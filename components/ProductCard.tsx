@@ -1,22 +1,24 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
 import { categories, deliveryLabels, type Messages } from "@/lib/i18n";
 import type { Locale, Product } from "@/lib/types";
 import { Badge } from "./Badge";
+import { FavoriteButton } from "./FavoriteButton";
 import { Icon } from "./Icons";
+import { SafeImage } from "./SafeImage";
 
 export function ProductCard({
   product,
   locale,
   messages: m,
+  imagePriority = false,
 }: {
   product: Product;
   locale: Locale;
   messages: Messages;
+  imagePriority?: boolean;
 }) {
-  const [favorite, setFavorite] = useState(false);
   const primaryDetail =
     product.world === "kitchen" ? product.portion : product.material;
 
@@ -27,22 +29,23 @@ export function ProductCard({
           href={`/${locale}/products/${product.slug}`}
           aria-label={product.title[locale]}
         >
-          <img src={product.image} alt={product.title[locale]} loading="lazy" />
+          <SafeImage
+            src={product.image}
+            alt={product.title[locale]}
+            sizes="(max-width: 720px) 100vw, (max-width: 1100px) 50vw, 28vw"
+            priority={imagePriority}
+          />
         </Link>
         <div className="product-image-badges">
           <Badge tone={product.world === "kitchen" ? "terracotta" : "sage"}>
             {categories[product.category][locale]}
           </Badge>
         </div>
-        <button
-          className="favorite"
-          type="button"
-          aria-label={m.addFavorite}
-          aria-pressed={favorite}
-          onClick={() => setFavorite((value) => !value)}
-        >
-          <Icon name="heart" size={18} />
-        </button>
+        <FavoriteButton
+          productId={product.id}
+          addLabel={m.addFavorite}
+          removeLabel={m.removeFavorite}
+        />
       </div>
       <div className="product-body">
         <div className="product-kicker">

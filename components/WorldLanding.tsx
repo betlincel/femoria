@@ -5,6 +5,7 @@ import { DeliveryExplainer } from "./DeliveryExplainer";
 import { Icon } from "./Icons";
 import { ProductCard } from "./ProductCard";
 import { SectionHeader } from "./SectionHeader";
+import { SafeImage } from "./SafeImage";
 
 export function WorldLanding({
   world,
@@ -35,7 +36,9 @@ export function WorldLanding({
             </Link>
           </div>
           <div className="world-hero-image">
-            <img src={content.image} alt="" />
+            <div className="world-hero-image-frame">
+              <SafeImage src={content.image} alt="" sizes="(max-width: 900px) 100vw, 50vw" priority />
+            </div>
             <p>{content.description[locale]}</p>
           </div>
         </div>

@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900" role="img" aria-labelledby="title">
+  <title id="title">FEMORIA görsel yer tutucusu</title>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#F8F4EE"/>
+      <stop offset="1" stop-color="#E8DDD1"/>
+    </linearGradient>
+    <pattern id="motif" width="90" height="90" patternUnits="userSpaceOnUse">
+      <path d="M15 45c15-20 45-20 60 0-15 20-45 20-60 0z" fill="none" stroke="#7F927D" stroke-opacity=".18" stroke-width="3"/>
+    </pattern>
+  </defs>
+  <rect width="1200" height="900" fill="url(#bg)"/>
+  <rect width="1200" height="900" fill="url(#motif)"/>
+  <g transform="translate(504 340) scale(3)">
+    <rect width="64" height="64" rx="18" fill="#3D2038"/>
+    <path d="M21 47V18h23v7H29v6h12v7H29v9z" fill="#F8F4EE"/>
+    <path d="M39 17c8 1 11 7 10 14-6-1-10-4-12-9 0 5-2 9-6 12" fill="none" stroke="#C89A53" stroke-width="3" stroke-linecap="round"/>
+  </g>
+</svg>

@@ -18,12 +18,12 @@ export function BottomNav({
     { href: `/${locale}`, label: m.nav.home, icon: "home" as const },
     { href: `/${locale}/products`, label: m.nav.discover, icon: "compass" as const },
     { href: `/${locale}/nearby`, label: m.nav.nearby, icon: "pin" as const },
-    { href: `/${locale}/products`, label: m.nav.cart, icon: "bag" as const },
-    { href: `/${locale}/how-it-works`, label: m.nav.account, icon: "user" as const },
+    { href: `/${locale}/cart`, label: m.nav.cart, icon: "bag" as const },
+    { href: `/${locale}/account`, label: m.nav.account, icon: "user" as const },
   ];
 
   return (
-    <nav className="bottom-nav" aria-label={m.menuLinksTitle}>
+    <nav className="bottom-nav" aria-label={m.mobileNavigation}>
       {items.map((item) => {
         const active =
           item.href === `/${locale}`

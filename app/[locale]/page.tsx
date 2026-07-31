@@ -5,6 +5,7 @@ import { Icon } from "@/components/Icons";
 import { ProducerCard } from "@/components/ProducerCard";
 import { ProductCard } from "@/components/ProductCard";
 import { SectionHeader } from "@/components/SectionHeader";
+import { SafeImage } from "@/components/SafeImage";
 import { WorldCard } from "@/components/WorldCard";
 import { getLocale, guides, translations } from "@/lib/i18n";
 import { products } from "@/lib/mock-data";
@@ -61,13 +62,17 @@ export default async function HomePage({
           </div>
           <div className="hero-visual" aria-label={m.producerQuote}>
             <div className="hero-arch">
-              <img
+              <SafeImage
                 src="https://images.unsplash.com/photo-1556911073-52527ac43761?auto=format&fit=crop&w=1200&q=90"
                 alt=""
+                sizes="(max-width: 900px) 100vw, 46vw"
+                priority
               />
             </div>
             <div className="floating-card hero-product">
-              <img src={products[0].image} alt={products[0].title[locale]} />
+              <div className="floating-thumb">
+                <SafeImage src={products[0].image} alt={products[0].title[locale]} sizes="72px" />
+              </div>
               <div>
                 <small>{m.miniProduct}</small>
                 <strong>{products[0].title[locale]}</strong>
@@ -205,14 +210,17 @@ export default async function HomePage({
             <p className="eyebrow">{m.producerCtaEyebrow}</p>
             <h2>{m.producerCtaTitle}</h2>
             <p>{m.producerCtaText}</p>
-            <Link className="btn btn-light" href={`/${locale}/guide`}>
+            <Link className="btn btn-light" href={`/${locale}/info/producer-application`}>
               {m.startApplication}<Icon name="arrow" />
             </Link>
           </div>
-          <img
-            src="https://images.unsplash.com/photo-1452860606245-08befc0ff44b?auto=format&fit=crop&w=1100&q=85"
-            alt=""
-          />
+          <div className="producer-cta-image">
+            <SafeImage
+              src="https://images.unsplash.com/photo-1452860606245-08befc0ff44b?auto=format&fit=crop&w=1100&q=85"
+              alt=""
+              sizes="(max-width: 900px) 100vw, 42vw"
+            />
+          </div>
         </div>
       </section>
 

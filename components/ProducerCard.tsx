@@ -3,6 +3,7 @@ import type { Messages } from "@/lib/i18n";
 import type { ProducerProfile } from "@/lib/presentation-data";
 import type { Locale } from "@/lib/types";
 import { Badge } from "./Badge";
+import { SafeImage } from "./SafeImage";
 
 export function ProducerCard({
   producer,
@@ -16,7 +17,11 @@ export function ProducerCard({
   return (
     <article className="maker-card">
       <div className="maker-image">
-        <img src={producer.image} alt="" loading="lazy" />
+        <SafeImage
+          src={producer.image}
+          alt={`${producer.name} — ${producer.specialty[locale]}`}
+          sizes="(max-width: 720px) 100vw, 33vw"
+        />
         <Badge tone="sage">{m.verifiedProfile}</Badge>
       </div>
       <div className="maker-body">

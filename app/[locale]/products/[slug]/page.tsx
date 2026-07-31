@@ -2,6 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { Icon } from "@/components/Icons";
+import { FavoriteButton } from "@/components/FavoriteButton";
+import { SafeImage } from "@/components/SafeImage";
 import { deliveryLabels, getLocale, translations } from "@/lib/i18n";
 import { getProduct, products } from "@/lib/mock-data";
 
@@ -37,7 +39,7 @@ export default async function ProductDetailPage({
   return (
     <div className="container detail">
       <div className="detail-image">
-        <img src={product.image} alt={product.title[locale]} />
+        <SafeImage src={product.image} alt={product.title[locale]} sizes="(max-width: 900px) 100vw, 48vw" priority />
       </div>
       <article className="detail-copy">
         <nav className="breadcrumb" aria-label={m.breadcrumbLabel}>
@@ -49,8 +51,8 @@ export default async function ProductDetailPage({
         <p className="detail-description">{product.description[locale]}</p>
         <div className="detail-price">{product.price.toLocaleString(locale)} ₺</div>
         <div className="detail-actions">
-          <button className="btn btn-primary" type="button">{m.requestOrder}<Icon name="arrow" /></button>
-          <button className="btn btn-secondary" type="button"><Icon name="heart" />{m.addFavorite}</button>
+          <Link className="btn btn-primary" href={`/${locale}/cart`}>{m.requestOrder}<Icon name="arrow" /></Link>
+          <FavoriteButton productId={product.id} addLabel={m.addFavorite} removeLabel={m.removeFavorite} className="btn btn-secondary" withText />
         </div>
         <h2 className="detail-subtitle">{m.aboutProduct}</h2>
         <dl className="detail-info">
@@ -91,7 +93,9 @@ export default async function ProductDetailPage({
         </div>
         <p className="delivery-privacy"><Icon name="shield" />{m.deliveryPrivacy}</p>
         <div className="seller-box">
-          <img src={product.producerImage} alt="" />
+          <div className="seller-avatar">
+            <SafeImage src={product.producerImage} alt={product.producer} sizes="64px" />
+          </div>
           <div><span>{m.producerLabel}</span><strong>{product.producer}</strong><span>{m.verifiedProducer} · {deliveryLabels[product.delivery[0]][locale]}</span></div>
           <Icon name="shield" />
         </div>
