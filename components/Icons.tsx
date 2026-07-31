@@ -8,7 +8,12 @@ type IconName =
   | "spark"
   | "grid"
   | "list"
-  | "shield";
+  | "shield"
+  | "home"
+  | "compass"
+  | "user"
+  | "close"
+  | "chevron";
 
 const paths: Record<IconName, React.ReactNode> = {
   pin: <><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></>,
@@ -21,6 +26,11 @@ const paths: Record<IconName, React.ReactNode> = {
   grid: <><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></>,
   list: <><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r=".5"/><circle cx="4.5" cy="12" r=".5"/><circle cx="4.5" cy="18" r=".5"/></>,
   shield: <path d="M12 3 4.5 6v5.5c0 4.7 3.2 7.8 7.5 9.5 4.3-1.7 7.5-4.8 7.5-9.5V6L12 3Zm-3 9 2 2 4-4"/>,
+  home: <><path d="m3 11 9-8 9 8"/><path d="M5 10v10h14V10M9 20v-6h6v6"/></>,
+  compass: <><circle cx="12" cy="12" r="9"/><path d="m15.5 8.5-2 5-5 2 2-5 5-2Z"/></>,
+  user: <><circle cx="12" cy="8" r="4"/><path d="M4.5 21a7.5 7.5 0 0 1 15 0"/></>,
+  close: <path d="m6 6 12 12M18 6 6 18"/>,
+  chevron: <path d="m9 6 6 6-6 6"/>,
 };
 
 export function Icon({ name, size = 20 }: { name: IconName; size?: number }) {

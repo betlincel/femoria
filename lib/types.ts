@@ -9,11 +9,14 @@ export type CategoryId =
   | "bags"
   | "crafts";
 
+export type ProductWorld = "kitchen" | "workshop";
+
 export type DeliveryType = "courier" | "pickup" | "shipping";
 
 export interface Product {
   id: string;
   slug: string;
+  world: ProductWorld;
   category: CategoryId;
   title: Record<Locale, string>;
   description: Record<Locale, string>;
@@ -28,6 +31,24 @@ export interface Product {
   reviews: number;
   delivery: DeliveryType[];
   preparation: Record<Locale, string>;
+  portion?: Record<Locale, string>;
+  material?: Record<Locale, string>;
+  customizable?: boolean;
+  deliveryDetails: {
+    pickup?: {
+      area: Record<Locale, string>;
+      readyAt: Record<Locale, string>;
+      window: Record<Locale, string>;
+    };
+    courier?: {
+      districts: Record<Locale, string>;
+      estimate: Record<Locale, string>;
+      fee: Record<Locale, string>;
+    };
+    shipping?: {
+      estimate: Record<Locale, string>;
+    };
+  };
   image: string;
   producerImage: string;
   details: {

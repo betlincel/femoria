@@ -40,7 +40,7 @@ export default async function ProductDetailPage({
         <img src={product.image} alt={product.title[locale]} />
       </div>
       <article className="detail-copy">
-        <nav className="breadcrumb" aria-label="Breadcrumb">
+        <nav className="breadcrumb" aria-label={m.breadcrumbLabel}>
           <Link href={`/${locale}`}>FEMORIA</Link> / <Link href={`/${locale}/products`}>{m.breadcrumbProducts}</Link>
         </nav>
         <p className="eyebrow">{product.preparation[locale]}</p>
@@ -48,16 +48,48 @@ export default async function ProductDetailPage({
         <div className="rating">★ {product.rating} · {product.reviews} {m.review}</div>
         <p className="detail-description">{product.description[locale]}</p>
         <div className="detail-price">{product.price.toLocaleString(locale)} ₺</div>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+        <div className="detail-actions">
           <button className="btn btn-primary" type="button">{m.requestOrder}<Icon name="arrow" /></button>
           <button className="btn btn-secondary" type="button"><Icon name="heart" />{m.addFavorite}</button>
         </div>
-        <h2 style={{ color: "var(--plum)", fontFamily: "Georgia, serif", marginTop: 36 }}>{m.aboutProduct}</h2>
+        <h2 className="detail-subtitle">{m.aboutProduct}</h2>
         <dl className="detail-info">
           {product.details.map((detail) => <div key={detail.label.tr}><dt>{detail.label[locale]}</dt><dd>{detail.value[locale]}</dd></div>)}
           <div><dt>{m.deliveryArea}</dt><dd>{product.district}, {product.city}</dd></div>
           <div><dt>{m.approximateDistance}</dt><dd>~{product.distanceKm.toLocaleString(locale)} km</dd></div>
         </dl>
+        <h2 className="detail-subtitle">{m.deliveryOptionsLabel}</h2>
+        <div className="delivery-detail-grid">
+          {product.deliveryDetails.pickup ? (
+            <article>
+              <h3>{deliveryLabels.pickup[locale]}</h3>
+              <dl>
+                <div><dt>{m.pickupAreaLabel}</dt><dd>{product.deliveryDetails.pickup.area[locale]}</dd></div>
+                <div><dt>{m.readyAtLabel}</dt><dd>{product.deliveryDetails.pickup.readyAt[locale]}</dd></div>
+                <div><dt>{m.pickupWindowLabel}</dt><dd>{product.deliveryDetails.pickup.window[locale]}</dd></div>
+              </dl>
+            </article>
+          ) : null}
+          {product.deliveryDetails.courier ? (
+            <article>
+              <h3>{deliveryLabels.courier[locale]}</h3>
+              <dl>
+                <div><dt>{m.courierDistrictsLabel}</dt><dd>{product.deliveryDetails.courier.districts[locale]}</dd></div>
+                <div><dt>{m.courierEstimateLabel}</dt><dd>{product.deliveryDetails.courier.estimate[locale]}</dd></div>
+                <div><dt>{m.courierFeeLabel}</dt><dd>{product.deliveryDetails.courier.fee[locale]}</dd></div>
+              </dl>
+            </article>
+          ) : null}
+          {product.deliveryDetails.shipping ? (
+            <article>
+              <h3>{deliveryLabels.shipping[locale]}</h3>
+              <dl>
+                <div><dt>{m.shippingEstimateLabel}</dt><dd>{product.deliveryDetails.shipping.estimate[locale]}</dd></div>
+              </dl>
+            </article>
+          ) : null}
+        </div>
+        <p className="delivery-privacy"><Icon name="shield" />{m.deliveryPrivacy}</p>
         <div className="seller-box">
           <img src={product.producerImage} alt="" />
           <div><span>{m.producerLabel}</span><strong>{product.producer}</strong><span>{m.verifiedProducer} · {deliveryLabels[product.delivery[0]][locale]}</span></div>

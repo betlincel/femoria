@@ -29,15 +29,7 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="tr">
-      <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html:
-              "document.documentElement.lang=location.pathname.startsWith('/en')?'en':'tr'",
-          }}
-        />
-      </head>
+    <html lang="tr" data-scroll-behavior="smooth">
       <body>{children}</body>
     </html>
   );
