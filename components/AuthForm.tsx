@@ -2,72 +2,135 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FormEvent, useState } from "react";
-import { createDemoAuthService } from "@/lib/demo-auth";
+import { type FormEvent, useState } from "react";
+import { loginSchema, sanitizeSignupRole, signupSchema } from "@/lib/auth";
 import type { Messages } from "@/lib/i18n";
+import { createClient } from "@/lib/supabase/client";
 import type { Locale } from "@/lib/types";
 import { Icon } from "./Icons";
 
 export function AuthForm({
   mode,
   locale,
+  nextPath,
   messages: m,
 }: {
   mode: "login" | "register";
   locale: Locale;
+  nextPath: string;
   messages: Messages;
 }) {
   const router = useRouter();
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [googleNotice, setGoogleNotice] = useState(false);
 
-  const submit = (event: FormEvent<HTMLFormElement>) => {
+  const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
-    const name = String(form.get("name") ?? "").trim();
     const email = String(form.get("email") ?? "").trim();
     const password = String(form.get("password") ?? "");
-    const confirmation = String(form.get("confirmation") ?? "");
-    const terms = form.get("terms");
-    const role = form.get("role") === "producer" ? "producer" : "buyer";
 
-    if (!email.includes("@") || password.length < 6) {
-      setError(m.authValidation);
+    setError("");
+    setNotice("");
+
+    if (mode === "login") {
+      const parsed = loginSchema.safeParse({ email, password });
+      if (!parsed.success) {
+        setError(m.authValidation);
+        return;
+      }
+
+      setSubmitting(true);
+      const supabase = createClient();
+      const result = await supabase.auth.signInWithPassword(parsed.data);
+      if (result.error) {
+        setError(m.authFailed);
+        setSubmitting(false);
+        return;
+      }
+      router.push(nextPath);
+      router.refresh();
       return;
     }
-    if (mode === "register" && (!name || password !== confirmation || !terms)) {
+
+    const parsed = signupSchema.safeParse({
+      name: String(form.get("name") ?? ""),
+      email,
+      password,
+      confirmation: String(form.get("confirmation") ?? ""),
+      role: sanitizeSignupRole(form.get("role")),
+      locale,
+      termsAccepted: form.get("terms") === "on",
+    });
+    if (!parsed.success) {
       setError(m.registerValidation);
       return;
     }
 
-    setError("");
     setSubmitting(true);
-    createDemoAuthService(window.localStorage).signIn({
-      name: name || email.split("@")[0] || m.demoUser,
-      email,
-      role,
+    const supabase = createClient();
+    const { data, error: signupError } = await supabase.auth.signUp({
+      email: parsed.data.email,
+      password: parsed.data.password,
+      options: {
+        data: {
+          display_name: parsed.data.name,
+          role: parsed.data.role,
+          locale: parsed.data.locale,
+        },
+        emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextPath)}`,
+      },
     });
-    window.setTimeout(() => router.push(`/${locale}/account`), 250);
+
+    if (signupError) {
+      setError(m.authFailed);
+      setSubmitting(false);
+      return;
+    }
+    if (!data.session) {
+      setNotice(m.emailConfirmationSent);
+      setSubmitting(false);
+      return;
+    }
+    router.push(nextPath);
+    router.refresh();
+  };
+
+  const continueWithGoogle = async () => {
+    setError("");
+    setNotice("");
+    setSubmitting(true);
+    const supabase = createClient();
+    const { error: oauthError } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextPath)}`,
+      },
+    });
+    if (oauthError) {
+      setError(m.authFailed);
+      setSubmitting(false);
+    }
   };
 
   return (
     <form className="auth-form" noValidate onSubmit={submit}>
       {mode === "register" ? (
         <label>{m.fullName}
-          <input name="name" type="text" autoComplete="name" required />
+          <input name="name" type="text" autoComplete="name" required maxLength={120} />
         </label>
       ) : null}
       <label>{m.email}
-        <input name="email" type="email" autoComplete="email" required />
+        <input name="email" type="email" autoComplete="email" required maxLength={254} />
       </label>
       <label>{m.password}
-        <input name="password" type="password" autoComplete={mode === "login" ? "current-password" : "new-password"} minLength={6} required />
+        <input name="password" type="password" autoComplete={mode === "login" ? "current-password" : "new-password"} minLength={6} maxLength={128} required />
       </label>
       {mode === "register" ? (
         <>
           <label>{m.passwordAgain}
-            <input name="confirmation" type="password" autoComplete="new-password" minLength={6} required />
+            <input name="confirmation" type="password" autoComplete="new-password" minLength={6} maxLength={128} required />
           </label>
           <fieldset className="role-choice">
             <legend>{m.accountType}</legend>
@@ -81,26 +144,26 @@ export function AuthForm({
         </>
       ) : (
         <div className="auth-options">
-          <label className="check auth-check"><input name="remember" type="checkbox" />{m.rememberMe}</label>
+          <span>{m.secureSession}</span>
           <Link href={`/${locale}/info/password-reset`}>{m.forgotPassword}</Link>
         </div>
       )}
       {error ? <p className="form-error" role="alert">{error}</p> : null}
+      {notice ? <p className="form-success" role="status">{notice}</p> : null}
       <button className="btn btn-primary auth-submit" type="submit" disabled={submitting}>
         {submitting ? m.signingIn : mode === "login" ? m.login : m.register}
         {!submitting ? <Icon name="arrow" /> : null}
       </button>
-      <button className="btn btn-secondary auth-google" type="button" onClick={() => setGoogleNotice(true)}>
+      <button className="btn btn-secondary auth-google" type="button" disabled={submitting} onClick={continueWithGoogle}>
         {m.continueGoogle}
       </button>
-      {googleNotice ? <p className="prototype-notice" role="status">{m.integrationSoon}</p> : null}
       <p className="auth-switch">
         {mode === "login" ? m.noAccount : m.haveAccount}{" "}
         <Link href={`/${locale}/${mode === "login" ? "register" : "login"}`}>
           {mode === "login" ? m.register : m.login}
         </Link>
       </p>
-      <p className="demo-warning">{m.demoAuthWarning}</p>
+      <p className="demo-warning">{m.authSecurityNote}</p>
     </form>
   );
 }

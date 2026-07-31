@@ -580,7 +580,9 @@ img { display: block; width: 100%; max-width: 100%; }
 .role-choice input { width: 19px; height: 19px; accent-color: var(--terracotta); }
 .auth-submit, .auth-google { width: 100%; }
 .auth-submit:disabled { opacity: .65; cursor: progress; }
-.form-error { margin: 0; padding: 11px 13px; border-radius: 10px; background: var(--soft-clay); color: #7c392b; font-size: .78rem; line-height: 1.5; }
+.form-error, .form-success { margin: 0; padding: 11px 13px; border-radius: 10px; font-size: .78rem; line-height: 1.5; }
+.form-error { background: var(--soft-clay); color: #7c392b; }
+.form-success { background: var(--soft-sage); color: #40553e; }
 .prototype-notice, .demo-warning, .auth-switch { margin: 0; color: var(--muted); font-size: .74rem; line-height: 1.55; text-align: center; }
 .demo-warning { padding-top: 12px; border-top: 1px solid var(--line); }
 
@@ -601,6 +603,13 @@ img { display: block; width: 100%; max-width: 100%; }
 .account-role { display: inline-flex; padding: 7px 10px; border-radius: 999px; background: var(--soft-sage); color: #4d624b; font-size: .72rem; font-weight: 800; }
 .account-actions { display: flex; flex-wrap: wrap; gap: 9px; }
 .account-skeleton { width: min(780px, 100%); height: 240px; margin-inline: auto; }
+.account-layout { display: grid; gap: 22px; }
+.profile-form { display: grid; gap: 16px; max-width: 780px; width: 100%; margin-inline: auto; padding: 28px; border: 1px solid var(--line); border-radius: 24px; background: white; box-shadow: var(--shadow-sm); }
+.profile-form h2 { margin: 0; color: var(--plum); font: 600 1.8rem Georgia, serif; }
+.profile-form > div > p:last-child { color: var(--muted); line-height: 1.65; }
+.profile-form label { display: grid; gap: 7px; color: var(--plum); font-size: .76rem; font-weight: 800; }
+.profile-form input, .profile-form select { width: 100%; height: 48px; padding: 0 13px; border: 1px solid var(--line); border-radius: 12px; background: var(--ivory); }
+.profile-fields { display: grid; gap: 16px; }
 
 .detail-image { position: relative; aspect-ratio: 1 / 1; border-radius: 24px; overflow: hidden; }
 .detail-image img { position: absolute; inset: 0; width: 100%; height: 100%; }
@@ -656,6 +665,7 @@ img { display: block; width: 100%; max-width: 100%; }
   .auth-shell { grid-template-columns: .9fr 1.1fr; }
   .auth-intro, .auth-form { padding: 48px; }
   .account-card { grid-template-columns: auto 1fr auto; }
+  .profile-fields { grid-template-columns: 1fr 1fr; }
   .footer-main { grid-template-columns: 1fr 1.5fr; }
   .footer-newsletter { grid-column: 1 / -1; }
 }

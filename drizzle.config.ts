@@ -1,7 +1,8 @@
 import { defineConfig } from "drizzle-kit";
 
 export default defineConfig({
-  out: "./drizzle",
+  out: "./supabase/migrations",
   schema: "./db/schema.ts",
-  dialect: "sqlite",
+  dialect: "postgresql",
+  migrations: { prefix: "supabase" },
 });

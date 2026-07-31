@@ -1,4 +1,7 @@
+import { z } from "zod";
+
 const FAVORITES_KEY = "femoria-demo-favorites";
+const productIdSchema = z.string().uuid();
 
 export interface FavoritesService {
   read(): string[];
@@ -14,6 +17,22 @@ export function toggleFavorite(ids: string[], productId: string): string[] {
   return ids.includes(productId)
     ? ids.filter((id) => id !== productId)
     : [...ids, productId];
+}
+
+export function isDatabaseProductId(productId: string): boolean {
+  return productIdSchema.safeParse(productId).success;
+}
+
+export function mergeFavoriteIds(
+  localIds: string[],
+  remoteIds: string[],
+  existingDatabaseProductIds: string[],
+): string[] {
+  const allowedLocal = new Set(existingDatabaseProductIds);
+  return [...new Set([
+    ...remoteIds.filter(isDatabaseProductId),
+    ...localIds.filter((id) => isDatabaseProductId(id) && allowedLocal.has(id)),
+  ])];
 }
 
 export function createFavoritesService(

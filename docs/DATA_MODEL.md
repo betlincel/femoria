@@ -1,51 +1,45 @@
 # Data Model
 
-## Temel tablolar
+## İlk migration tabloları
 
 ### profiles
 
-`id`, `role` (`buyer|producer|admin`), `display_name`, `locale`, `city`, `district`, `neighborhood_public`, `created_at`.
+`id` doğrudan `auth.users.id` UUID’sine bağlıdır. `role` (`buyer|producer|admin`), `status` (`active|suspended`), `display_name`, `locale`, yaklaşık public bölge alanları ve audit tarihlerini içerir. Kullanıcı yalnız ad, dil, şehir, ilçe ve public mahalle alanlarını güncelleyebilir.
 
 ### producer_profiles
 
-`profile_id`, `story_tr`, `story_en`, `verification_status`, `delivery_regions`, `approximate_geohash`, `approved_at`. Kesin koordinat ayrı, yalnız yetkili erişimli alanda tutulur.
+`profile_id` bire bir profile ilişkisidir. TR/EN hikâye, `verification_status`, teslimat bölgeleri, kesin koordinat içermeyen `approximate_area`, onay ve audit tarihlerini içerir. Üretici doğrulama durumunu kendisi değiştiremez.
 
 ### categories
 
-`id`, `slug`, `name_tr`, `name_en`, `kind` (`food|craft`), `active`, `sort_order`.
+UUID, slug, TR/EN ad, `food|craft` türü, aktiflik ve sıralama alanları. Public yalnız aktif kategorileri okuyabilir.
 
 ### products
 
-`id`, `producer_id`, `category_id`, `slug`, `title_tr`, `title_en`, `description_tr`, `description_en`, `price_minor`, `currency`, `status`, `stock_mode`, `stock_quantity`, `preparation_days`, `created_at`.
-
-### food_product_details
-
-`product_id`, `ingredients_tr/en`, `allergens_tr/en`, `net_amount`, `production_date`, `expiry_date`, `storage_tr/en`, `preservation_method`.
-
-### craft_product_details
-
-`product_id`, `material_tr/en`, `dimensions`, `color_tr/en`, `customizable`, `customization_notes_tr/en`.
+UUID, üretici/kategori foreign key’leri, slug, iki dilli başlık/açıklama, minor-unit fiyat, para birimi, moderasyon durumu, stok modeli, hazırlık günü ve yaklaşık şehir/ilçe bilgisi. Public yalnız onaylı üreticiye ait `approved` ürünleri görür.
 
 ### product_images
 
-`id`, `product_id`, `storage_path`, `alt_tr`, `alt_en`, `sort_order`.
+Ürün foreign key’i, Supabase Storage içindeki göreli path, TR/EN alt metin ve sıralama. Harici URL saklanmaz; erişim ürün politikalarıyla bağlıdır.
 
 ### favorites
 
-Bileşik anahtar: `buyer_id`, `product_id`; ayrıca `created_at`.
+`buyer_id + product_id` bileşik anahtarı ve oluşturma tarihi. Kullanıcı yalnız kendi favorilerini okur, ekler ve siler. Ekleme politikası ürünün onaylı olmasını da doğrular.
 
-### orders / order_items
+### addresses
 
-Sipariş talebi, durum, teslimat tipi, anonimleştirilmiş teslimat bölgesi, tutar snapshot’ı ve ürün satırları. Adres bilgisi katalog verisinden ayrı tutulur.
+Teslimat için alıcı adı, telefon, adres satırı, şehir, ilçe, posta kodu ve not içerir. Kesin koordinat içermez. Hiçbir anonim/public okuma politikası yoktur; yalnız kayıt sahibi CRUD yapabilir.
 
-### complaints / producer_applications
+## Trigger ve güvenlik kuralları
 
-Yönetici moderasyonu için durum, inceleyen kullanıcı, karar notu ve audit tarihleri.
-
-## Kurallar
-
+- Mutable tablolarda `updated_at` otomatik güncellenir.
+- `auth.users` insert sonrası güvenli profile trigger’ı çalışır.
+- Signup rolü database içinde tekrar `buyer|producer` allowlist’inden geçirilir; diğer değerler `buyer` olur.
+- Producer signup, `pending` producer profile oluşturur.
+- Yetki ve moderasyon kolonları normal kullanıcı update grant’lerine dahil değildir.
 - Para integer minor unit olarak saklanır.
-- Public sorgular yalnız `approved` ürün ve üreticileri döndürür.
-- Çeviri alanları MVP’de iki sütun; kategori ve ürün içerikleri için TR zorunlu, EN yayın öncesi doğrulanır.
-- RLS politikaları sahiplik ve role göre yazılır; service role tarayıcıya gönderilmez.
-- Kesin koordinat, public view veya client payload’ına eklenmez.
+- RLS tüm public tablolarda açık ve varsayılan erişim en az yetkilidir.
+
+## Sonraki migrationlar
+
+Food/craft detay tabloları, siparişler, sipariş kalemleri, şikâyetler ve üretici başvurusu audit geçmişi sonraki migrationlara ayrılacaktır. Mock katalog gerçek UUID ürün seed’iyle değiştirilmeden database favorite feature flag’i açılmaz.

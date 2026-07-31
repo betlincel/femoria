@@ -2,41 +2,50 @@
 
 ## Genel yapı
 
-FEMORIA App Router tabanlı modüler bir monolit olarak başlar. UI, domain tipleri ve servis adaptörleri ayrıdır; böylece mock servisler ileride Supabase/OpenAI/OpenStreetMap adaptörleriyle değiştirilebilir.
+FEMORIA Next.js 16 App Router tabanlı modüler bir monolittir.
 
 ```text
-App Router pages
-  → reusable components
-  → typed service interfaces
-  → mock adapters (Phase 1)
-  → Supabase / OpenAI / OSM adapters (later)
+App Router server/client components
+  → Zod doğrulamalı form ve domain sınırları
+  → Supabase SSR browser/server clients
+  → Supabase Auth + PostgreSQL Data API
+  → PostgreSQL grants + RLS
 ```
 
-## Sınırlar
+## Uygulama sınırları
 
-- `app/[locale]`: rota kompozisyonu, metadata ve server component’ler.
-- `components`: erişilebilir, yeniden kullanılabilir görsel ve etkileşimli parçalar.
-- `lib/i18n.ts`: tüm public metinler, kategori ve teslimat etiketleri.
-- `lib/types.ts`: domain modelleri ve servis sözleşmeleri.
-- `lib/mock-data.ts`: yalnızca geliştirme verisi.
-- `lib/services.ts`: Zod doğrulamalı mock katalog adaptörü.
+- `app/[locale]`: TR/EN rota kompozisyonu, metadata, server-side route protection ve Server Actions.
+- `app/auth/callback`: OAuth/email confirmation PKCE code exchange.
+- `components`: erişilebilir ve yeniden kullanılabilir görsel/etkileşimli parçalar.
+- `lib/i18n.ts`: tüm kullanıcı metinlerinin TR/EN karşılıkları.
+- `lib/auth.ts`: signup, profil ve güvenli redirect Zod sınırları.
+- `lib/supabase`: browser client, request-scoped server client, route guard ve session refresh.
+- `lib/mock-data.ts`: seed tamamlanana kadar public katalog verisi.
+- `db/schema.ts`: PostgreSQL için Drizzle şema karşılığı.
+- `supabase/migrations`: trigger, grant, RLS ve uygulanabilir SQL’in kaynak doğrusu.
 
-## Backend hedef mimarisi
+## Auth mimarisi
 
-- **Supabase Auth:** alıcı, üretici ve yönetici oturumları; rol bilgisi `profiles`.
-- **PostgreSQL + RLS:** ürün, başvuru, sipariş ve favoriler. Varsayılan erişim en az yetki.
-- **Storage:** ürün görselleri; MIME, boyut ve sahiplik politikaları.
-- **OpenAI:** yalnızca server route/service üzerinden. İstek bağlamı doğrulanmış katalog/sipariş kayıtlarıyla sınırlandırılır.
-- **Harita:** public yanıtlarda yuvarlatılmış/anonimleştirilmiş konum; kesin koordinat yalnız yetkili teslimat akışında.
+`@supabase/ssr` browser ve server client’ları aynı cookie tabanlı PKCE oturumunu kullanır. Next.js 16 root `proxy.ts`, uygun isteklerde token doğrulama/yenileme işlemini yapar. Supabase client sunucuda global tutulmaz; her istek için yeniden oluşturulur.
 
-## i18n
+Account ve favorites rotaları render öncesi `supabase.auth.getUser()` ile kullanıcıyı doğrular. Güvenli olmayan `getSession()` verisi authorization kararı için kullanılmaz. Login sonrası `next` yalnız uygulama içindeki `/tr` veya `/en` rotalarına yönlenebilir.
 
-URL tabanlı `/tr` ve `/en` rotaları vardır. Varsayılan `/tr`; dil değiştirici aynı path’in diğer locale karşılığını açar. Çeviri anahtarlarının iki dilde de bulunması TypeScript ile denetlenir.
+Signup rolü UI ve Zod katmanında `buyer|producer` ile sınırlıdır. Database trigger aynı allowlist’i tekrar uygular; `admin` metadata ile oluşturulamaz. Kullanıcıların `profiles.role`, `profiles.status`, `producer_profiles.verification_status` veya `products.status` alanlarını değiştirebilmesi kolon grant’leriyle engellenir.
 
-## Güvenlik ve gizlilik
+## Veri ve RLS
 
-Server anahtarları `NEXT_PUBLIC_` öneki almaz. Public katalog yalnız onaylı ürünleri döndürür. Kesin ev adresi ve koordinat public payload’a hiç dahil edilmez. Form/API sınırları Zod ile doğrulanır; yönetim işlemleri ayrıca rol ve RLS ile korunur.
+Tüm uygulama tablolarında RLS açıktır. Public katalog yalnız aktif kategorileri, onaylı üreticileri ve onaylı ürünleri görür. Sahiplik politikaları `(select auth.uid())` üzerinden uygulanır. Hassas adres satırları sadece kayıt sahibine açıktır; anonim adres politikası yoktur.
+
+Service role veya secret key uygulamada kullanılmaz. Uygulama Supabase publishable key ile çalışır ve authorization PostgreSQL RLS tarafından uygulanır.
+
+## Favoriler
+
+Misafir favorileri local storage’da tutulur. Oturum açıldıktan sonra feature flag açıksa remote favoriler okunur, local UUID’ler `products` tablosunda görünürlük açısından doğrulanır ve yalnız doğrulanan kimlikler upsert edilir. Mock `p1` benzeri kimlikler veritabanına gönderilmez.
+
+## Gizlilik
+
+Public payload’larda açık ev adresi veya kesin koordinat bulunmaz. `addresses` hassas teslimat verisidir ve yalnız sahibine açıktır. Üretici için yalnız yaklaşık bölge metni tutulabilir.
 
 ## Dağıtım
 
-Uygulama standart Next.js App Router build’i üretir ve Vercel’in Next.js framework preset’iyle dağıtılır. Production build komutu `npm run build`, çıktı yönetimi ise Vercel tarafından otomatik olarak `.next` üzerinden yapılır.
+Uygulama standart Next.js production çıktısı üretir. Supabase URL ve publishable key Preview/Production ortamlarında tanımlanır. Auth callback URL’leri Supabase allow listesiyle birebir eşleşmelidir.

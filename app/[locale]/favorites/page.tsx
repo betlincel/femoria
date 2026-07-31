@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { FavoritesView } from "@/components/FavoritesView";
 import { getLocale, translations } from "@/lib/i18n";
+import { requireUser } from "@/lib/supabase/auth";
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const locale = getLocale((await params).locale);
@@ -10,6 +11,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
 export default async function FavoritesPage({ params }: { params: Promise<{ locale: string }> }) {
   const locale = getLocale((await params).locale);
   const m = translations[locale];
+  await requireUser(locale, `/${locale}/favorites`);
   return (
     <>
       <section className="page-hero"><div className="container"><p className="eyebrow">{m.favoritesEyebrow}</p><h1 className="page-title">{m.favoritesTitle}</h1><p>{m.favoritesText}</p></div></section>
