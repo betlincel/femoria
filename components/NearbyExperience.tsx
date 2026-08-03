@@ -26,7 +26,8 @@ export function NearbyExperience({
             Number(b.city === location.city) - Number(a.city === location.city);
           if (cityDifference) return cityDifference;
         }
-        return a.distanceKm - b.distanceKm;
+        return (a.distanceKm ?? Number.POSITIVE_INFINITY)
+          - (b.distanceKm ?? Number.POSITIVE_INFINITY);
       }),
     [location],
   );

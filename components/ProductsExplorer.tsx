@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { categories, deliveryLabels, type Messages } from "@/lib/i18n";
-import type { CategoryId, DeliveryType, Locale, Product } from "@/lib/types";
+import { deliveryLabels, type Messages } from "@/lib/i18n";
+import type { CatalogCategory, DeliveryType, Locale, Product } from "@/lib/types";
 import { Icon } from "./Icons";
 import { InfiniteProductGrid } from "./InfiniteProductGrid";
 
 export function ProductsExplorer({
   products,
+  categoryOptions,
   locale,
   messages: m,
   initialQuery = "",
@@ -15,14 +16,15 @@ export function ProductsExplorer({
   initialCity = "",
 }: {
   products: Product[];
+  categoryOptions: CatalogCategory[];
   locale: Locale;
   messages: Messages;
   initialQuery?: string;
-  initialCategory?: "" | CategoryId;
+  initialCategory?: string;
   initialCity?: string;
 }) {
   const [query, setQuery] = useState(initialQuery);
-  const [category, setCategory] = useState<"" | CategoryId>(initialCategory);
+  const [category, setCategory] = useState(initialCategory);
   const [city, setCity] = useState(initialCity);
   const [delivery, setDelivery] = useState<DeliveryType[]>([]);
   const [min, setMin] = useState("");
@@ -49,11 +51,18 @@ export function ProductsExplorer({
         && (!max || product.price <= Number(max));
     });
     if (sort === "price") return [...result].sort((a, b) => a.price - b.price);
-    if (sort === "rating") return [...result].sort((a, b) => b.rating - a.rating);
+    if (sort === "rating") {
+      return [...result].sort(
+        (a, b) => (b.rating ?? Number.NEGATIVE_INFINITY)
+          - (a.rating ?? Number.NEGATIVE_INFINITY),
+      );
+    }
     return result;
   }, [products, query, category, city, delivery, min, max, sort, locale]);
 
   const resetKey = [query, category, city, delivery.join(","), min, max, sort].join("|");
+  const supportsDelivery = products.some((product) => product.delivery.length > 0);
+  const supportsRating = products.some((product) => product.rating !== undefined);
   const clear = () => { setQuery(""); setCategory(""); setCity(""); setDelivery([]); setMin(""); setMax(""); };
   return (
     <section className="section">
@@ -80,11 +89,11 @@ export function ProductsExplorer({
               </button>
             </div>
             <div className="filter-group"><label htmlFor="search-products">{m.searchLabel}</label><input id="search-products" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={m.searchPlaceholder} /></div>
-            <div className="filter-group"><label htmlFor="category-filter">{m.category}</label><select id="category-filter" value={category} onChange={(event) => setCategory(event.target.value as CategoryId | "")}><option value="">{m.all}</option>{Object.entries(categories).map(([id, item]) => <option key={id} value={id}>{item[locale]}</option>)}</select></div>
+            <div className="filter-group"><label htmlFor="category-filter">{m.category}</label><select id="category-filter" value={category} onChange={(event) => setCategory(event.target.value)}><option value="">{m.all}</option>{categoryOptions.map((item) => <option key={item.id} value={item.slug}>{item.name[locale]}</option>)}</select></div>
             <div className="filter-group"><span className="filter-legend">{m.price}</span><div className="filter-row"><input aria-label={m.minPrice} type="number" min="0" value={min} onChange={(event) => setMin(event.target.value)} placeholder={m.minPrice} /><input aria-label={m.maxPrice} type="number" min="0" value={max} onChange={(event) => setMax(event.target.value)} placeholder={m.maxPrice} /></div></div>
             <div className="filter-group"><label htmlFor="location-filter">{m.locationFilter}</label><select id="location-filter" value={city} onChange={(event) => setCity(event.target.value)}><option value="">{m.allLocations}</option>{[...new Set(products.map((product) => product.city))].map((item) => <option key={item}>{item}</option>)}</select></div>
-            <fieldset className="filter-group delivery-filter"><legend className="filter-legend">{m.delivery}</legend>{(Object.keys(deliveryLabels) as DeliveryType[]).map((item) => <label className="check" key={item}><input type="checkbox" checked={delivery.includes(item)} onChange={() => setDelivery((current) => current.includes(item) ? current.filter((value) => value !== item) : [...current, item])} /><span>{deliveryLabels[item][locale]}</span></label>)}</fieldset>
-            <div className="filter-group"><label htmlFor="sort-filter">{m.sort}</label><select id="sort-filter" value={sort} onChange={(event) => setSort(event.target.value)}><option value="recommended">{m.recommended}</option><option value="price">{m.lowestPrice}</option><option value="rating">{m.highestRating}</option></select></div>
+            {supportsDelivery ? <fieldset className="filter-group delivery-filter"><legend className="filter-legend">{m.delivery}</legend>{(Object.keys(deliveryLabels) as DeliveryType[]).map((item) => <label className="check" key={item}><input type="checkbox" checked={delivery.includes(item)} onChange={() => setDelivery((current) => current.includes(item) ? current.filter((value) => value !== item) : [...current, item])} /><span>{deliveryLabels[item][locale]}</span></label>)}</fieldset> : null}
+            <div className="filter-group"><label htmlFor="sort-filter">{m.sort}</label><select id="sort-filter" value={sort} onChange={(event) => setSort(event.target.value)}><option value="recommended">{m.recommended}</option><option value="price">{m.lowestPrice}</option>{supportsRating ? <option value="rating">{m.highestRating}</option> : null}</select></div>
             <button className="btn btn-secondary" type="button" onClick={clear}>{m.clearFilters}</button>
           </aside>
           <div>

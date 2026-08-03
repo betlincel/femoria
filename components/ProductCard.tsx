@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { categories, deliveryLabels, type Messages } from "@/lib/i18n";
-import type { Locale, Product } from "@/lib/types";
+import type { CategoryId, Locale, Product } from "@/lib/types";
 import { Badge } from "./Badge";
 import { FavoriteButton } from "./FavoriteButton";
 import { Icon } from "./Icons";
@@ -21,6 +21,15 @@ export function ProductCard({
 }) {
   const primaryDetail =
     product.world === "kitchen" ? product.portion : product.material;
+  const legacyCategory = product.category in categories
+    ? categories[product.category as CategoryId][locale]
+    : m.catalogCategoryFallback;
+  const categoryName = product.categoryName?.[locale] ?? legacyCategory;
+  const location = [product.district, product.city].filter(Boolean).join(", ");
+  const price = new Intl.NumberFormat(locale === "tr" ? "tr-TR" : "en-US", {
+    style: "currency",
+    currency: product.currency,
+  }).format(product.price);
 
   return (
     <article className={`product-card product-card-${product.world}`}>
@@ -38,7 +47,7 @@ export function ProductCard({
         </Link>
         <div className="product-image-badges">
           <Badge tone={product.world === "kitchen" ? "terracotta" : "sage"}>
-            {categories[product.category][locale]}
+            {categoryName}
           </Badge>
         </div>
         <FavoriteButton
@@ -50,7 +59,12 @@ export function ProductCard({
       <div className="product-body">
         <div className="product-kicker">
           <span>{product.preparation[locale]}</span>
-          <span className="rating">★ {product.rating} <small>({product.reviews})</small></span>
+          {product.rating !== undefined ? (
+            <span className="rating">
+              ★ {product.rating}
+              {product.reviews !== undefined ? <small>({product.reviews})</small> : null}
+            </span>
+          ) : null}
         </div>
         <h3>
           <Link href={`/${locale}/products/${product.slug}`}>
@@ -72,22 +86,28 @@ export function ProductCard({
           </div>
         </dl>
 
-        <div className="product-place">
-          <span><Icon name="pin" size={15} />{product.district}, {product.city}</span>
-          <span>~{product.distanceKm.toLocaleString(locale)} km</span>
-        </div>
+        {location || product.distanceKm !== undefined ? (
+          <div className="product-place">
+            {location ? <span><Icon name="pin" size={15} />{location}</span> : null}
+            {product.distanceKm !== undefined ? (
+              <span>~{product.distanceKm.toLocaleString(locale)} km</span>
+            ) : null}
+          </div>
+        ) : null}
 
-        <div className="delivery-badges" aria-label={m.deliveryOptionsLabel}>
-          {product.delivery.map((delivery) => (
-            <Badge key={delivery} tone={delivery === "courier" ? "sage" : "neutral"}>
-              {deliveryLabels[delivery][locale]}
-            </Badge>
-          ))}
-          {product.customizable ? <Badge tone="gold">{m.customizableYes}</Badge> : null}
-        </div>
+        {product.delivery.length || product.customizable ? (
+          <div className="delivery-badges" aria-label={m.deliveryOptionsLabel}>
+            {product.delivery.map((delivery) => (
+              <Badge key={delivery} tone={delivery === "courier" ? "sage" : "neutral"}>
+                {deliveryLabels[delivery][locale]}
+              </Badge>
+            ))}
+            {product.customizable ? <Badge tone="gold">{m.customizableYes}</Badge> : null}
+          </div>
+        ) : null}
 
         <div className="product-foot">
-          <span className="price">{product.price.toLocaleString(locale)} ₺</span>
+          <span className="price">{price}</span>
           <Link
             className="card-arrow"
             href={`/${locale}/products/${product.slug}`}

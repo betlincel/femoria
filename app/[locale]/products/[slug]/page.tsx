@@ -4,15 +4,8 @@ import type { Metadata } from "next";
 import { Icon } from "@/components/Icons";
 import { FavoriteButton } from "@/components/FavoriteButton";
 import { SafeImage } from "@/components/SafeImage";
+import { getCatalogProductBySlug } from "@/lib/catalog";
 import { deliveryLabels, getLocale, translations } from "@/lib/i18n";
-import { getProduct, products } from "@/lib/mock-data";
-
-export function generateStaticParams() {
-  return products.flatMap((product) => [
-    { locale: "tr", slug: product.slug },
-    { locale: "en", slug: product.slug },
-  ]);
-}
 
 export async function generateMetadata({
   params,
@@ -21,7 +14,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale: localeValue, slug } = await params;
   const locale = getLocale(localeValue);
-  const product = getProduct(slug);
+  const product = await getCatalogProductBySlug(slug);
   return { title: product?.title[locale] ?? translations[locale].noResultsTitle };
 }
 
@@ -32,14 +25,27 @@ export default async function ProductDetailPage({
 }) {
   const { locale: localeValue, slug } = await params;
   const locale = getLocale(localeValue);
-  const product = getProduct(slug);
+  const product = await getCatalogProductBySlug(slug);
   if (!product) notFound();
   const m = translations[locale];
+  const location = [product.district, product.city].filter(Boolean).join(", ");
+  const hasProductInfo = product.details.length > 0
+    || Boolean(location)
+    || product.distanceKm !== undefined;
+  const hasDeliveryDetails = Boolean(
+    product.deliveryDetails.pickup
+      || product.deliveryDetails.courier
+      || product.deliveryDetails.shipping,
+  );
+  const price = new Intl.NumberFormat(locale === "tr" ? "tr-TR" : "en-US", {
+    style: "currency",
+    currency: product.currency,
+  }).format(product.price);
 
   return (
     <div className="container detail">
       <div className="detail-image">
-        <SafeImage src={product.image} alt={product.title[locale]} sizes="(max-width: 900px) 100vw, 48vw" priority />
+        <SafeImage src={product.image} alt={product.imageAlt?.[locale] ?? product.title[locale]} sizes="(max-width: 900px) 100vw, 48vw" priority />
       </div>
       <article className="detail-copy">
         <nav className="breadcrumb" aria-label={m.breadcrumbLabel}>
@@ -47,21 +53,28 @@ export default async function ProductDetailPage({
         </nav>
         <p className="eyebrow">{product.preparation[locale]}</p>
         <h1>{product.title[locale]}</h1>
-        <div className="rating">★ {product.rating} · {product.reviews} {m.review}</div>
+        {product.rating !== undefined ? (
+          <div className="rating">
+            ★ {product.rating}
+            {product.reviews !== undefined ? ` · ${product.reviews} ${m.review}` : null}
+          </div>
+        ) : null}
         <p className="detail-description">{product.description[locale]}</p>
-        <div className="detail-price">{product.price.toLocaleString(locale)} ₺</div>
+        <div className="detail-price">{price}</div>
         <div className="detail-actions">
           <Link className="btn btn-primary" href={`/${locale}/cart`}>{m.requestOrder}<Icon name="arrow" /></Link>
           <FavoriteButton productId={product.id} addLabel={m.addFavorite} removeLabel={m.removeFavorite} className="btn btn-secondary" withText />
         </div>
-        <h2 className="detail-subtitle">{m.aboutProduct}</h2>
-        <dl className="detail-info">
-          {product.details.map((detail) => <div key={detail.label.tr}><dt>{detail.label[locale]}</dt><dd>{detail.value[locale]}</dd></div>)}
-          <div><dt>{m.deliveryArea}</dt><dd>{product.district}, {product.city}</dd></div>
-          <div><dt>{m.approximateDistance}</dt><dd>~{product.distanceKm.toLocaleString(locale)} km</dd></div>
-        </dl>
-        <h2 className="detail-subtitle">{m.deliveryOptionsLabel}</h2>
-        <div className="delivery-detail-grid">
+        {hasProductInfo ? <h2 className="detail-subtitle">{m.aboutProduct}</h2> : null}
+        {hasProductInfo ? (
+          <dl className="detail-info">
+            {product.details.map((detail) => <div key={detail.label.tr}><dt>{detail.label[locale]}</dt><dd>{detail.value[locale]}</dd></div>)}
+            {location ? <div><dt>{m.deliveryArea}</dt><dd>{location}</dd></div> : null}
+            {product.distanceKm !== undefined ? <div><dt>{m.approximateDistance}</dt><dd>~{product.distanceKm.toLocaleString(locale)} km</dd></div> : null}
+          </dl>
+        ) : null}
+        {hasDeliveryDetails ? <h2 className="detail-subtitle">{m.deliveryOptionsLabel}</h2> : null}
+        {hasDeliveryDetails ? <div className="delivery-detail-grid">
           {product.deliveryDetails.pickup ? (
             <article>
               <h3>{deliveryLabels.pickup[locale]}</h3>
@@ -90,13 +103,13 @@ export default async function ProductDetailPage({
               </dl>
             </article>
           ) : null}
-        </div>
+        </div> : null}
         <p className="delivery-privacy"><Icon name="shield" />{m.deliveryPrivacy}</p>
         <div className="seller-box">
           <div className="seller-avatar">
             <SafeImage src={product.producerImage} alt={product.producer} sizes="64px" />
           </div>
-          <div><span>{m.producerLabel}</span><strong>{product.producer}</strong><span>{m.verifiedProducer} · {deliveryLabels[product.delivery[0]][locale]}</span></div>
+          <div><span>{m.producerLabel}</span><strong>{product.producer}</strong><span>{m.verifiedProducer}{product.delivery[0] ? ` · ${deliveryLabels[product.delivery[0]][locale]}` : ""}</span></div>
           <Icon name="shield" />
         </div>
       </article>

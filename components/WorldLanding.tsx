@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { productWorlds, type Messages } from "@/lib/i18n";
-import type { Locale, Product, ProductWorld } from "@/lib/types";
+import type { CatalogCategory, Locale, Product, ProductWorld } from "@/lib/types";
 import { DeliveryExplainer } from "./DeliveryExplainer";
+import { EmptyState } from "./EmptyState";
 import { Icon } from "./Icons";
 import { ProductCard } from "./ProductCard";
 import { SectionHeader } from "./SectionHeader";
@@ -12,11 +13,13 @@ export function WorldLanding({
   locale,
   messages: m,
   products,
+  categories,
 }: {
   world: ProductWorld;
   locale: Locale;
   messages: Messages;
   products: Product[];
+  categories: CatalogCategory[];
 }) {
   const content = productWorlds[world];
   const isKitchen = world === "kitchen";
@@ -52,13 +55,13 @@ export function WorldLanding({
             text={m.categoryDirectoryText}
           />
           <div className="directory-grid">
-            {content.categories.map((category, index) => (
+            {categories.map((category, index) => (
               <Link
-                href={`/${locale}/products?q=${encodeURIComponent(category[locale])}`}
-                key={category.tr}
+                href={`/${locale}/products?category=${encodeURIComponent(category.slug)}`}
+                key={category.id}
               >
                 <span>{String(index + 1).padStart(2, "0")}</span>
-                <strong>{category[locale]}</strong>
+                <strong>{category.name[locale]}</strong>
                 <Icon name="arrow" size={18} />
               </Link>
             ))}
@@ -77,16 +80,18 @@ export function WorldLanding({
               label: m.seeAll,
             }}
           />
-          <div className="product-grid">
-            {products.map((product) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                locale={locale}
-                messages={m}
-              />
-            ))}
-          </div>
+          {products.length ? (
+            <div className="product-grid">
+              {products.map((product) => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  locale={locale}
+                  messages={m}
+                />
+              ))}
+            </div>
+          ) : <EmptyState title={m.catalogEmptyTitle} text={m.catalogEmptyText} />}
         </div>
       </section>
 

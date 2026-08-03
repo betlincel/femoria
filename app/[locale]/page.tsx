@@ -1,15 +1,17 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { DeliveryExplainer } from "@/components/DeliveryExplainer";
+import { EmptyState } from "@/components/EmptyState";
 import { Icon } from "@/components/Icons";
 import { ProducerCard } from "@/components/ProducerCard";
 import { ProductCard } from "@/components/ProductCard";
 import { SectionHeader } from "@/components/SectionHeader";
 import { SafeImage } from "@/components/SafeImage";
 import { WorldCard } from "@/components/WorldCard";
+import { listCatalogProducts } from "@/lib/catalog";
 import { getLocale, guides, translations } from "@/lib/i18n";
-import { products } from "@/lib/mock-data";
 import { producerProfiles } from "@/lib/presentation-data";
+import type { Product } from "@/lib/types";
 
 export async function generateMetadata({
   params,
@@ -32,8 +34,10 @@ export default async function HomePage({
 }) {
   const locale = getLocale((await params).locale);
   const m = translations[locale];
+  const products = await listCatalogProducts();
   const kitchenProducts = products.filter((product) => product.world === "kitchen");
   const workshopProducts = products.filter((product) => product.world === "workshop");
+  const featuredProduct = products[0];
   const cities = ["Ankara", "İstanbul", "İzmir", "Bursa"];
 
   return (
@@ -69,16 +73,18 @@ export default async function HomePage({
                 priority
               />
             </div>
-            <div className="floating-card hero-product">
-              <div className="floating-thumb">
-                <SafeImage src={products[0].image} alt={products[0].title[locale]} sizes="72px" />
+            {featuredProduct ? (
+              <div className="floating-card hero-product">
+                <div className="floating-thumb">
+                  <SafeImage src={featuredProduct.image} alt={featuredProduct.imageAlt?.[locale] ?? featuredProduct.title[locale]} sizes="72px" />
+                </div>
+                <div>
+                  <small>{m.miniProduct}</small>
+                  <strong>{featuredProduct.title[locale]}</strong>
+                  <span>{new Intl.NumberFormat(locale === "tr" ? "tr-TR" : "en-US", { style: "currency", currency: featuredProduct.currency }).format(featuredProduct.price)}</span>
+                </div>
               </div>
-              <div>
-                <small>{m.miniProduct}</small>
-                <strong>{products[0].title[locale]}</strong>
-                <span>{products[0].price.toLocaleString(locale)} ₺</span>
-              </div>
-            </div>
+            ) : null}
             <div className="hero-quote">
               <p>{m.producerQuote}</p>
               <span>{m.producerQuoteBy}</span>
@@ -129,6 +135,7 @@ export default async function HomePage({
         products={kitchenProducts}
         locale={locale}
         messages={m}
+        showEmpty
       />
 
       <ProductSection
@@ -258,31 +265,42 @@ function ProductSection({
   locale,
   messages,
   compact = false,
+  showEmpty = false,
 }: {
   className?: string;
   eyebrow: string;
   title: string;
   text: string;
   link: { href: string; label: string };
-  products: typeof products;
+  products: Product[];
   locale: ReturnType<typeof getLocale>;
   messages: (typeof translations)[ReturnType<typeof getLocale>];
   compact?: boolean;
+  showEmpty?: boolean;
 }) {
+  if (!sectionProducts.length && !showEmpty) return null;
   return (
     <section className={`section ${className}`}>
       <div className="container">
         <SectionHeader eyebrow={eyebrow} title={title} text={text} link={link} />
-        <div className={`product-grid ${compact ? "product-grid-compact" : ""}`}>
-          {sectionProducts.map((product) => (
-            <ProductCard
-              key={product.id}
-              product={product}
-              locale={locale}
-              messages={messages}
-            />
-          ))}
-        </div>
+        {sectionProducts.length ? (
+          <div className={`product-grid ${compact ? "product-grid-compact" : ""}`}>
+            {sectionProducts.map((product) => (
+              <ProductCard
+                key={product.id}
+                product={product}
+                locale={locale}
+                messages={messages}
+              />
+            ))}
+          </div>
+        ) : (
+          <EmptyState
+            title={messages.catalogEmptyTitle}
+            text={messages.catalogEmptyText}
+            action={{ href: `/${locale}/products`, label: messages.exploreProducts }}
+          />
+        )}
       </div>
     </section>
   );

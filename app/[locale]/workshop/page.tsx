@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { WorldLanding } from "@/components/WorldLanding";
+import { listCatalogCategories, listCatalogProducts } from "@/lib/catalog";
 import { getLocale, translations } from "@/lib/i18n";
-import { products } from "@/lib/mock-data";
 
 export async function generateMetadata({
   params,
@@ -19,12 +19,17 @@ export default async function WorkshopPage({
   params: Promise<{ locale: string }>;
 }) {
   const locale = getLocale((await params).locale);
+  const [products, categories] = await Promise.all([
+    listCatalogProducts(),
+    listCatalogCategories(),
+  ]);
   return (
     <WorldLanding
       world="workshop"
       locale={locale}
       messages={translations[locale]}
       products={products.filter((product) => product.world === "workshop")}
+      categories={categories.filter((category) => category.kind === "craft")}
     />
   );
 }
