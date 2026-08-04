@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   canApplyAsSeller,
   canManageOwnProducts,
+  isActiveAdminProfile,
   isAdminProfile,
   isApprovedSeller,
   isStandardUser,
@@ -30,6 +31,9 @@ describe("single-account access model", () => {
   it("keeps admin as a separate authority", () => {
     const admin: AccessProfile = { role: "admin", status: "active" };
     expect(isAdminProfile(admin)).toBe(true);
+    expect(isActiveAdminProfile(admin)).toBe(true);
+    expect(isActiveAdminProfile({ ...admin, status: "suspended" })).toBe(false);
+    expect(isActiveAdminProfile(activeUser)).toBe(false);
     expect(isStandardUser(admin)).toBe(false);
     expect(canApplyAsSeller(admin, null)).toBe(false);
   });

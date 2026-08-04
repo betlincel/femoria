@@ -253,7 +253,15 @@ export type Database = {
       };
     };
     Views: { [_ in never]: never };
-    Functions: { [_ in never]: never };
+    Functions: {
+      review_producer_application: {
+        Args: {
+          target_profile_id: string;
+          review_action: string;
+        };
+        Returns: boolean;
+      };
+    };
     Enums: {
       profile_role: "user" | "buyer" | "producer" | "admin";
       profile_status: "active" | "suspended";

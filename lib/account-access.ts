@@ -15,6 +15,10 @@ export function isAdminProfile(profile: AccessProfile): boolean {
   return profile.role === "admin";
 }
 
+export function isActiveAdminProfile(profile: AccessProfile): boolean {
+  return profile.status === "active" && isAdminProfile(profile);
+}
+
 export function isStandardUser(profile: AccessProfile): boolean {
   return !isAdminProfile(profile);
 }

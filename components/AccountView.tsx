@@ -64,6 +64,17 @@ export function AccountView({
         </div>
       </article>
       <ProfileForm profile={profile} locale={locale} messages={m} />
+      {admin ? (
+        <section className="account-admin-tools" aria-labelledby="account-admin-tools-title">
+          <div>
+            <p className="eyebrow">{m.adminManagement}</p>
+            <h2 id="account-admin-tools-title">{m.adminProducerApplications}</h2>
+          </div>
+          <Link className="btn btn-primary" href={`/${locale}/admin/producer-applications`}>
+            {m.adminProducerApplications}<Icon name="arrow" size={18} />
+          </Link>
+        </section>
+      ) : null}
       <section className="account-info-grid" aria-label={locale === "tr" ? "Hesap bilgileri" : "Account information"}>
         {accountEditorial.sections.map((section, index) => (
           <article key={section.title.tr}>
