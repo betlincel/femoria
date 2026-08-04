@@ -10,6 +10,7 @@ import {
   type MegaMenuState,
 } from "@/lib/navigation";
 import type { Locale, ProductWorld } from "@/lib/types";
+import type { SellerNavigationState } from "@/lib/supabase/seller";
 import { useFavorites } from "./FavoritesProvider";
 import { Icon } from "./Icons";
 import { LocationPicker } from "./LocationPicker";
@@ -22,9 +23,11 @@ import { ThemeToggle } from "./ThemeToggle";
 export function Header({
   locale,
   messages: m,
+  sellerNavigation,
 }: {
   locale: Locale;
   messages: Messages;
+  sellerNavigation: SellerNavigationState;
 }) {
   const pathname = usePathname();
   const otherLocale = locale === "tr" ? "en" : "tr";
@@ -81,6 +84,7 @@ export function Header({
     { href: `/${locale}/nearby`, label: m.nav.nearby },
     { href: `/${locale}/producers`, label: m.nav.producers },
     { href: `/${locale}/guide`, label: m.nav.guide },
+    ...(sellerNavigation === "approved" ? [{ href: `/${locale}/seller`, label: m.sellerPanel }] : []),
   ];
 
   const toggleMega = (world: ProductWorld) => {
@@ -170,6 +174,7 @@ export function Header({
         otherPath={otherPath}
         pathname={pathname}
         messages={m}
+        sellerNavigation={sellerNavigation}
         onClose={() => setDrawerOpen(false)}
         onLocation={() => {
           setDrawerOpen(false);

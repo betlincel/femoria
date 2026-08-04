@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { getLocale, translations } from "@/lib/i18n";
 import { SiteShell } from "@/components/SiteShell";
+import { getSellerNavigationState } from "@/lib/supabase/seller";
 
 export function generateStaticParams() {
   return [{ locale: "tr" }, { locale: "en" }];
@@ -28,8 +29,9 @@ export default async function LocaleLayout({
   params: Promise<{ locale: string }>;
 }) {
   const locale = getLocale((await params).locale);
+  const sellerNavigation = await getSellerNavigationState();
   return (
-    <SiteShell locale={locale} messages={translations[locale]}>
+    <SiteShell locale={locale} messages={translations[locale]} sellerNavigation={sellerNavigation}>
       {children}
     </SiteShell>
   );

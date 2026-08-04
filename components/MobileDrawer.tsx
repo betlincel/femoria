@@ -3,6 +3,7 @@ import { productWorlds, type Messages } from "@/lib/i18n";
 import type { Locale, ProductWorld } from "@/lib/types";
 import { Icon } from "./Icons";
 import { Logo } from "./Logo";
+import type { SellerNavigationState } from "@/lib/supabase/seller";
 
 export function MobileDrawer({
   locale,
@@ -10,6 +11,7 @@ export function MobileDrawer({
   otherPath,
   pathname,
   messages: m,
+  sellerNavigation,
   onClose,
   onLocation,
 }: {
@@ -18,6 +20,7 @@ export function MobileDrawer({
   otherPath: string;
   pathname: string;
   messages: Messages;
+  sellerNavigation: SellerNavigationState;
   onClose: () => void;
   onLocation: () => void;
 }) {
@@ -89,6 +92,9 @@ export function MobileDrawer({
               {item.label}<Icon name="chevron" size={18} />
             </Link>
           ))}
+          {sellerNavigation === "approved" ? <Link className={`drawer-link ${pathname.startsWith(`/${locale}/seller`) ? "active" : ""}`} href={`/${locale}/seller`} onClick={onClose}>{m.sellerPanel}<Icon name="chevron" size={18} /></Link> : null}
+          {sellerNavigation === "pending" || sellerNavigation === "rejected" ? <Link className="drawer-link" href={`/${locale}/info/producer-application`} onClick={onClose}>{sellerNavigation === "pending" ? m.accountSellerPending : m.accountSellerRejected}<Icon name="chevron" size={18} /></Link> : null}
+          {sellerNavigation === "none" ? <Link className="drawer-link" href={`/${locale}/info/producer-application`} onClick={onClose}>{m.startApplication}<Icon name="chevron" size={18} /></Link> : null}
         </nav>
         <div className="drawer-account-links">
           <Link className={pathname.startsWith(`/${locale}/favorites`) ? "active" : ""} href={`/${locale}/favorites`} onClick={onClose}>{m.favorites}</Link>

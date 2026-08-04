@@ -26,7 +26,7 @@ export function AccountView({
   messages: Messages;
 }) {
   const admin = isAdminProfile(profile);
-  const approvedSeller = !admin && isApprovedSeller(
+  const approvedSeller = isApprovedSeller(
     profile,
     sellerStatus ? { verification_status: sellerStatus } : null,
   );
@@ -50,7 +50,7 @@ export function AccountView({
           <p>{email}</p>
           <div className="account-badges">
             <span className="account-role">{admin ? m.accountRoleAdmin : m.accountRoleMember}</span>
-            {!admin && sellerLabel ? <span className={`account-role seller-${sellerStatus}`}>{sellerLabel}</span> : null}
+            {sellerLabel ? <span className={`account-role seller-${sellerStatus}`}>{sellerLabel}</span> : null}
           </div>
         </div>
         <div className="account-actions">
@@ -91,9 +91,9 @@ export function AccountView({
       {approvedSeller ? (
         <section className="account-seller-tools" aria-label={m.sellerTools}>
           <div><p className="eyebrow">{m.sellerTools}</p><h2>{m.accountSellerApproved}</h2></div>
-          {[m.sellerPanel, m.myProducts, m.addProduct].map((label) => (
-            <span className="btn btn-secondary" aria-disabled="true" key={label}>{label}<small>{m.sellerToolsPlanned}</small></span>
-          ))}
+          <Link className="btn btn-secondary" href={`/${locale}/seller`}>{m.sellerPanel}</Link>
+          <Link className="btn btn-secondary" href={`/${locale}/seller/products`}>{m.myProducts}</Link>
+          <Link className="btn btn-primary" href={`/${locale}/seller/products/new`}>{m.addProduct}</Link>
         </section>
       ) : null}
     </div>

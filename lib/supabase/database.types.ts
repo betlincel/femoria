@@ -254,11 +254,40 @@ export type Database = {
     };
     Views: { [_ in never]: never };
     Functions: {
+      add_seller_product_image: {
+        Args: { target_product_id: string; input_storage_path: string; input_alt_tr: string; input_alt_en: string };
+        Returns: string | null;
+      };
+      create_seller_product: {
+        Args: {
+          input_category_id: string; input_slug: string; input_title_tr: string; input_title_en: string;
+          input_description_tr: string; input_description_en: string; input_price_minor: number;
+          input_currency: string; input_stock_mode: Database["public"]["Enums"]["stock_mode"];
+          input_stock_quantity: number | null; input_preparation_days: number; input_city: string; input_district: string;
+        };
+        Returns: string;
+      };
+      delete_seller_product_image: { Args: { target_image_id: string }; Returns: string | null };
+      reorder_seller_product_images: { Args: { target_product_id: string; ordered_image_ids: string[] }; Returns: boolean };
       review_producer_application: {
         Args: {
           target_profile_id: string;
           review_action: string;
         };
+        Returns: boolean;
+      };
+      submit_product_for_review: { Args: { target_product_id: string }; Returns: boolean };
+      update_seller_product: {
+        Args: {
+          target_product_id: string; input_category_id: string; input_slug: string; input_title_tr: string; input_title_en: string;
+          input_description_tr: string; input_description_en: string; input_price_minor: number;
+          input_currency: string; input_stock_mode: Database["public"]["Enums"]["stock_mode"];
+          input_stock_quantity: number | null; input_preparation_days: number; input_city: string; input_district: string;
+        };
+        Returns: boolean;
+      };
+      update_seller_product_image_alt: {
+        Args: { target_image_id: string; input_alt_tr: string; input_alt_en: string };
         Returns: boolean;
       };
     };

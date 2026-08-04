@@ -922,6 +922,43 @@ export const adminProducerApplicationsUi = {
   },
 } as const;
 
+export const sellerUi = {
+  tr: {
+    eyebrow: "Onaylı üretici alanı", dashboardTitle: "Üretici paneli", dashboardIntro: "Ürünlerinizi güvenli taslaklar halinde hazırlayın ve incelemeye gönderin.",
+    products: "Ürünlerim", newProduct: "Yeni ürün ekle", editProduct: "Ürünü düzenle", viewProfile: "Profilimi görüntüle", applicationStatus: "Üretici başvuru durumunu görüntüle",
+    verified: "Onaylı üretici", totalProducts: "Toplam ürün", draft: "Taslak", pending: "İnceleniyor", approved: "Onaylandı", rejected: "Reddedildi",
+    ordersSoon: "Sipariş sistemi yakında", ordersSoonText: "Henüz sipariş veya satış geliri verisi oluşturulmuyor.",
+    accessDenied: "Üretici paneline erişilemiyor", suspendedText: "Hesabınız aktif olmadığı için ürün yönetimi kullanılamıyor.", pendingText: "Üretici başvurunuz değerlendiriliyor.", rejectedText: "Üretici başvurunuz onaylanmadı.", noneText: "Ürün yönetimi için önce üretici başvurusu gönderin.", apply: "Üretici başvurusu",
+    all: "Tümü", searchProducts: "Ürünlerde ara", searchPlaceholder: "Türkçe/İngilizce başlık veya slug", search: "Ara", noProducts: "Ürün henüz oluşturulmadı", noProductsText: "İlk ürününüzü taslak olarak hazırlayabilirsiniz.", noMatch: "Aramayla eşleşen ürün bulunamadı",
+    category: "Kategori", price: "Fiyat", location: "Şehir / ilçe", stockStatus: "Stok durumu", preparation: "Hazırlık süresi", days: "gün", updatedAt: "Son güncelleme", mainImage: "Ana görsel", noImage: "Görsel yok",
+    basicInfo: "Temel bilgiler", stockAndPreparation: "Stok ve hazırlık", titleTr: "Türkçe ürün adı", titleEn: "İngilizce ürün adı", descriptionTr: "Türkçe açıklama", descriptionEn: "İngilizce açıklama", slug: "Ürün bağlantısı", slugHint: "Küçük harf, rakam ve kısa çizgi kullanın.", currency: "Para birimi", city: "Şehir", district: "İlçe", stockQuantity: "Stok adedi", preparationDays: "Hazırlık süresi (gün)",
+    stockModes: { in_stock: "Stokta", made_to_order: "Sipariş üzerine", unavailable: "Şu anda mevcut değil" },
+    foodHelper: "Alerjenleri, saklama koşullarını ve tüketim bilgisini açıklama içinde açıkça belirtin.", craftHelper: "Malzeme, ölçü ve bakım bilgisini açıklama içinde belirtin.",
+    saveDraft: "Taslağı kaydet", saving: "Kaydediliyor…", saved: "İşlem başarılı", invalid: "Alanları belirtilen kurallara göre kontrol edin.", duplicateSlug: "Bu ürün bağlantısı kullanılıyor. Farklı bir slug deneyin.", operationFailed: "İşlem gerçekleştirilemedi.", locked: "Bu ürün şu anda düzenlenemez.", rejectedDraftNotice: "Reddedilen ürün kaydedildiğinde yeniden taslak durumuna geçer.", approvedChangeSoon: "Onaylı ürünler için değişiklik talebi sistemi yakında.",
+    submitReview: "Onaya gönder", submitConfirm: "Ürün incelemeye gönderilecek ve sonuçlanana kadar düzenlenemeyecek.", needImage: "Onaya göndermek için en az bir görsel ekleyin.", submitted: "Ürün incelemeye gönderildi.",
+    images: "Ürün görselleri", uploadImage: "Görsel yükle", imageRules: "JPG, PNG veya WebP · en fazla 5 MB · en fazla 6 görsel", imageFile: "Görsel dosyası", altTr: "Türkçe alt metin", altEn: "İngilizce alt metin", upload: "Yükle", uploading: "Yükleniyor…", updateAlt: "Alt metni kaydet", moveUp: "Yukarı taşı", moveDown: "Aşağı taşı", makeMain: "Ana görsel yap", removeImage: "Görseli kaldır", removeConfirm: "Bu görsel kaldırılacak.", imageLimit: "En fazla 6 görsel eklenebilir.", cleanupPending: "Kayıt kaldırıldı; Storage temizliği daha sonra tekrar denenmeli.",
+    deleteProductUnavailable: "Ürün silme henüz desteklenmiyor", backProducts: "Ürünlere dön", backAccount: "Hesaba dön", retry: "Tekrar dene", loading: "Üretici alanı hazırlanıyor", errorTitle: "Üretici alanı yüklenemedi", errorText: "Bilgiler şu anda güvenli biçimde okunamadı.",
+    kindFood: "Gıda", kindCraft: "Zanaat",
+  },
+  en: {
+    eyebrow: "Approved maker area", dashboardTitle: "Maker dashboard", dashboardIntro: "Prepare products as secure drafts and submit them for review.",
+    products: "My products", newProduct: "Add new product", editProduct: "Edit product", viewProfile: "View my profile", applicationStatus: "View maker application status",
+    verified: "Approved maker", totalProducts: "Total products", draft: "Draft", pending: "Under review", approved: "Approved", rejected: "Rejected",
+    ordersSoon: "Ordering system coming soon", ordersSoonText: "No order or sales revenue data is being generated yet.",
+    accessDenied: "Maker dashboard unavailable", suspendedText: "Product management is unavailable because your account is not active.", pendingText: "Your maker application is under review.", rejectedText: "Your maker application was not approved.", noneText: "Submit a maker application before managing products.", apply: "Maker application",
+    all: "All", searchProducts: "Search products", searchPlaceholder: "Turkish/English title or slug", search: "Search", noProducts: "No products created yet", noProductsText: "You can prepare your first product as a draft.", noMatch: "No products match your search",
+    category: "Category", price: "Price", location: "City / district", stockStatus: "Stock status", preparation: "Preparation time", days: "days", updatedAt: "Last updated", mainImage: "Main image", noImage: "No image",
+    basicInfo: "Basic information", stockAndPreparation: "Stock and preparation", titleTr: "Turkish product name", titleEn: "English product name", descriptionTr: "Turkish description", descriptionEn: "English description", slug: "Product URL", slugHint: "Use lowercase letters, numbers, and hyphens.", currency: "Currency", city: "City", district: "District", stockQuantity: "Stock quantity", preparationDays: "Preparation time (days)",
+    stockModes: { in_stock: "In stock", made_to_order: "Made to order", unavailable: "Currently unavailable" },
+    foodHelper: "Clearly include allergens, storage conditions, and consumption details in the description.", craftHelper: "Include materials, dimensions, and care details in the description.",
+    saveDraft: "Save draft", saving: "Saving…", saved: "Operation successful", invalid: "Check the fields against the stated rules.", duplicateSlug: "This product URL is already in use. Try another slug.", operationFailed: "The operation could not be completed.", locked: "This product cannot be edited right now.", rejectedDraftNotice: "Saving a rejected product moves it back to draft.", approvedChangeSoon: "A change-request system for approved products is coming soon.",
+    submitReview: "Submit for review", submitConfirm: "The product will be submitted for review and cannot be edited until a decision is made.", needImage: "Add at least one image before submitting for review.", submitted: "Product submitted for review.",
+    images: "Product images", uploadImage: "Upload image", imageRules: "JPG, PNG, or WebP · up to 5 MB · up to 6 images", imageFile: "Image file", altTr: "Turkish alt text", altEn: "English alt text", upload: "Upload", uploading: "Uploading…", updateAlt: "Save alt text", moveUp: "Move up", moveDown: "Move down", makeMain: "Make main image", removeImage: "Remove image", removeConfirm: "This image will be removed.", imageLimit: "A maximum of 6 images is allowed.", cleanupPending: "The record was removed; Storage cleanup must be retried later.",
+    deleteProductUnavailable: "Product deletion is not supported yet", backProducts: "Back to products", backAccount: "Back to account", retry: "Try again", loading: "Preparing maker area", errorTitle: "Maker area could not be loaded", errorText: "The information could not be read securely right now.",
+    kindFood: "Food", kindCraft: "Craft",
+  },
+} as const;
+
 export const locationOptions = [
   { city: "Ankara", districts: ["Çankaya", "Keçiören", "Yenimahalle"] },
   { city: "İstanbul", districts: ["Kadıköy", "Beşiktaş", "Üsküdar"] },

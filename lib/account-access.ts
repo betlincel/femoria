@@ -1,6 +1,8 @@
 export type ProfileRole = "user" | "buyer" | "producer" | "admin";
 export type ProfileStatus = "active" | "suspended";
 export type SellerVerificationStatus = "pending" | "approved" | "rejected";
+export type SellerAccessState = "approved" | "pending" | "rejected" | "suspended" | "none";
+export type SellerManagedProductStatus = "draft" | "pending" | "approved" | "rejected";
 
 export interface AccessProfile {
   role: ProfileRole;
@@ -43,3 +45,30 @@ export function canManageOwnProducts(
 ): boolean {
   return isApprovedSeller(profile, sellerProfile);
 }
+
+export function getSellerAccessState(
+  profile: AccessProfile,
+  sellerProfile: SellerProfile | null | undefined,
+): SellerAccessState {
+  if (profile.status !== "active") return "suspended";
+  return sellerProfile?.verification_status ?? "none";
+}
+
+export function canCreateProduct(
+  profile: Pick<AccessProfile, "status">,
+  sellerProfile: SellerProfile | null | undefined,
+): boolean {
+  return isApprovedSeller(profile, sellerProfile);
+}
+
+export function canEditProduct(
+  profile: Pick<AccessProfile, "status">,
+  sellerProfile: SellerProfile | null | undefined,
+  productStatus: SellerManagedProductStatus,
+): boolean {
+  return isApprovedSeller(profile, sellerProfile) && ["draft", "rejected"].includes(productStatus);
+}
+
+export const canSubmitProductForReview = canEditProduct;
+export const canDeleteProduct = canEditProduct;
+export const canManageProductImages = canEditProduct;

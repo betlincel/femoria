@@ -19,6 +19,9 @@ function getSupabaseImagePattern() {
 const supabaseImagePattern = getSupabaseImagePattern();
 
 const nextConfig: NextConfig = {
+  experimental: {
+    serverActions: { bodySizeLimit: "6mb" },
+  },
   images: {
     remotePatterns: [
       {
