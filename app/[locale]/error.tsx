@@ -1,6 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import Link from "next/link";
 import { Icon } from "@/components/Icons";
 import { translations } from "@/lib/i18n";
 
@@ -20,7 +21,7 @@ export default function ErrorPage({
         <span className="prototype-icon" aria-hidden="true"><Icon name="shield" /></span>
         <h1>{m.errorTitle}</h1>
         <p>{m.errorText}</p>
-        <button className="btn btn-primary" type="button" onClick={reset}>{m.retry}</button>
+        <div className="prototype-actions"><button className="btn btn-primary" type="button" onClick={reset}>{m.retry}</button><Link className="btn btn-secondary" href={`/${locale}`}>{m.backHome}</Link></div>
       </div>
     </section>
   );

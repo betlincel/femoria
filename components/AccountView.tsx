@@ -3,6 +3,7 @@ import type { z } from "zod";
 import type { profileSchema } from "@/lib/auth";
 import type { Messages } from "@/lib/i18n";
 import type { Locale } from "@/lib/types";
+import { accountEditorial } from "@/lib/content/editorial-content";
 import { signOut } from "@/app/[locale]/account/actions";
 import { Icon } from "./Icons";
 import { ProfileForm } from "./ProfileForm";
@@ -49,6 +50,19 @@ export function AccountView({
         </div>
       </article>
       <ProfileForm profile={profile} locale={locale} messages={m} />
+      <section className="account-info-grid" aria-label={locale === "tr" ? "Hesap bilgileri" : "Account information"}>
+        {accountEditorial.sections.map((section, index) => (
+          <article key={section.title.tr}>
+            <span aria-hidden="true"><Icon name={index === 0 ? "pin" : index === 1 ? "sun" : index === 2 ? "heart" : index === 3 ? "compass" : "shield"} /></span>
+            <h3>{section.title[locale]}</h3>
+            <p>{section.text[locale]}</p>
+          </article>
+        ))}
+        <nav className="account-info-links">
+          <Link className="text-link" href={`/${locale}/info/safety`}>{m.safety}<Icon name="arrow" size={16} /></Link>
+          {profile.role === "producer" ? <Link className="text-link" href={`/${locale}/info/producer-application`}>{m.startApplication}<Icon name="arrow" size={16} /></Link> : null}
+        </nav>
+      </section>
     </div>
   );
 }

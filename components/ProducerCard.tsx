@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Messages } from "@/lib/i18n";
-import type { ProducerProfile } from "@/lib/presentation-data";
+import type { ProducerDirectoryEntry } from "@/lib/catalog-view";
 import type { Locale } from "@/lib/types";
 import { Badge } from "./Badge";
 import { SafeImage } from "./SafeImage";
@@ -10,7 +10,7 @@ export function ProducerCard({
   locale,
   messages: m,
 }: {
-  producer: ProducerProfile;
+  producer: ProducerDirectoryEntry;
   locale: Locale;
   messages: Messages;
 }) {
@@ -19,18 +19,17 @@ export function ProducerCard({
       <div className="maker-image">
         <SafeImage
           src={producer.image}
-          alt={`${producer.name} — ${producer.specialty[locale]}`}
+          alt={producer.imageAlt[locale]}
           sizes="(max-width: 720px) 100vw, 33vw"
         />
         <Badge tone="sage">{m.verifiedProfile}</Badge>
       </div>
       <div className="maker-body">
-        <p className="maker-location">{producer.city}</p>
+        {producer.area ? <p className="maker-location">{producer.area}</p> : null}
         <h3>{producer.name}</h3>
         <p className="maker-specialty">{producer.specialty[locale]}</p>
-        <p>{producer.story[locale]}</p>
+        {producer.story[locale] ? <p>{producer.story[locale]}</p> : null}
         <div className="maker-meta">
-          <span>★ {producer.rating}</span>
           <span>{producer.productCount} {m.productCount}</span>
         </div>
         <Link href={`/${locale}/products?q=${encodeURIComponent(producer.name)}`}>

@@ -62,8 +62,8 @@ export default async function ProductDetailPage({
         <p className="detail-description">{product.description[locale]}</p>
         <div className="detail-price">{price}</div>
         <div className="detail-actions">
-          <Link className="btn btn-primary" href={`/${locale}/cart`}>{m.requestOrder}<Icon name="arrow" /></Link>
-          <FavoriteButton productId={product.id} addLabel={m.addFavorite} removeLabel={m.removeFavorite} className="btn btn-secondary" withText />
+          <Link className="btn btn-primary order-button" href={`/${locale}/how-it-works`}>{m.requestOrder}<Icon name="arrow" /></Link>
+          <FavoriteButton productId={product.id} addLabel={m.addFavorite} removeLabel={m.removeFavorite} className="btn btn-secondary detail-favorite" withText />
         </div>
         {hasProductInfo ? <h2 className="detail-subtitle">{m.aboutProduct}</h2> : null}
         {hasProductInfo ? (

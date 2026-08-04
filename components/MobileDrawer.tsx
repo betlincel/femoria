@@ -8,6 +8,7 @@ export function MobileDrawer({
   locale,
   open,
   otherPath,
+  pathname,
   messages: m,
   onClose,
   onLocation,
@@ -15,6 +16,7 @@ export function MobileDrawer({
   locale: Locale;
   open: boolean;
   otherPath: string;
+  pathname: string;
   messages: Messages;
   onClose: () => void;
   onLocation: () => void;
@@ -51,7 +53,10 @@ export function MobileDrawer({
             const worldLabel =
               world === "kitchen" ? m.nav.kitchen : m.nav.workshop;
             return (
-              <details className={`drawer-accordion ${world}`} key={world}>
+              <details
+                className={`drawer-accordion ${world} ${pathname.startsWith(`/${locale}/${world}`) ? "active" : ""}`}
+                key={world}
+              >
                 <summary>
                   <span><small>{world === "kitchen" ? "01" : "02"}</small>{worldLabel}</span>
                   <Icon name="chevron" />
@@ -75,9 +80,10 @@ export function MobileDrawer({
           })}
           {regularNav.map((item) => (
             <Link
-              className="drawer-link"
+              className={`drawer-link ${pathname.startsWith(item.href) ? "active" : ""}`}
               key={item.href}
               href={item.href}
+              aria-current={pathname.startsWith(item.href) ? "page" : undefined}
               onClick={onClose}
             >
               {item.label}<Icon name="chevron" size={18} />
@@ -85,9 +91,9 @@ export function MobileDrawer({
           ))}
         </nav>
         <div className="drawer-account-links">
-          <Link href={`/${locale}/favorites`} onClick={onClose}>{m.favorites}</Link>
-          <Link href={`/${locale}/cart`} onClick={onClose}>{m.cart}</Link>
-          <Link href={`/${locale}/account`} onClick={onClose}>{m.nav.account}</Link>
+          <Link className={pathname.startsWith(`/${locale}/favorites`) ? "active" : ""} href={`/${locale}/favorites`} onClick={onClose}>{m.favorites}</Link>
+          <Link className={pathname.startsWith(`/${locale}/cart`) ? "active" : ""} href={`/${locale}/cart`} onClick={onClose}>{m.cart}</Link>
+          <Link className={pathname.startsWith(`/${locale}/account`) ? "active" : ""} href={`/${locale}/account`} onClick={onClose}>{m.nav.account}</Link>
         </div>
         <div className="drawer-actions">
           <button type="button" onClick={onLocation}>

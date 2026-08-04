@@ -6,7 +6,14 @@ export function ProductCardSkeleton() {
         <div className="skeleton skeleton-line short" />
         <div className="skeleton skeleton-line title" />
         <div className="skeleton skeleton-line" />
-        <div className="skeleton skeleton-line medium" />
+        <div className="skeleton-facts">
+          <div className="skeleton skeleton-block" />
+          <div className="skeleton skeleton-block" />
+        </div>
+        <div className="skeleton-foot">
+          <div className="skeleton skeleton-line medium" />
+          <div className="skeleton skeleton-circle" />
+        </div>
       </div>
     </div>
   );

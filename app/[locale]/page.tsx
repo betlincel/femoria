@@ -2,6 +2,8 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { DeliveryExplainer } from "@/components/DeliveryExplainer";
 import { EmptyState } from "@/components/EmptyState";
+import { FaqExplorer } from "@/components/FaqExplorer";
+import { GuideCard } from "@/components/GuideCard";
 import { Icon } from "@/components/Icons";
 import { ProducerCard } from "@/components/ProducerCard";
 import { ProductCard } from "@/components/ProductCard";
@@ -9,8 +11,10 @@ import { SectionHeader } from "@/components/SectionHeader";
 import { SafeImage } from "@/components/SafeImage";
 import { WorldCard } from "@/components/WorldCard";
 import { listCatalogProducts } from "@/lib/catalog";
-import { getLocale, guides, translations } from "@/lib/i18n";
-import { producerProfiles } from "@/lib/presentation-data";
+import { buildProducerDirectory } from "@/lib/catalog-view";
+import { homeEditorial } from "@/lib/content/editorial-content";
+import { guideArticles } from "@/lib/content/guides";
+import { getLocale, translations } from "@/lib/i18n";
 import type { Product } from "@/lib/types";
 
 export async function generateMetadata({
@@ -24,6 +28,11 @@ export async function generateMetadata({
       locale === "tr"
         ? "Kadın emeğini keşfet"
         : "Discover women-made goods",
+    description: homeEditorial.purpose.text[locale],
+    openGraph: {
+      title: locale === "tr" ? "Kadın emeğini keşfet · FEMORIA" : "Discover women-made goods · FEMORIA",
+      description: homeEditorial.purpose.text[locale],
+    },
   };
 }
 
@@ -38,6 +47,7 @@ export default async function HomePage({
   const kitchenProducts = products.filter((product) => product.world === "kitchen");
   const workshopProducts = products.filter((product) => product.world === "workshop");
   const featuredProduct = products[0];
+  const producerDirectory = buildProducerDirectory(products);
   const cities = ["Ankara", "İstanbul", "İzmir", "Bursa"];
 
   return (
@@ -64,11 +74,11 @@ export default async function HomePage({
               <span><Icon name="heart" size={16} />{m.secureRequest}</span>
             </div>
           </div>
-          <div className="hero-visual" aria-label={m.producerQuote}>
+          <div className="hero-visual" aria-label={homeEditorial.hero.image.alt[locale]}>
             <div className="hero-arch">
               <SafeImage
-                src="https://images.unsplash.com/photo-1556911073-52527ac43761?auto=format&fit=crop&w=1200&q=90"
-                alt=""
+                 src={homeEditorial.hero.image.src}
+                 alt={homeEditorial.hero.image.alt[locale]}
                 sizes="(max-width: 900px) 100vw, 46vw"
                 priority
               />
@@ -85,10 +95,7 @@ export default async function HomePage({
                 </div>
               </div>
             ) : null}
-            <div className="hero-quote">
-              <p>{m.producerQuote}</p>
-              <span>{m.producerQuoteBy}</span>
-            </div>
+            <div className="hero-quote"><p>{homeEditorial.purpose.title[locale]}</p><span>{homeEditorial.purpose.eyebrow[locale]}</span></div>
           </div>
         </div>
 
@@ -110,6 +117,21 @@ export default async function HomePage({
             {m.search}<Icon name="arrow" size={18} />
           </button>
         </form>
+      </section>
+
+      <section className="section editorial-intro-section">
+        <div className="container">
+          <SectionHeader eyebrow={homeEditorial.purpose.eyebrow[locale]} title={homeEditorial.purpose.title[locale]} text={homeEditorial.purpose.text[locale]} />
+          <div className="principle-grid">
+            {homeEditorial.principles.map((principle, index) => (
+              <article className="principle-card" key={principle.title.tr}>
+                <span>{String(index + 1).padStart(2, "0")}</span>
+                <h3>{principle.title[locale]}</h3>
+                <p>{principle.text[locale]}</p>
+              </article>
+            ))}
+          </div>
+        </div>
       </section>
 
       <section className="section worlds-section">
@@ -179,8 +201,8 @@ export default async function HomePage({
             text={m.featuredProducersText}
             link={{ href: `/${locale}/producers`, label: m.seeProducers }}
           />
-          <div className="maker-grid maker-grid-home">
-            {producerProfiles.slice(0, 3).map((producer) => (
+          {producerDirectory.length ? <div className="maker-grid maker-grid-home">
+            {producerDirectory.slice(0, 3).map((producer) => (
               <ProducerCard
                 key={producer.id}
                 producer={producer}
@@ -188,7 +210,7 @@ export default async function HomePage({
                 messages={m}
               />
             ))}
-          </div>
+          </div> : <EmptyState title={m.catalogEmptyTitle} text={m.catalogEmptyText} action={{ href: `/${locale}/products`, label: m.exploreProducts }} />}
         </div>
       </section>
 
@@ -223,8 +245,8 @@ export default async function HomePage({
           </div>
           <div className="producer-cta-image">
             <SafeImage
-              src="https://images.unsplash.com/photo-1452860606245-08befc0ff44b?auto=format&fit=crop&w=1100&q=85"
-              alt=""
+              src={homeEditorial.trust.image.src}
+              alt={homeEditorial.trust.image.alt[locale]}
               sizes="(max-width: 900px) 100vw, 42vw"
             />
           </div>
@@ -239,16 +261,14 @@ export default async function HomePage({
             text={m.guideText}
             link={{ href: `/${locale}/guide`, label: m.allGuides }}
           />
-          <div className="guide-grid">
-            {guides.map((guide) => (
-              <article className="guide-card" key={guide.no}>
-                <span className="guide-no">{guide.no}</span>
-                <h3>{guide.title[locale]}</h3>
-                <p>{guide.text[locale]}</p>
-                <Link href={`/${locale}/guide`}>{m.readGuide} →</Link>
-              </article>
-            ))}
-          </div>
+          <div className="editorial-guide-grid">{guideArticles.slice(0, 3).map((guide) => <GuideCard guide={guide} locale={locale} compact key={guide.slug} />)}</div>
+        </div>
+      </section>
+
+      <section className="section">
+        <div className="container faq-home">
+          <SectionHeader eyebrow={m.help} title={homeEditorial.faqTitle[locale]} text={homeEditorial.faqText[locale]} link={{ href: `/${locale}/info/help`, label: m.help }} />
+          <FaqExplorer locale={locale} limit={4} />
         </div>
       </section>
     </>

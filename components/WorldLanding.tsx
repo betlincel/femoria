@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { productWorlds, type Messages } from "@/lib/i18n";
+import { worldEditorial } from "@/lib/content/editorial-content";
+import { getGuideBySlug } from "@/lib/content/guides";
 import type { CatalogCategory, Locale, Product, ProductWorld } from "@/lib/types";
 import { DeliveryExplainer } from "./DeliveryExplainer";
 import { EmptyState } from "./EmptyState";
@@ -7,6 +9,7 @@ import { Icon } from "./Icons";
 import { ProductCard } from "./ProductCard";
 import { SectionHeader } from "./SectionHeader";
 import { SafeImage } from "./SafeImage";
+import { GuideCard } from "./GuideCard";
 
 export function WorldLanding({
   world,
@@ -22,7 +25,12 @@ export function WorldLanding({
   categories: CatalogCategory[];
 }) {
   const content = productWorlds[world];
+  const editorial = worldEditorial[world];
   const isKitchen = world === "kitchen";
+  const relatedGuides = editorial.relatedGuides.flatMap((slug) => {
+    const guide = getGuideBySlug(slug);
+    return guide ? [guide] : [];
+  });
 
   return (
     <>
@@ -40,9 +48,24 @@ export function WorldLanding({
           </div>
           <div className="world-hero-image">
             <div className="world-hero-image-frame">
-              <SafeImage src={content.image} alt="" sizes="(max-width: 900px) 100vw, 50vw" priority />
+              <SafeImage src={editorial.hero.src} alt={editorial.hero.alt[locale]} sizes="(max-width: 900px) 100vw, 50vw" priority />
             </div>
             <p>{content.description[locale]}</p>
+          </div>
+        </div>
+      </section>
+
+      <section className="section world-editorial-intro">
+        <div className="container">
+          <SectionHeader eyebrow={content.title[locale]} title={editorial.introTitle[locale]} text={editorial.introText[locale]} />
+          <div className="topic-grid">
+            {editorial.topics.map((topic, index) => (
+              <article className="topic-card" key={topic.title.tr}>
+                <span>{String(index + 1).padStart(2, "0")}</span>
+                <h3>{topic.title[locale]}</h3>
+                <p>{topic.text[locale]}</p>
+              </article>
+            ))}
           </div>
         </div>
       </section>
@@ -96,6 +119,24 @@ export function WorldLanding({
       </section>
 
       {isKitchen ? <DeliveryExplainer messages={m} /> : null}
+
+      <section className="section world-questions">
+        <div className="container world-questions-grid">
+          <div>
+            <p className="eyebrow">{locale === "tr" ? "Üreticiye sor" : "Ask the maker"}</p>
+            <h2>{locale === "tr" ? "Karar vermeden önce netleştirin" : "Clarify before deciding"}</h2>
+            <ul className="editorial-list">{editorial.questions[locale].map((question) => <li key={question}><Icon name="check" size={16} /><span>{question}</span></li>)}</ul>
+          </div>
+          <aside className="editorial-callout"><Icon name="shield" /><p>{editorial.note[locale]}</p></aside>
+        </div>
+      </section>
+
+      <section className="section section-tint">
+        <div className="container">
+          <SectionHeader eyebrow={m.guideEyebrow} title={m.guideTitle} text={m.guideText} link={{ href: `/${locale}/guide`, label: m.allGuides }} />
+          <div className="editorial-guide-grid">{relatedGuides.map((guide) => <GuideCard guide={guide} locale={locale} compact key={guide.slug} />)}</div>
+        </div>
+      </section>
     </>
   );
 }

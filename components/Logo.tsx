@@ -11,14 +11,36 @@ export function Logo({
 }) {
   return (
     <Link className="brand" href={`/${locale}`} aria-label="FEMORIA">
-      <Image
-        className="brand-logo"
-        src={light ? "/brand/femoria-logo-light.svg" : "/brand/femoria-logo.svg"}
-        width={154}
-        height={36}
-        priority
-        alt="FEMORIA"
-      />
+      {light ? (
+        <Image
+          className="brand-logo"
+          src="/brand/femoria-logo-light.svg"
+          width={154}
+          height={36}
+          priority
+          alt="FEMORIA"
+        />
+      ) : (
+        <>
+          <Image
+            className="brand-logo brand-logo-light-theme"
+            src="/brand/femoria-logo.svg"
+            width={154}
+            height={36}
+            priority
+            alt="FEMORIA"
+          />
+          <Image
+            className="brand-logo brand-logo-dark-theme"
+            src="/brand/femoria-logo-light.svg"
+            width={154}
+            height={36}
+            priority
+            alt=""
+            aria-hidden="true"
+          />
+        </>
+      )}
       <Image
         className="brand-mark-image"
         src="/brand/femoria-mark.svg"

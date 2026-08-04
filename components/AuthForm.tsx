@@ -150,7 +150,8 @@ export function AuthForm({
       )}
       {error ? <p className="form-error" role="alert">{error}</p> : null}
       {notice ? <p className="form-success" role="status">{notice}</p> : null}
-      <button className="btn btn-primary auth-submit" type="submit" disabled={submitting}>
+      <button className="btn btn-primary auth-submit" type="submit" disabled={submitting} aria-busy={submitting}>
+        {submitting ? <span className="button-spinner" aria-hidden="true" /> : null}
         {submitting ? m.signingIn : mode === "login" ? m.login : m.register}
         {!submitting ? <Icon name="arrow" /> : null}
       </button>

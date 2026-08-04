@@ -15,7 +15,8 @@ export default function NotFound() {
         <span className="not-found-code">404</span>
         <h1>{m.notFoundTitle}</h1>
         <p>{m.notFoundText}</p>
-        <Link className="btn btn-primary" href={`/${locale}`}>{m.backHome}<Icon name="arrow" /></Link>
+        <div className="prototype-actions"><Link className="btn btn-primary" href={`/${locale}`}>{m.backHome}<Icon name="arrow" /></Link><Link className="btn btn-secondary" href={`/${locale}/products`}>{m.exploreProducts}</Link></div>
+        <Link className="text-link" href={`/${locale}/guide`}>{m.allGuides}<Icon name="arrow" size={16} /></Link>
       </div>
     </section>
   );

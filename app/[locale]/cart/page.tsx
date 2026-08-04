@@ -13,7 +13,7 @@ export default async function CartPage({ params }: { params: Promise<{ locale: s
   return (
     <>
       <section className="page-hero"><div className="container"><p className="eyebrow">{m.cartEyebrow}</p><h1 className="page-title">{m.cartTitle}</h1><p>{m.cartText}</p></div></section>
-      <section className="section"><div className="container"><EmptyState title={m.cartEmptyTitle} text={m.cartEmptyText} action={{ href: `/${locale}/products`, label: m.exploreProducts }} /></div></section>
+      <section className="section"><div className="container"><EmptyState icon="bag" title={m.cartEmptyTitle} text={m.cartEmptyText} action={{ href: `/${locale}/products`, label: m.exploreProducts }} links={[{ href: `/${locale}/kitchen`, label: m.viewKitchen }, { href: `/${locale}/workshop`, label: m.viewWorkshop }, { href: `/${locale}/guide/el-yapimi-urun-kontrol-listesi`, label: m.readGuide }]} /></div></section>
     </>
   );
 }

@@ -7,6 +7,7 @@ export function MegaMenu({
   locale,
   world,
   open,
+  active,
   messages: m,
   onToggle,
   onNavigate,
@@ -14,6 +15,7 @@ export function MegaMenu({
   locale: Locale;
   world: ProductWorld;
   open: boolean;
+  active: boolean;
   messages: Messages;
   onToggle: () => void;
   onNavigate: () => void;
@@ -26,12 +28,13 @@ export function MegaMenu({
   const panelId = `${world}-mega-panel`;
 
   return (
-    <div className={`mega-menu ${open ? "open" : ""}`}>
+    <div className={`mega-menu ${open ? "open" : ""} ${active ? "active" : ""}`}>
       <button
         className="mega-trigger"
         type="button"
         aria-expanded={open}
         aria-controls={panelId}
+        aria-current={active ? "page" : undefined}
         onClick={onToggle}
       >
         {label}<Icon name="chevron" size={16} />

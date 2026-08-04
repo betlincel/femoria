@@ -17,6 +17,7 @@ import { useLocationSelection } from "./LocationProvider";
 import { Logo } from "./Logo";
 import { MegaMenu } from "./MegaMenu";
 import { MobileDrawer } from "./MobileDrawer";
+import { ThemeToggle } from "./ThemeToggle";
 
 export function Header({
   locale,
@@ -31,6 +32,7 @@ export function Header({
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [locationOpen, setLocationOpen] = useState(false);
   const [megaOpen, setMegaOpen] = useState<MegaMenuState>(null);
+  const [scrolled, setScrolled] = useState(false);
   const headerRef = useRef<HTMLElement>(null);
   const { ids } = useFavorites();
   const { location } = useLocationSelection();
@@ -68,6 +70,13 @@ export function Header({
     return () => document.body.classList.remove("drawer-open");
   }, [drawerOpen]);
 
+  useEffect(() => {
+    const updateHeader = () => setScrolled(window.scrollY > 18);
+    updateHeader();
+    window.addEventListener("scroll", updateHeader, { passive: true });
+    return () => window.removeEventListener("scroll", updateHeader);
+  }, []);
+
   const regularNav = [
     { href: `/${locale}/nearby`, label: m.nav.nearby },
     { href: `/${locale}/producers`, label: m.nav.producers },
@@ -87,7 +96,7 @@ export function Header({
           <p>{m.ethical}</p>
         </div>
       </div>
-      <header className="header" ref={headerRef}>
+      <header className={`header ${scrolled ? "scrolled" : ""}`} ref={headerRef}>
         <nav className="nav container" aria-label={m.menuLinksTitle}>
           <Logo locale={locale} />
           <div className="desktop-nav">
@@ -97,6 +106,7 @@ export function Header({
                 locale={locale}
                 world={world}
                 open={megaOpen === world}
+                active={pathname.startsWith(`/${locale}/${world}`)}
                 messages={m}
                 onToggle={() => toggleMega(world)}
                 onNavigate={() => setMegaOpen(null)}
@@ -129,6 +139,7 @@ export function Header({
               <Icon name="search" />
             </Link>
             <Link className="locale-link" href={otherPath}>{m.localeName}</Link>
+            <ThemeToggle label={m.toggleTheme} />
             <Link className="icon-button desktop-action nav-count-link" href={`/${locale}/favorites`} aria-label={m.favorites}>
               <Icon name="heart" />
               {ids.length ? <span className="nav-count">{ids.length}</span> : null}
@@ -157,6 +168,7 @@ export function Header({
         locale={locale}
         open={drawerOpen}
         otherPath={otherPath}
+        pathname={pathname}
         messages={m}
         onClose={() => setDrawerOpen(false)}
         onLocation={() => {

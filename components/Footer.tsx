@@ -11,13 +11,13 @@ import { Logo } from "./Logo";
 
 export function Footer({ locale, messages: m }: { locale: Locale; messages: Messages }) {
   const pathname = usePathname();
-  const [subscribed, setSubscribed] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
   const otherLocale = locale === "tr" ? "en" : "tr";
   const otherPath = preserveLocalePath(pathname, otherLocale);
 
   const submitNewsletter = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setSubscribed(true);
+    setSubmitted(true);
     event.currentTarget.reset();
   };
 
@@ -50,6 +50,7 @@ export function Footer({ locale, messages: m }: { locale: Locale; messages: Mess
         { href: `/${locale}/info/help`, label: m.help },
         { href: `/${locale}/info/safety`, label: m.safety },
         { href: `/${locale}/info/contact`, label: m.contact },
+        { href: `/${locale}/info/about`, label: m.about },
       ],
     },
     {
@@ -93,7 +94,7 @@ export function Footer({ locale, messages: m }: { locale: Locale; messages: Mess
               <input id="newsletter-email" type="email" required placeholder={m.emailPlaceholder} />
               <button type="submit" aria-label={m.subscribe}><Icon name="arrow" /></button>
             </form>
-            {subscribed ? <p className="newsletter-status" role="status">{m.subscribed}</p> : null}
+            {submitted ? <p className="newsletter-status" role="status">{m.newsletterUnavailable}</p> : null}
             <div className="footer-social" aria-label={m.footerCommunity}>
               <Link href={`/${locale}/info/community`}>{m.socialInstagram}</Link>
               <Link href={`/${locale}/info/community`}>{m.socialPinterest}</Link>

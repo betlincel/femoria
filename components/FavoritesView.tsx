@@ -30,9 +30,15 @@ export function FavoritesView({
   if (!favorites.length) {
     return (
       <EmptyState
+        icon="heart"
         title={m.favoritesEmptyTitle}
         text={m.favoritesEmptyText}
         action={{ href: `/${locale}/products`, label: m.exploreProducts }}
+        links={[
+          { href: `/${locale}/kitchen`, label: m.viewKitchen },
+          { href: `/${locale}/workshop`, label: m.viewWorkshop },
+          { href: `/${locale}/guide/el-yapimi-urun-kontrol-listesi`, label: m.readGuide },
+        ]}
       />
     );
   }
