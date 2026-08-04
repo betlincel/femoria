@@ -5,6 +5,7 @@ import { ContactForm } from "@/components/ContactForm";
 import { EditorialSections } from "@/components/EditorialSections";
 import { FaqExplorer } from "@/components/FaqExplorer";
 import { Icon } from "@/components/Icons";
+import { ProducerApplicationSection } from "@/components/ProducerApplicationSection";
 import { SafeImage } from "@/components/SafeImage";
 import { getInfoPage, infoPages } from "@/lib/content/editorial-content";
 import { getLocale } from "@/lib/i18n";
@@ -39,6 +40,8 @@ export default async function InfoPage({ params }: { params: Promise<{ locale: s
   if (!page) notFound();
   const statusLabel = page.status === "planned"
     ? (locale === "tr" ? "Planlanan / demo alan" : "Planned / demo area")
+    : page.status === "available"
+      ? (locale === "tr" ? "Kullanıma açık" : "Available now")
     : (locale === "tr" ? "Editoryal içerik" : "Editorial content");
 
   return (
@@ -59,6 +62,7 @@ export default async function InfoPage({ params }: { params: Promise<{ locale: s
 
       {slug === "help" ? <section className="section help-section"><div className="container"><FaqExplorer locale={locale} /></div></section> : null}
       {slug === "contact" ? <section className="section contact-section"><div className="container contact-layout"><div><p className="eyebrow">{locale === "tr" ? "Demo arayüz" : "Demo interface"}</p><h2>{locale === "tr" ? "Mesaj bilgilerini hazırlayın" : "Prepare your message"}</h2><p>{page.description[locale]}</p></div><ContactForm locale={locale} /></div></section> : null}
+      {slug === "producer-application" ? <section className="section producer-application-section"><div className="container"><ProducerApplicationSection locale={locale} /></div></section> : null}
 
       {page.links?.length ? (
         <section className="section info-cta-section">

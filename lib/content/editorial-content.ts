@@ -107,11 +107,11 @@ export const howItWorksContent = {
     { title: { tr: "Sipariş talebi", en: "Order request" }, text: { tr: "Tam talep yönetimi, ödeme ve takip deneyimi planlanan kapsamdır.", en: "Complete request management, payment, and tracking are planned." }, status: "planned" },
   ] satisfies StepContent[],
   producerTitle: { tr: "Üretici için yol haritası", en: "Maker roadmap" },
-  producerText: { tr: "Hesap oluşturma aktiftir; üretici başvurusu, ürün yönetimi ve sipariş paneli aşamalı geliştirme kapsamındadır.", en: "Account creation is active; maker application, product management, and order tools are being developed in stages." },
+  producerText: { tr: "Hesap oluşturma ve güvenli üretici başvurusu aktiftir; ürün yönetimi ve sipariş paneli aşamalı geliştirme kapsamındadır.", en: "Account creation and secure maker applications are active; product management and order tools are being developed in stages." },
   producerSteps: [
     { title: { tr: "Hesap oluştur", en: "Create an account" }, text: { tr: "Üretici rolüyle güvenli auth akışını tamamla.", en: "Complete the secure auth flow with the maker role." }, status: "available" },
     { title: { tr: "Başvuru bilgilerini hazırla", en: "Prepare application details" }, text: { tr: "Üretim alanı, yaklaşık bölge ve ürün örneklerini düzenle.", en: "Organize craft area, approximate location, and product examples." }, status: "available" },
-    { title: { tr: "Doğrulama değerlendirmesi", en: "Verification review" }, text: { tr: "Tam başvuru gönderimi ve değerlendirme paneli planlanan kapsamdır.", en: "Complete submission and review tools are planned." }, status: "planned" },
+    { title: { tr: "Doğrulama değerlendirmesi", en: "Verification review" }, text: { tr: "Başvuru gönderimi ve kullanıcı durum ekranı aktiftir; idari değerlendirme paneli ayrı geliştirme kapsamındadır.", en: "Application submission and the user status view are active; the administrative review dashboard is a separate development phase." }, status: "available" },
     { title: { tr: "Ürün ve talepleri yönet", en: "Manage products and requests" }, text: { tr: "Üretici yönetim paneli henüz public deneyimde aktif değildir.", en: "The maker dashboard is not yet active in the public experience." }, status: "planned" },
   ] satisfies StepContent[],
 } as const;
@@ -138,7 +138,7 @@ export const infoPages = {
     sections: [
       { id: "purpose", title: { tr: "Amacımız", en: "Our purpose" }, paragraphs: { tr: ["Ürünün yalnız sonucunu değil, malzemesini, hazırlık biçimini ve arkasındaki emeği de görünür kılmak."], en: ["To make not only the finished item visible, but also its materials, preparation, and the work behind it."] } },
       { id: "worlds", title: { tr: "Mutfak ve Atölye", en: "Kitchen and Workshop" }, paragraphs: { tr: ["Mutfak dünyası ev yapımı gıdayı; Atölye dünyası seramik, tekstil, ahşap ve takı gibi el emeği kategorilerini düzenler."], en: ["Kitchen organizes homemade food; Workshop brings together handmade categories such as ceramics, textiles, wood, and jewelry."] } },
-      { id: "stage", title: { tr: "Mevcut geliştirme aşaması", en: "Current development stage" }, paragraphs: { tr: ["Katalog, locale ve auth temelleri çalışmaktadır. Tam ödeme, sipariş yönetimi, otomatik başvuru ve teslim takip özellikleri henüz tamamlanmış değildir."], en: ["Catalog, locale, and auth foundations are active. Full payment, order management, automated applications, and delivery tracking are not yet complete."] }, callout: { tr: "Bu sayfa doğrulanmamış ekip, kuruluş tarihi veya başarı rakamı içermez.", en: "This page does not invent team members, founding dates, or achievement figures." } },
+      { id: "stage", title: { tr: "Mevcut geliştirme aşaması", en: "Current development stage" }, paragraphs: { tr: ["Katalog, locale, auth ve üretici başvuru temelleri çalışmaktadır. Tam ödeme, sipariş yönetimi, idari başvuru değerlendirmesi ve teslim takip özellikleri henüz tamamlanmış değildir."], en: ["Catalog, locale, auth, and maker application foundations are active. Full payment, order management, administrative application review, and delivery tracking are not yet complete."] }, callout: { tr: "Bu sayfa doğrulanmamış ekip, kuruluş tarihi veya başarı rakamı içermez.", en: "This page does not invent team members, founding dates, or achievement figures." } },
     ],
     links: [{ href: "/how-it-works", label: { tr: "Nasıl çalıştığını incele", en: "See how it works" } }],
   },
@@ -182,18 +182,17 @@ export const infoPages = {
   },
   "producer-application": {
     slug: "producer-application",
-    status: "planned",
+    status: "available",
     eyebrow: { tr: "Üretici başvurusu", en: "Maker application" },
-    title: { tr: "Başvuru öncesi bilgilerinizi adım adım hazırlayın", en: "Prepare your application information step by step" },
+    title: { tr: "Üretiminizi güvenli bir başvuruyla anlatın", en: "Share your work through a secure application" },
     description: { tr: "Uygunluk, gerekli bilgiler, ürün fotoğrafları, gizlilik ve değerlendirme süreci.", en: "Eligibility, required information, product photos, privacy, and review." },
-    intro: { tr: "Tam başvuru gönderimi ve otomatik durum takibi henüz aktif değildir. Bu sayfa başvuruya hazırlanmak için editoryal bir kontrol listesi sunar.", en: "Full submission and automated status tracking are not yet active. This page provides an editorial preparation checklist." },
+    intro: { tr: "Giriş yaptıktan sonra üretim bilgilerinizi güvenli biçimde gönderebilir ve mevcut başvurunuzun durumunu bu sayfadan görebilirsiniz.", en: "After signing in, you can securely submit production details and review the current status of your application on this page." },
     image: { src: editorialVisuals.workshop, alt: { tr: "Ürün örneklerini hazırlayan el emeği üreticisi", en: "A craft maker preparing product samples" } },
     sections: [
       { id: "eligibility", title: { tr: "Kimler başvurabilir?", en: "Who can apply?" }, paragraphs: { tr: ["Mutfak veya Atölye kategorilerinde kendi üretimini yapan ve ürün bilgisini şeffaf paylaşmaya hazır kişiler değerlendirilebilir."], en: ["People making their own Kitchen or Workshop goods and ready to share product information transparently may be considered."] } },
       { id: "information", title: { tr: "Hazırlanacak bilgiler", en: "Information to prepare" }, paragraphs: { tr: ["Profil adı, yaklaşık bölge, üretim alanı, kısa üretim hikâyesi, ürün örnekleri ve açık ürün açıklamaları."], en: ["Profile name, approximate area, craft category, a short making story, product examples, and clear product descriptions."] }, bullets: { tr: ["Kesin ev adresi yerine yaklaşık bölge", "Doğal ve yanıltıcı olmayan ürün fotoğrafları", "Malzeme veya içerik bilgisi", "Hazırlık ve bakım notları"], en: ["Approximate area instead of exact home address", "Natural, non-misleading product photos", "Material or ingredient information", "Lead-time and care notes"] } },
-      { id: "review", title: { tr: "Değerlendirme durumu", en: "Review status" }, paragraphs: { tr: ["Üretici rolü otomatik onay anlamına gelmez. İnceleme kapsamı ve geri dönüş süreleri aktif süreç devreye alındığında açıkça yayınlanmalıdır."], en: ["A maker role does not mean automatic approval. Review scope and response times must be stated clearly when the active process launches."] }, callout: { tr: "Bu sayfadaki CTA bilgi hazırlama amaçlıdır; başvuru gönderildiği izlenimi vermez.", en: "The CTA on this page is for preparation and does not imply that an application was submitted." } },
+      { id: "review", title: { tr: "Değerlendirme durumu", en: "Review status" }, paragraphs: { tr: ["Her yeni başvuru beklemede durumuyla başlar. Başvuru göndermek profil rolünü otomatik değiştirmez; onay ve rol yönetimi ayrı bir idari süreçtir."], en: ["Every new application starts as pending. Submitting an application does not automatically change the profile role; approval and role management are separate administrative steps."] }, callout: { tr: "Aynı hesap ikinci bir başvuru gönderemez; güncelleme ve yeniden başvuru henüz desteklenmiyor.", en: "The same account cannot submit a second application; updates and reapplication are not yet supported." } },
     ],
-    links: [{ href: "/register?role=producer", label: { tr: "Üretici hesabı oluştur", en: "Create a maker account" } }],
   },
   privacy: {
     slug: "privacy",

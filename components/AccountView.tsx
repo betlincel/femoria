@@ -60,7 +60,7 @@ export function AccountView({
         ))}
         <nav className="account-info-links">
           <Link className="text-link" href={`/${locale}/info/safety`}>{m.safety}<Icon name="arrow" size={16} /></Link>
-          {profile.role === "producer" ? <Link className="text-link" href={`/${locale}/info/producer-application`}>{m.startApplication}<Icon name="arrow" size={16} /></Link> : null}
+          <Link className="text-link" href={`/${locale}/info/producer-application`}>{m.startApplication}<Icon name="arrow" size={16} /></Link>
         </nav>
       </section>
     </div>

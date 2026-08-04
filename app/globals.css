@@ -1396,6 +1396,80 @@ html[data-theme="dark"] .theme-toggle-sun { display: grid; }
 .form-error { background: color-mix(in srgb, var(--color-danger) 14%, var(--color-surface)); color: var(--color-danger); }
 .form-success { background: color-mix(in srgb, var(--color-success) 14%, var(--color-surface)); color: var(--color-success); }
 
+.producer-application-section {
+  background:
+    radial-gradient(circle at 8% 14%, color-mix(in srgb, var(--color-highlight) 10%, transparent), transparent 28%),
+    var(--color-background);
+}
+.producer-application-form,
+.producer-application-status {
+  width: min(100%, 920px); margin-inline: auto; border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg); background: var(--color-surface); box-shadow: var(--shadow-md);
+}
+.producer-application-form { display: grid; gap: 22px; padding: clamp(22px, 5vw, 48px); }
+.producer-application-form-header { max-width: 720px; }
+.producer-application-form-header h2,
+.producer-application-status h2 {
+  margin: 0; color: var(--color-heading); font: 600 clamp(1.8rem, 4vw, 2.8rem)/1.05 var(--font-display);
+}
+.producer-application-form-header > p:last-child,
+.producer-application-status div > p:not(.eyebrow) { color: var(--color-text-muted); line-height: 1.7; }
+.producer-application-step {
+  display: grid; gap: 17px; margin: 0; padding: clamp(18px, 3vw, 28px);
+  border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-background);
+}
+.producer-application-step > legend {
+  padding: 0 9px; color: var(--color-heading); font: 700 1.15rem/1.3 var(--font-display);
+}
+.producer-application-step > label,
+.producer-application-grid > label {
+  display: grid; gap: 7px; color: var(--color-heading); font-size: .84rem; font-weight: 800;
+}
+.producer-application-step label small { color: var(--color-text-muted); font-size: .75rem; font-weight: 500; line-height: 1.5; }
+.producer-application-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 15px; }
+.producer-application-form :where(input:not([type="checkbox"]), select, textarea) {
+  width: 100%; border: 1px solid var(--color-border); border-radius: var(--radius-sm);
+  background: var(--color-surface); color: var(--color-text); font: inherit;
+  transition: border-color var(--motion-fast) ease, box-shadow var(--motion-fast) ease, background var(--motion-fast) ease;
+}
+.producer-application-form :where(input:not([type="checkbox"]), select) { min-height: 50px; padding: 0 14px; }
+.producer-application-form textarea { min-height: 110px; padding: 13px 14px; resize: vertical; line-height: 1.55; }
+.producer-application-form :where(input, select, textarea):focus-visible {
+  outline: none; border-color: var(--color-accent); background: var(--color-surface-elevated);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-accent) 16%, transparent);
+}
+.producer-application-options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 0; padding: 0; border: 0; }
+.producer-application-options > legend { grid-column: 1 / -1; margin-bottom: 3px; color: var(--color-heading); font-size: .84rem; font-weight: 800; }
+.producer-application-options label,
+.producer-application-check {
+  display: flex; align-items: flex-start; gap: 10px; padding: 13px; border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm); background: var(--color-surface); color: var(--color-text); font-size: .82rem; font-weight: 700; line-height: 1.5;
+}
+.producer-application-options label:has(input:checked),
+.producer-application-check:has(input:checked) { border-color: var(--color-accent); background: var(--soft-clay); }
+.producer-application-options input,
+.producer-application-check input { width: 18px; height: 18px; margin-top: 2px; accent-color: var(--color-accent); flex: 0 0 auto; }
+.producer-application-consent .form-privacy { margin: 0; }
+.producer-application-submit { justify-self: start; min-width: 210px; }
+.producer-application-status {
+  display: grid; grid-template-columns: auto 1fr; align-items: start; gap: 20px; padding: clamp(25px, 5vw, 48px);
+}
+.producer-application-status-icon {
+  display: grid; place-items: center; width: 54px; height: 54px; border-radius: 18px;
+  background: var(--soft-sage); color: var(--color-success);
+}
+.producer-application-status.pending .producer-application-status-icon,
+.producer-application-status.unavailable .producer-application-status-icon { background: color-mix(in srgb, var(--color-warning) 13%, var(--color-surface)); color: var(--color-warning); }
+.producer-application-status.rejected .producer-application-status-icon { background: color-mix(in srgb, var(--color-danger) 13%, var(--color-surface)); color: var(--color-danger); }
+.producer-application-status .btn { margin-top: 10px; }
+
+@media (max-width: 720px) {
+  .producer-application-grid,
+  .producer-application-options { grid-template-columns: 1fr; }
+  .producer-application-status { grid-template-columns: 1fr; }
+  .producer-application-submit { width: 100%; }
+}
+
 .auth-page {
   background:
     radial-gradient(circle at 14% 16%, color-mix(in srgb, var(--color-highlight) 17%, transparent), transparent 32%),

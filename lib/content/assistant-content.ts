@@ -136,8 +136,8 @@ const localRouteKnowledge = [
     id: "producer-application",
     search: { tr: "üretici olmak başvuru doğrulama", en: "become maker producer application verification" },
     answer: {
-      tr: "Üretici başvurusu sayfası gerekli profil, yaklaşık bölge ve ürün örneklerini açıklar. Tam gönderim ve yönetim araçları henüz planlanan kapsamdadır.",
-      en: "The maker application page explains the profile, approximate area, and product examples needed. Full submission and management tools are still planned.",
+      tr: "Giriş yaptıktan sonra üretim bilgilerini güvenli formdan gönderebilir ve mevcut başvurunun durumunu aynı sayfada görebilirsin. Üretici yönetim paneli henüz planlanan kapsamdadır.",
+      en: "After signing in, you can submit production details securely and view the current application status on the same page. The maker management dashboard is still planned.",
     },
     label: { tr: "Üretici başvurusu", en: "Maker application" },
     path: "/info/producer-application",
