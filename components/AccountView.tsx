@@ -3,7 +3,9 @@ import type { z } from "zod";
 import type { profileSchema } from "@/lib/auth";
 import type { Messages } from "@/lib/i18n";
 import type { Locale } from "@/lib/types";
+import { isAdminProfile, isApprovedSeller } from "@/lib/account-access";
 import { accountEditorial } from "@/lib/content/editorial-content";
+import type { ProducerApplicationStatus } from "@/lib/producer-application";
 import { signOut } from "@/app/[locale]/account/actions";
 import { Icon } from "./Icons";
 import { ProfileForm } from "./ProfileForm";
@@ -14,18 +16,27 @@ export function AccountView({
   locale,
   email,
   profile,
+  sellerStatus,
   messages: m,
 }: {
   locale: Locale;
   email: string;
   profile: Profile;
+  sellerStatus: ProducerApplicationStatus | null;
   messages: Messages;
 }) {
-  const roleLabel = profile.role === "admin"
-    ? m.accountRoleAdmin
-    : profile.role === "producer"
-      ? m.accountRoleProducer
-      : m.accountRoleBuyer;
+  const admin = isAdminProfile(profile);
+  const approvedSeller = !admin && isApprovedSeller(
+    profile,
+    sellerStatus ? { verification_status: sellerStatus } : null,
+  );
+  const sellerLabel = approvedSeller
+    ? m.accountSellerApproved
+    : sellerStatus === "pending"
+      ? m.accountSellerPending
+      : sellerStatus === "rejected"
+        ? m.accountSellerRejected
+        : null;
 
   return (
     <div className="account-layout">
@@ -37,7 +48,10 @@ export function AccountView({
           <p className="eyebrow">{m.welcome}</p>
           <h2>{profile.display_name}</h2>
           <p>{email}</p>
-          <span className="account-role">{roleLabel}</span>
+          <div className="account-badges">
+            <span className="account-role">{admin ? m.accountRoleAdmin : m.accountRoleMember}</span>
+            {!admin && sellerLabel ? <span className={`account-role seller-${sellerStatus}`}>{sellerLabel}</span> : null}
+          </div>
         </div>
         <div className="account-actions">
           <Link className="btn btn-secondary" href={`/${locale}/favorites`}>
@@ -60,9 +74,17 @@ export function AccountView({
         ))}
         <nav className="account-info-links">
           <Link className="text-link" href={`/${locale}/info/safety`}>{m.safety}<Icon name="arrow" size={16} /></Link>
-          <Link className="text-link" href={`/${locale}/info/producer-application`}>{m.startApplication}<Icon name="arrow" size={16} /></Link>
+          {!admin && !approvedSeller ? <Link className="text-link" href={`/${locale}/info/producer-application`}>{m.startApplication}<Icon name="arrow" size={16} /></Link> : null}
         </nav>
       </section>
+      {approvedSeller ? (
+        <section className="account-seller-tools" aria-label={m.sellerTools}>
+          <div><p className="eyebrow">{m.sellerTools}</p><h2>{m.accountSellerApproved}</h2></div>
+          {[m.sellerPanel, m.myProducts, m.addProduct].map((label) => (
+            <span className="btn btn-secondary" aria-disabled="true" key={label}>{label}<small>{m.sellerToolsPlanned}</small></span>
+          ))}
+        </section>
+      ) : null}
     </div>
   );
 }

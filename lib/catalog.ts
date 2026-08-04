@@ -38,6 +38,7 @@ const PRODUCT_SELECT = `
   producer:profiles!products_producer_id_fkey!inner(
     id,
     display_name,
+    status,
     producer_profile:producer_profiles!inner(
       story_tr,
       story_en,

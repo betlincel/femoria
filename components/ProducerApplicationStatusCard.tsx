@@ -10,14 +10,12 @@ import { Icon } from "./Icons";
 export function ProducerApplicationStatusCard({
   locale,
   status,
-  profileRole,
 }: {
   locale: Locale;
-  status: ProducerApplicationStatus | "success" | "unavailable";
-  profileRole: "buyer" | "producer" | "admin";
+  status: ProducerApplicationStatus | "success" | "unavailable" | "ineligible";
 }) {
   const ui = producerApplicationUi[locale];
-  const content = getProducerApplicationStatusContent(locale, status, profileRole);
+  const content = getProducerApplicationStatusContent(locale, status);
 
   return (
     <section className={`producer-application-status ${status}`} aria-live="polite">

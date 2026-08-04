@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useState } from "react";
-import { loginSchema, sanitizeSignupRole, signupSchema } from "@/lib/auth";
+import { loginSchema, signupSchema } from "@/lib/auth";
 import type { Messages } from "@/lib/i18n";
 import { createClient } from "@/lib/supabase/client";
 import type { Locale } from "@/lib/types";
@@ -59,7 +59,6 @@ export function AuthForm({
       email,
       password,
       confirmation: String(form.get("confirmation") ?? ""),
-      role: sanitizeSignupRole(form.get("role")),
       locale,
       termsAccepted: form.get("terms") === "on",
     });
@@ -76,7 +75,6 @@ export function AuthForm({
       options: {
         data: {
           display_name: parsed.data.name,
-          role: parsed.data.role,
           locale: parsed.data.locale,
         },
         emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(nextPath)}`,
@@ -132,11 +130,6 @@ export function AuthForm({
           <label>{m.passwordAgain}
             <input name="confirmation" type="password" autoComplete="new-password" minLength={6} maxLength={128} required />
           </label>
-          <fieldset className="role-choice">
-            <legend>{m.accountType}</legend>
-            <label><input type="radio" name="role" value="buyer" defaultChecked />{m.registerBuyer}</label>
-            <label><input type="radio" name="role" value="producer" />{m.registerProducer}</label>
-          </fieldset>
           <label className="check auth-check">
             <input name="terms" type="checkbox" required />
             <span>{m.acceptTerms} <Link href={`/${locale}/info/terms`}>{m.terms}</Link></span>

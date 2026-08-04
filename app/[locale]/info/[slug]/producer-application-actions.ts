@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { canApplyAsSeller } from "@/lib/account-access";
 import {
   buildDeliveryRegionsPayload,
   canSubmitProducerApplication,
@@ -28,7 +29,7 @@ export async function submitProducerApplication(
 
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
-    .select("id, status, city, district")
+    .select("id, role, status, city, district")
     .eq("id", user.id)
     .maybeSingle();
   if (profileError || !profile || profile.status !== "active") return { status: "error" };
@@ -43,6 +44,7 @@ export async function submitProducerApplication(
   if (existing && (!existingStatus.success || !canSubmitProducerApplication(existingStatus.data))) {
     return { status: "duplicate" };
   }
+  if (!canApplyAsSeller(profile, null)) return { status: "error" };
 
   const { error: insertError } = await supabase.from("producer_profiles").insert({
     profile_id: user.id,

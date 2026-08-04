@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { canApplyAsSeller } from "@/lib/account-access";
 import { producerApplicationRowSchema } from "@/lib/producer-application";
 import { requireUser } from "@/lib/supabase/auth";
 import type { Locale } from "@/lib/types";
@@ -6,7 +7,7 @@ import { ProducerApplicationForm } from "./ProducerApplicationForm";
 import { ProducerApplicationStatusCard } from "./ProducerApplicationStatusCard";
 
 const applicationProfileSchema = z.object({
-  role: z.enum(["buyer", "producer", "admin"]),
+  role: z.enum(["user", "buyer", "producer", "admin"]),
   status: z.enum(["active", "suspended"]),
   city: z.string().nullable(),
   district: z.string().nullable(),
@@ -25,21 +26,24 @@ export async function ProducerApplicationSection({ locale }: { locale: Locale })
   ]);
   const profile = applicationProfileSchema.safeParse(profileResult.data);
   if (profileResult.error || !profile.success || profile.data.status !== "active" || applicationResult.error) {
-    return <ProducerApplicationStatusCard locale={locale} status="unavailable" profileRole="buyer" />;
+    return <ProducerApplicationStatusCard locale={locale} status="unavailable" />;
   }
 
   if (applicationResult.data) {
     const application = producerApplicationRowSchema.safeParse(applicationResult.data);
     if (!application.success) {
-      return <ProducerApplicationStatusCard locale={locale} status="unavailable" profileRole={profile.data.role} />;
+      return <ProducerApplicationStatusCard locale={locale} status="unavailable" />;
     }
     return (
       <ProducerApplicationStatusCard
         locale={locale}
         status={application.data.verification_status}
-        profileRole={profile.data.role}
       />
     );
+  }
+
+  if (!canApplyAsSeller(profile.data, null)) {
+    return <ProducerApplicationStatusCard locale={locale} status="ineligible" />;
   }
 
   return (
@@ -47,7 +51,6 @@ export async function ProducerApplicationSection({ locale }: { locale: Locale })
       locale={locale}
       initialCity={profile.data.city ?? ""}
       initialDistrict={profile.data.district ?? ""}
-      profileRole={profile.data.role}
     />
   );
 }

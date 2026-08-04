@@ -36,6 +36,7 @@ function catalogRow() {
     producer: {
       id: producerId,
       display_name: "Emine'nin Kileri",
+      status: "active",
       producer_profile: {
         story_tr: "Mevsiminde üretir.",
         story_en: "Produces in season.",
@@ -91,6 +92,12 @@ describe("catalog row mapper", () => {
   it("does not expose products from an unapproved producer", () => {
     const row = catalogRow();
     row.producer.producer_profile.verification_status = "pending";
+    expect(mapCatalogProduct(row, (path) => path)).toBeNull();
+  });
+
+  it("does not expose products from a suspended producer profile owner", () => {
+    const row = catalogRow();
+    row.producer.status = "suspended";
     expect(mapCatalogProduct(row, (path) => path)).toBeNull();
   });
 });

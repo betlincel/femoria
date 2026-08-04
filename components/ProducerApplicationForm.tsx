@@ -12,18 +12,16 @@ export function ProducerApplicationForm({
   locale,
   initialCity,
   initialDistrict,
-  profileRole,
 }: {
   locale: Locale;
   initialCity: string;
   initialDistrict: string;
-  profileRole: "buyer" | "producer" | "admin";
 }) {
   const [state, action, pending] = useActionState(submitProducerApplication, initialProducerApplicationState);
   const ui = producerApplicationUi[locale];
 
   if (state.status === "success") {
-    return <ProducerApplicationStatusCard locale={locale} status="success" profileRole={profileRole} />;
+    return <ProducerApplicationStatusCard locale={locale} status="success" />;
   }
 
   const feedback = state.status === "invalid"

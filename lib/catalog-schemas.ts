@@ -27,6 +27,7 @@ const relation = <Schema extends z.ZodType>(schema: Schema) =>
 const producerRowSchema = z.object({
   id: z.string().uuid(),
   display_name: z.string().trim().min(1),
+  status: z.enum(["active", "suspended"]),
   producer_profile: relation(producerProfileRowSchema),
 });
 

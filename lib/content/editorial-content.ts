@@ -98,9 +98,9 @@ export const nearbyEditorial = {
 } as const;
 
 export const howItWorksContent = {
-  buyerTitle: { tr: "Alıcı için mevcut akış", en: "Current buyer flow" },
-  buyerText: { tr: "Keşif ve bilgi karşılaştırma aktif; tam sipariş, ödeme ve otomatik takip özellikleri henüz tamamlanmış değildir.", en: "Discovery and comparison are available; complete ordering, payment, and automated tracking are not yet finished." },
-  buyerSteps: [
+  memberTitle: { tr: "Her üye için mevcut akış", en: "Current flow for every member" },
+  memberText: { tr: "Tek FEMORIA hesabıyla keşif ve bilgi karşılaştırma aktiftir; tam sipariş, ödeme ve otomatik takip özellikleri henüz tamamlanmış değildir.", en: "Discovery and comparison are available through one FEMORIA account; complete ordering, payment, and automated tracking are not yet finished." },
+  memberSteps: [
     { title: { tr: "Ürünleri keşfet", en: "Discover products" }, text: { tr: "Kategori, şehir ve anahtar kelimeyle onaylı kataloğu incele.", en: "Browse the approved catalog by category, city, and keyword." }, status: "available" },
     { title: { tr: "Ürün detayını incele", en: "Review product details" }, text: { tr: "Üretici, yaklaşık bölge, hazırlık ve malzeme bilgilerini karşılaştır.", en: "Compare maker, approximate area, preparation, and material information." }, status: "available" },
     { title: { tr: "Koşulları netleştir", en: "Clarify terms" }, text: { tr: "Eksik içerik, alerjen, bakım veya teslim ayrıntısını belirle.", en: "Identify missing ingredient, allergen, care, or delivery details." }, status: "available" },
@@ -109,7 +109,7 @@ export const howItWorksContent = {
   producerTitle: { tr: "Üretici için yol haritası", en: "Maker roadmap" },
   producerText: { tr: "Hesap oluşturma ve güvenli üretici başvurusu aktiftir; ürün yönetimi ve sipariş paneli aşamalı geliştirme kapsamındadır.", en: "Account creation and secure maker applications are active; product management and order tools are being developed in stages." },
   producerSteps: [
-    { title: { tr: "Hesap oluştur", en: "Create an account" }, text: { tr: "Üretici rolüyle güvenli auth akışını tamamla.", en: "Complete the secure auth flow with the maker role." }, status: "available" },
+    { title: { tr: "Tek hesabını oluştur", en: "Create one account" }, text: { tr: "Standart FEMORIA hesabını aç; alışveriş ve üretici başvurusu için aynı hesabı kullan.", en: "Create a standard FEMORIA account and use it for shopping and maker applications." }, status: "available" },
     { title: { tr: "Başvuru bilgilerini hazırla", en: "Prepare application details" }, text: { tr: "Üretim alanı, yaklaşık bölge ve ürün örneklerini düzenle.", en: "Organize craft area, approximate location, and product examples." }, status: "available" },
     { title: { tr: "Doğrulama değerlendirmesi", en: "Verification review" }, text: { tr: "Başvuru gönderimi ve kullanıcı durum ekranı aktiftir; idari değerlendirme paneli ayrı geliştirme kapsamındadır.", en: "Application submission and the user status view are active; the administrative review dashboard is a separate development phase." }, status: "available" },
     { title: { tr: "Ürün ve talepleri yönet", en: "Manage products and requests" }, text: { tr: "Üretici yönetim paneli henüz public deneyimde aktif değildir.", en: "The maker dashboard is not yet active in the public experience." }, status: "planned" },
@@ -121,7 +121,7 @@ export const accountEditorial = {
     { title: { tr: "Profil ve yaklaşık konum", en: "Profile and approximate location" }, text: { tr: "Ad, şehir, ilçe ve dil tercihi mevcut profil formundan yönetilir. Public deneyim kesin adres göstermez.", en: "Name, city, district, and language are managed through the current profile form. The public experience does not show exact addresses." } },
     { title: { tr: "Tema ve dil", en: "Theme and language" }, text: { tr: "Tema tarayıcıda saklanır; profil dili hesabınızda, aktif rota dili ise URL üzerinde korunur.", en: "Theme is stored in the browser; profile language is stored in your account, while the active route locale remains in the URL." } },
     { title: { tr: "Favoriler", en: "Favorites" }, text: { tr: "Favori senkronizasyonu feature flag ile kontrollüdür. Kapalıyken yeni sunucu davranışı zorla etkinleştirilmez.", en: "Favorite synchronization is controlled by a feature flag and is not force-enabled when disabled." } },
-    { title: { tr: "Üretici durumu", en: "Maker status" }, text: { tr: "Üretici rolü başvurunun veya doğrulamanın otomatik tamamlandığı anlamına gelmez. Ayrıntılı yönetim paneli planlanan kapsamdır.", en: "A maker role does not mean application or verification completed automatically. A detailed dashboard is planned." } },
+    { title: { tr: "Üretici durumu", en: "Maker status" }, text: { tr: "Satış yetkisi yalnız onaylı üretici başvurusuyla belirlenir; temel hesap türü değişmez. Ayrıntılı yönetim paneli planlanan kapsamdır.", en: "Selling access is determined only by an approved maker application; the base account type does not change. A detailed dashboard is planned." } },
     { title: { tr: "Hesap güvenliği", en: "Account security" }, text: { tr: "Şifrenizi paylaşmayın ve yalnız FEMORIA'nın doğrulanmış giriş rotalarını kullanın. Şifre sıfırlama arayüzü tamamlandığında açıkça belirtilecektir.", en: "Do not share your password and use only verified FEMORIA sign-in routes. The interface will state clearly when password reset is complete." } },
   ],
 } as const;
@@ -191,7 +191,7 @@ export const infoPages = {
     sections: [
       { id: "eligibility", title: { tr: "Kimler başvurabilir?", en: "Who can apply?" }, paragraphs: { tr: ["Mutfak veya Atölye kategorilerinde kendi üretimini yapan ve ürün bilgisini şeffaf paylaşmaya hazır kişiler değerlendirilebilir."], en: ["People making their own Kitchen or Workshop goods and ready to share product information transparently may be considered."] } },
       { id: "information", title: { tr: "Hazırlanacak bilgiler", en: "Information to prepare" }, paragraphs: { tr: ["Profil adı, yaklaşık bölge, üretim alanı, kısa üretim hikâyesi, ürün örnekleri ve açık ürün açıklamaları."], en: ["Profile name, approximate area, craft category, a short making story, product examples, and clear product descriptions."] }, bullets: { tr: ["Kesin ev adresi yerine yaklaşık bölge", "Doğal ve yanıltıcı olmayan ürün fotoğrafları", "Malzeme veya içerik bilgisi", "Hazırlık ve bakım notları"], en: ["Approximate area instead of exact home address", "Natural, non-misleading product photos", "Material or ingredient information", "Lead-time and care notes"] } },
-      { id: "review", title: { tr: "Değerlendirme durumu", en: "Review status" }, paragraphs: { tr: ["Her yeni başvuru beklemede durumuyla başlar. Başvuru göndermek profil rolünü otomatik değiştirmez; onay ve rol yönetimi ayrı bir idari süreçtir."], en: ["Every new application starts as pending. Submitting an application does not automatically change the profile role; approval and role management are separate administrative steps."] }, callout: { tr: "Aynı hesap ikinci bir başvuru gönderemez; güncelleme ve yeniden başvuru henüz desteklenmiyor.", en: "The same account cannot submit a second application; updates and reapplication are not yet supported." } },
+      { id: "review", title: { tr: "Değerlendirme durumu", en: "Review status" }, paragraphs: { tr: ["Her yeni başvuru beklemede durumuyla başlar. Onay, aynı standart hesaba satış yetkisi kazandırır; ayrı bir üretici hesap türü oluşturmaz."], en: ["Every new application starts as pending. Approval grants selling access to the same standard account rather than creating a separate maker account type."] }, callout: { tr: "Aynı hesap ikinci bir başvuru gönderemez; güncelleme ve yeniden başvuru henüz desteklenmiyor.", en: "The same account cannot submit a second application; updates and reapplication are not yet supported." } },
     ],
   },
   privacy: {

@@ -34,9 +34,9 @@ export default async function HowItWorksPage({
       </section>
       <section className="section">
         <div className="container flow-section">
-          <div className="section-head"><div><p className="eyebrow">{locale === "tr" ? "Alıcı yolculuğu" : "Buyer journey"}</p><h2>{howItWorksContent.buyerTitle[locale]}</h2><p>{howItWorksContent.buyerText[locale]}</p></div></div>
+          <div className="section-head"><div><p className="eyebrow">{locale === "tr" ? "Üye yolculuğu" : "Member journey"}</p><h2>{howItWorksContent.memberTitle[locale]}</h2><p>{howItWorksContent.memberText[locale]}</p></div></div>
           <div className="process-grid">
-            {howItWorksContent.buyerSteps.map((step, index) => (
+            {howItWorksContent.memberSteps.map((step, index) => (
               <article className={`process-card ${step.status}`} key={step.title.tr}>
                 <span className="process-icon"><Icon name={icons[index]} /></span>
                 <p>{String(index + 1).padStart(2, "0")}</p>

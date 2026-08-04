@@ -255,7 +255,7 @@ export type Database = {
     Views: { [_ in never]: never };
     Functions: { [_ in never]: never };
     Enums: {
-      profile_role: "buyer" | "producer" | "admin";
+      profile_role: "user" | "buyer" | "producer" | "admin";
       profile_status: "active" | "suspended";
       locale_code: "tr" | "en";
       verification_status: "pending" | "approved" | "rejected";

@@ -1,9 +1,6 @@
 import { z } from "zod";
 import type { Locale } from "./types";
 
-export const signupRoleSchema = z.enum(["buyer", "producer"]);
-export type SignupRole = z.infer<typeof signupRoleSchema>;
-
 const credentialsSchema = z.object({
   email: z.string().trim().email().max(254),
   password: z.string().min(6).max(128),
@@ -14,17 +11,16 @@ export const loginSchema = credentialsSchema;
 export const signupSchema = credentialsSchema.extend({
   name: z.string().trim().min(2).max(120),
   confirmation: z.string(),
-  role: signupRoleSchema,
   locale: z.enum(["tr", "en"]),
   termsAccepted: z.literal(true),
-}).refine((data) => data.password === data.confirmation, {
+}).strict().refine((data) => data.password === data.confirmation, {
   path: ["confirmation"],
   message: "Passwords do not match.",
 });
 
 export const profileSchema = z.object({
   id: z.string().uuid(),
-  role: z.enum(["buyer", "producer", "admin"]),
+  role: z.enum(["user", "buyer", "producer", "admin"]),
   status: z.enum(["active", "suspended"]),
   display_name: z.string().trim().min(2).max(120),
   locale: z.enum(["tr", "en"]),
@@ -38,11 +34,6 @@ export const profileUpdateSchema = z.object({
   city: z.string().trim().max(80),
   district: z.string().trim().max(80),
 });
-
-export function sanitizeSignupRole(value: unknown): SignupRole {
-  const result = signupRoleSchema.safeParse(value);
-  return result.success ? result.data : "buyer";
-}
 
 export function safeNextRedirect(
   value: string | null | undefined,

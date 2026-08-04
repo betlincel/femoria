@@ -87,20 +87,19 @@ describe("producer application boundary", () => {
 
 describe("producer application status content", () => {
   it("shows the pending state and disables resubmission messaging", () => {
-    const content = getProducerApplicationStatusContent("tr", "pending", "buyer");
+    const content = getProducerApplicationStatusContent("tr", "pending");
     expect(content.title).toBe(producerApplicationUi.tr.pendingTitle);
     expect(content.text).toContain("tekrar gönderilemez");
   });
 
-  it("checks the real profile role in the approved state", () => {
-    const buyer = getProducerApplicationStatusContent("tr", "approved", "buyer");
-    const producer = getProducerApplicationStatusContent("tr", "approved", "producer");
-    expect(buyer.text).toContain("rolü henüz görünmüyor");
-    expect(producer.text).toContain("rolünüz aktif");
+  it("does not require a role change in the approved state", () => {
+    const content = getProducerApplicationStatusContent("tr", "approved");
+    expect(content.text).toContain("Aynı FEMORIA hesabıyla");
+    expect(content.text).not.toContain("rol");
   });
 
   it("shows a general rejected state without inventing a reason", () => {
-    const content = getProducerApplicationStatusContent("en", "rejected", "buyer");
+    const content = getProducerApplicationStatusContent("en", "rejected");
     expect(content.title).toBe(producerApplicationUi.en.rejectedTitle);
     expect(content.text).toContain("does not include a rejection reason");
   });

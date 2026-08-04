@@ -13,15 +13,14 @@
   1. Supabase Dashboard > Authentication > Users bölümünden geliştirme/test amacıyla
      kullanacağınız gerçek kullanıcının UID değerini kopyalayın.
   2. Bu dosyadaki her 63434023-ed88-44ef-8d28-87233ce4afeb ifadesini aynı gerçek UID ile değiştirin.
-  3. Kullanıcının public.profiles kaydı role='producer' ve status='active' olmalıdır.
-     Seed mevcut profiles kaydını değiştirmez. Uygun değilse işlem güvenli biçimde durur.
+  3. Kullanıcının public.profiles kaydı status='active' olmalıdır. Satıcı yetkisi
+     profile rolünden değil, approved producer_profiles kaydından gelir.
   4. producer_profiles kaydı yoksa seed approved olarak oluşturur. Kayıt zaten varsa
      hiçbir alanını değiştirmez ve verification_status='approved' değilse işlemi durdurur.
   5. Dosyayı Supabase SQL Editor'a yapıştırıp Run ile çalıştırın. Ana seed tek transaction'dır;
      herhangi bir doğrulama başarısız olursa tamamı geri alınır.
 
   PUBLIC KATALOG KOŞULLARI
-  - profiles.role = 'producer'
   - profiles.status = 'active'
   - producer_profiles.verification_status = 'approved'
   - categories.active = true
@@ -42,7 +41,6 @@ do $catalog_seed$
 declare
   producer_user_id_text constant text := '63434023-ed88-44ef-8d28-87233ce4afeb';
   producer_user_id uuid;
-  producer_role text;
   producer_status text;
   producer_verification text;
   valid_category_count integer;
@@ -87,7 +85,7 @@ begin
   )
   values (
     producer_user_id,
-    'producer'::public.profile_role,
+    'user'::public.profile_role,
     'active'::public.profile_status,
     'FEMORIA Demo Üreticisi',
     'tr'::public.locale_code,
@@ -96,14 +94,14 @@ begin
   )
   on conflict (id) do nothing;
 
-  select role::text, status::text
-  into producer_role, producer_status
+  select status::text
+  into producer_status
   from public.profiles
   where id = producer_user_id;
 
-  if producer_role is distinct from 'producer' or producer_status is distinct from 'active' then
+  if producer_status is distinct from 'active' then
     raise exception using
-      message = 'Mevcut profile değiştirilmedi: seçilen kullanıcı role=producer ve status=active olmalıdır.';
+      message = 'Mevcut profile değiştirilmedi: seçilen kullanıcının profile status değeri active olmalıdır.';
   end if;
 
   insert into public.producer_profiles (

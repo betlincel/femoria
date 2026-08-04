@@ -66,18 +66,15 @@ export function canSubmitProducerApplication(existingStatus: ProducerApplication
 
 export function getProducerApplicationStatusContent(
   locale: Locale,
-  status: ProducerApplicationStatus | "success" | "unavailable",
-  profileRole: "buyer" | "producer" | "admin",
+  status: ProducerApplicationStatus | "success" | "unavailable" | "ineligible",
 ) {
   const ui = producerApplicationUi[locale];
   if (status === "pending") return { title: ui.pendingTitle, text: ui.pendingText };
   if (status === "approved") {
-    return {
-      title: ui.approvedTitle,
-      text: profileRole === "producer" ? ui.approvedProducerText : ui.approvedBuyerText,
-    };
+    return { title: ui.approvedTitle, text: ui.approvedText };
   }
   if (status === "rejected") return { title: ui.rejectedTitle, text: ui.rejectedText };
   if (status === "success") return { title: ui.successTitle, text: ui.successText };
+  if (status === "ineligible") return { title: ui.ineligibleTitle, text: ui.ineligibleText };
   return { title: ui.unavailableTitle, text: ui.unavailableText };
 }

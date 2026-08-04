@@ -944,10 +944,6 @@ img { display: block; width: 100%; max-width: 100%; }
 .auth-options > a, .auth-switch a { color: var(--terracotta); font-weight: 800; }
 .auth-check { min-height: 44px; cursor: pointer; }
 .auth-check input { width: 19px; height: 19px; flex: none; accent-color: var(--terracotta); }
-.role-choice { display: grid; gap: 7px; padding: 0; border: 0; }
-.role-choice legend { margin-bottom: 8px; color: var(--plum); font-size: .76rem; font-weight: 800; }
-.role-choice label { min-height: 44px; display: flex; align-items: center; gap: 9px; padding: 0 11px; border: 1px solid var(--line); border-radius: 11px; cursor: pointer; }
-.role-choice input { width: 19px; height: 19px; accent-color: var(--terracotta); }
 .auth-submit, .auth-google { width: 100%; }
 .auth-submit:disabled { opacity: .65; cursor: progress; }
 .form-error, .form-success { margin: 0; padding: 11px 13px; border-radius: 10px; font-size: .78rem; line-height: 1.5; }
@@ -971,9 +967,21 @@ img { display: block; width: 100%; max-width: 100%; }
 .account-card h2 { margin: 0; color: var(--plum); font: 600 2rem Georgia, serif; }
 .account-card p { color: var(--muted); }
 .account-role { display: inline-flex; padding: 7px 10px; border-radius: 999px; background: var(--soft-sage); color: #4d624b; font-size: .72rem; font-weight: 800; }
+.account-badges { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 10px; }
+.account-role.seller-approved { background: color-mix(in srgb, var(--color-success) 14%, var(--color-surface)); color: var(--color-success); }
+.account-role.seller-pending { background: color-mix(in srgb, var(--color-warning) 14%, var(--color-surface)); color: var(--color-warning); }
+.account-role.seller-rejected { background: color-mix(in srgb, var(--color-danger) 14%, var(--color-surface)); color: var(--color-danger); }
 .account-actions { display: flex; flex-wrap: wrap; gap: 9px; }
 .account-skeleton { width: min(780px, 100%); height: 240px; margin-inline: auto; }
 .account-layout { display: grid; gap: 22px; }
+.account-seller-tools {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 12px; width: min(100%, 780px); margin-inline: auto;
+  padding: 22px; border: 1px solid var(--color-border); border-radius: 24px; background: var(--color-surface); box-shadow: var(--shadow-sm);
+}
+.account-seller-tools > div { flex: 1 1 230px; }
+.account-seller-tools h2 { margin: 0; color: var(--color-heading); font: 600 1.6rem var(--font-display); }
+.account-seller-tools .btn[aria-disabled="true"] { cursor: not-allowed; opacity: .72; }
+.account-seller-tools .btn small { padding-left: 4px; color: var(--color-text-muted); font-size: .64rem; }
 .profile-form { display: grid; gap: 16px; max-width: 780px; width: 100%; margin-inline: auto; padding: 28px; border: 1px solid var(--line); border-radius: 24px; background: white; box-shadow: var(--shadow-sm); }
 .profile-form h2 { margin: 0; color: var(--plum); font: 600 1.8rem Georgia, serif; }
 .profile-form > div > p:last-child { color: var(--muted); line-height: 1.65; }
@@ -1390,9 +1398,7 @@ html[data-theme="dark"] .theme-toggle-sun { display: grid; }
   box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-accent) 16%, transparent);
 }
 :where(input, select, textarea)::placeholder { color: color-mix(in srgb, var(--color-text-muted) 78%, transparent); }
-.delivery-filter .check,
-.role-choice label { border-color: var(--color-border); background: var(--color-background); }
-.role-choice label:has(input:checked) { border-color: var(--color-accent); background: var(--soft-clay); color: var(--color-heading); }
+.delivery-filter .check { border-color: var(--color-border); background: var(--color-background); }
 .form-error { background: color-mix(in srgb, var(--color-danger) 14%, var(--color-surface)); color: var(--color-danger); }
 .form-success { background: color-mix(in srgb, var(--color-success) 14%, var(--color-surface)); color: var(--color-success); }
 
@@ -1481,8 +1487,7 @@ html[data-theme="dark"] .theme-toggle-sun { display: grid; }
 .auth-intro::after { content: ""; position: absolute; width: 240px; height: 240px; right: -120px; bottom: -120px; border: 1px solid rgb(255 255 255 / 18%); border-radius: 50%; box-shadow: 0 0 0 38px rgb(255 255 255 / 4%); }
 .auth-intro h1 { position: relative; color: #fff8fc; font-family: var(--font-display); }
 .auth-form { background: var(--color-surface); }
-.auth-form > label:not(.check),
-.role-choice legend { color: var(--color-heading); }
+.auth-form > label:not(.check) { color: var(--color-heading); }
 .auth-options,
 .prototype-notice,
 .demo-warning,

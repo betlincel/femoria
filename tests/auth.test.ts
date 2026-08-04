@@ -1,18 +1,17 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
   profileUpdateSchema,
   protectedRouteRedirect,
   safeNextRedirect,
-  sanitizeSignupRole,
   signupSchema,
 } from "@/lib/auth";
 
 describe("Supabase auth boundaries", () => {
-  it("allows only buyer or producer signup roles", () => {
-    expect(sanitizeSignupRole("buyer")).toBe("buyer");
-    expect(sanitizeSignupRole("producer")).toBe("producer");
-    expect(sanitizeSignupRole("admin")).toBe("buyer");
-    expect(sanitizeSignupRole(undefined)).toBe("buyer");
+  it("uses one standard registration form without a role selector", () => {
+    const source = readFileSync(new URL("../components/AuthForm.tsx", import.meta.url), "utf8");
+    expect(source).not.toContain('name="role"');
+    expect(source).not.toContain("sanitizeSignupRole");
   });
 
   it("validates signup metadata and matching passwords", () => {
@@ -21,7 +20,6 @@ describe("Supabase auth boundaries", () => {
       email: "ada@example.com",
       password: "secure-password",
       confirmation: "secure-password",
-      role: "producer",
       locale: "tr",
       termsAccepted: true,
     }).success).toBe(true);
@@ -30,9 +28,17 @@ describe("Supabase auth boundaries", () => {
       email: "ada@example.com",
       password: "secure-password",
       confirmation: "different-password",
-      role: "admin",
       locale: "tr",
       termsAccepted: true,
+    }).success).toBe(false);
+    expect(signupSchema.safeParse({
+      name: "Ada Lovelace",
+      email: "ada@example.com",
+      password: "secure-password",
+      confirmation: "secure-password",
+      locale: "tr",
+      termsAccepted: true,
+      role: "admin",
     }).success).toBe(false);
   });
 

@@ -14,7 +14,7 @@ export const faqItems = [
     id: "create-account",
     category: "account",
     question: { tr: "Nasıl hesap oluşturabilirim?", en: "How do I create an account?" },
-    answer: { tr: "Kayıt sayfasında e-posta, ad ve rol bilgilerinizi girin. Kayıt işlemi mevcut Supabase kimlik doğrulama sistemi üzerinden yürütülür.", en: "Enter your email, name, and role on the registration page. Registration uses the current Supabase authentication system." },
+    answer: { tr: "Kayıt sayfasında ad, e-posta ve şifrenizi girerek tek bir standart FEMORIA hesabı oluşturabilirsiniz. Aynı hesapla alışveriş yapabilir ve dilediğiniz zaman üretici başvurusu gönderebilirsiniz.", en: "Enter your name, email, and password to create one standard FEMORIA account. You can shop and apply to become a maker later with the same account." },
   },
   {
     id: "email-verification",
@@ -50,7 +50,7 @@ export const faqItems = [
     id: "application-status",
     category: "producer",
     question: { tr: "Başvurum otomatik onaylanır mı?", en: "Is my application approved automatically?" },
-    answer: { tr: "Hayır. Başvuru ve doğrulama süreci değerlendirme gerektirir. Henüz bulunmayan otomatik onay veya süre garantisi sunulmaz.", en: "No. Application and verification require review. FEMORIA does not promise an automated approval or fixed review time that is not yet available." },
+    answer: { tr: "Hayır. Başvuru ve doğrulama süreci değerlendirme gerektirir. Onay satış yetkisi kazandırır ancak temel FEMORIA hesabınızın türünü değiştirmez; otomatik onay veya süre garantisi sunulmaz.", en: "No. Application and verification require review. Approval grants selling access without changing your base FEMORIA account type; no automatic approval or fixed review time is promised." },
   },
   {
     id: "application-information",

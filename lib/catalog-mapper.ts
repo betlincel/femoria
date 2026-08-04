@@ -1,4 +1,5 @@
 import { translations } from "./i18n";
+import { isApprovedSeller } from "./account-access";
 import {
   catalogCategoryRowSchema,
   catalogProductRowSchema,
@@ -70,7 +71,8 @@ export function mapCatalogProduct(
   if (
     !categoryRow?.active ||
     !producer ||
-    producerProfile?.verification_status !== "approved"
+    !producerProfile ||
+    !isApprovedSeller(producer, producerProfile)
   ) {
     return null;
   }
