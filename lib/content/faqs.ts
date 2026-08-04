@@ -158,6 +158,6 @@ export const faqItems = [
     id: "assistant-unavailable",
     category: "assistant",
     question: { tr: "Asistan neden kullanılamıyor görünebilir?", en: "Why might the assistant be unavailable?" },
-    answer: { tr: "Sunucuda OPENAI_API_KEY tanımlı değilse, rate limit aşılırsa veya servis geçici olarak hata verirse güvenli kullanılamıyor durumu gösterilir.", en: "A safe unavailable state appears when OPENAI_API_KEY is missing, the rate limit is reached, or the service temporarily fails." },
+    answer: { tr: "Asistan, yanıtlayabildiği konularda mevcut FEMORIA rehberleri ve SSS içeriklerinden yararlanır. Geçici bir yoğunluk veya servis sorunu olursa kısa süre sonra yeniden deneyebilirsin.", en: "The assistant uses current FEMORIA guides and FAQs for supported questions. If it is temporarily busy or unavailable, try again shortly." },
   },
 ] satisfies FaqItem[];

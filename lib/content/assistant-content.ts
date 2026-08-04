@@ -20,6 +20,9 @@ export const assistantUi = {
     error: "Yanıt şu anda hazırlanamadı. Biraz sonra yeniden deneyebilirsin.",
     blocked: "Bu isteğe yardımcı olamam. FEMORIA kullanımıyla ilgili güvenli bir soru sorabilirsin.",
     outOfScope: "Yalnız FEMORIA, ürün keşfi, rehberler ve platform süreçleri hakkında yardımcı olabilirim.",
+    noMatch: "Bu soru için mevcut FEMORIA içeriklerinde net bir yanıt bulamadım. Şunlardan birini sorabilirsin:",
+    readGuide: "Ayrıntılar için ilgili rehberi açabilirsin.",
+    safetyReply: "Bu konuda tıbbi teşhis, alerjen garantisi, hukuki tavsiye veya ödeme garantisi veremem. FEMORIA’nın güvenlik sınırlarını inceleyebilirsin.",
     links: "İlgili bağlantılar",
     quickQuestions: [
       "FEMORIA nasıl çalışır?",
@@ -46,6 +49,9 @@ export const assistantUi = {
     error: "An answer could not be prepared right now. Please try again later.",
     blocked: "I cannot help with that request. You can ask a safe question about using FEMORIA.",
     outOfScope: "I can only help with FEMORIA, product discovery, guides, and platform processes.",
+    noMatch: "I could not find a clear answer to that question in the current FEMORIA content. You can try one of these questions:",
+    readGuide: "Open the related guide for more detail.",
+    safetyReply: "I cannot provide medical diagnosis, allergen guarantees, legal advice, or payment guarantees. You can review FEMORIA’s safety boundaries.",
     links: "Related links",
     quickQuestions: [
       "How does FEMORIA work?",
@@ -95,22 +101,247 @@ const routeFacts = {
   ],
 } as const;
 
+const localRouteKnowledge = [
+  {
+    id: "products",
+    search: { tr: "ürün katalog kategori keşfet arama", en: "product catalog category discover search" },
+    answer: {
+      tr: "Onaylı katalog ürünlerini ürün listeleme sayfasında kategori, şehir ve arama seçenekleriyle inceleyebilirsin.",
+      en: "Browse approved catalog items on the products page using category, city, and search options.",
+    },
+    label: { tr: "Ürünleri keşfet", en: "Explore products" },
+    path: "/products",
+  },
+  {
+    id: "nearby",
+    search: { tr: "yakınımdaki yakın üretici konum il ilçe", en: "nearby local maker location city district" },
+    answer: {
+      tr: "Yakınımdakiler sayfasında kesin adres paylaşmadan il ve ilçe seçerek yaklaşık bölgedeki katalog ürünlerini filtreleyebilirsin.",
+      en: "On the Nearby page, choose a city and district to filter catalog items by approximate area without sharing an exact address.",
+    },
+    label: { tr: "Yakınımdakiler", en: "Nearby" },
+    path: "/nearby",
+  },
+  {
+    id: "how-it-works",
+    search: { tr: "femoria nasıl çalışır süreç sipariş ödeme", en: "how femoria works process order payment" },
+    answer: {
+      tr: "FEMORIA’da ürün keşfi ve bilgi karşılaştırma aktiftir. Tam sipariş, ödeme ve takip akışları henüz planlanan kapsamdadır.",
+      en: "Product discovery and information comparison are available in FEMORIA. Complete ordering, payment, and tracking flows are still planned.",
+    },
+    label: { tr: "Nasıl çalışır?", en: "How it works" },
+    path: "/how-it-works",
+  },
+  {
+    id: "producer-application",
+    search: { tr: "üretici olmak başvuru doğrulama", en: "become maker producer application verification" },
+    answer: {
+      tr: "Üretici başvurusu sayfası gerekli profil, yaklaşık bölge ve ürün örneklerini açıklar. Tam gönderim ve yönetim araçları henüz planlanan kapsamdadır.",
+      en: "The maker application page explains the profile, approximate area, and product examples needed. Full submission and management tools are still planned.",
+    },
+    label: { tr: "Üretici başvurusu", en: "Maker application" },
+    path: "/info/producer-application",
+  },
+  {
+    id: "help",
+    search: { tr: "yardım soru sık sorulan destek", en: "help question frequently asked support" },
+    answer: {
+      tr: "Hesap, katalog, teslimat, gizlilik ve asistan soruları için aranabilir Yardım Merkezi’ni kullanabilirsin.",
+      en: "Use the searchable Help Center for account, catalog, delivery, privacy, and assistant questions.",
+    },
+    label: { tr: "Yardım Merkezi", en: "Help Center" },
+    path: "/info/help",
+  },
+] as const;
+
 const scopeWords = [
   "femoria", "ürün", "urun", "product", "kategori", "category", "mutfak", "kitchen",
   "atölye", "atolye", "workshop", "üretici", "uretici", "maker", "rehber", "guide",
   "favori", "favorite", "teslim", "delivery", "sipariş", "siparis", "order", "konum",
   "location", "yakın", "yakin", "nearby", "hesap", "account", "şifre", "sifre", "password",
+  "profil", "profile", "dil", "language", "locale",
   "başvuru", "basvuru", "application", "güven", "guven", "safety", "alerjen", "allergen",
   "seramik", "ceramic", "ahşap", "ahsap", "wood", "tekstil", "textile", "takı", "taki",
   "jewelry", "merhaba", "hello", "hi", "yardım", "yardim", "help",
 ] as const;
 
 function normalize(value: string): string {
-  return value.toLocaleLowerCase("tr-TR").normalize("NFKD").replace(/[\u0300-\u036f]/g, "");
+  return value
+    .toLocaleLowerCase("tr-TR")
+    .replace(/[ıİ]/g, "i")
+    .replace(/ğ/g, "g")
+    .replace(/ş/g, "s")
+    .replace(/ç/g, "c")
+    .replace(/ö/g, "o")
+    .replace(/ü/g, "u")
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "");
 }
 
 function tokens(value: string): string[] {
   return normalize(value).split(/[^a-z0-9çğıöşü]+/).filter((token) => token.length > 2);
+}
+
+const ignoredTokens = new Set([
+  "femoria", "icin", "hakkinda", "nasil", "nedir", "olan", "olarak", "veya",
+  "bir", "var", "yok", "miyim", "misin", "the", "and", "for", "how", "what", "can", "does", "with", "about",
+  "please", "urun", "urunu", "urunler", "product", "products",
+]);
+
+const conceptAliases = [
+  ["favori", "favorite", "favorites", "kaydet", "saved"],
+  ["konum", "yakinda", "yakindaki", "nearby", "location", "city", "district", "ilce"],
+  ["uretici", "maker", "producer", "basvuru", "apply", "application"],
+  ["seramik", "ceramic", "kupa", "vazo", "glaze"],
+  ["ahsap", "wood", "wooden"],
+  ["orgu", "tekstil", "knit", "crochet", "textile"],
+  ["alerjen", "alerji", "allergen", "allergy", "ingredient", "icerik"],
+  ["teslim", "teslimat", "delivery", "handover", "pickup"],
+  ["siparis", "order", "talep", "request"],
+  ["odeme", "payment", "ucret", "fee"],
+  ["sifre", "password", "hesap", "account", "email", "eposta"],
+  ["dogrulama", "verification", "approved", "onay"],
+  ["malzeme", "material", "bakim", "care", "temiz", "clean"],
+  ["mutfak", "gida", "kitchen", "food", "homemade"],
+  ["atolye", "workshop", "craft", "handmade", "elyapimi"],
+] as const;
+
+function meaningfulTokens(value: string): string[] {
+  return tokens(value).filter((token) => !ignoredTokens.has(token));
+}
+
+function tokensAreRelated(left: string, right: string): boolean {
+  if (left === right) return true;
+  if (left.length < 5 || right.length < 5) return false;
+  return left.slice(0, 5) === right.slice(0, 5);
+}
+
+function relevanceScore(message: string, searchable: string): number {
+  const queryTokens = meaningfulTokens(message);
+  if (!queryTokens.length) return 0;
+  const candidateTokens = meaningfulTokens(searchable);
+  let score = 0;
+
+  for (const queryToken of queryTokens) {
+    if (candidateTokens.includes(queryToken)) {
+      score += 6;
+    } else if (candidateTokens.some((candidate) => tokensAreRelated(queryToken, candidate))) {
+      score += 3;
+    }
+  }
+
+  for (const aliases of conceptAliases) {
+    const normalizedAliases = aliases.map(normalize);
+    const queryHasConcept = queryTokens.some((token) => normalizedAliases.some((alias) => tokensAreRelated(token, alias)));
+    const candidateHasConcept = candidateTokens.some((token) => normalizedAliases.some((alias) => tokensAreRelated(token, alias)));
+    if (queryHasConcept && candidateHasConcept) score += 8;
+  }
+
+  return score;
+}
+
+export function isRestrictedAdviceQuestion(message: string): boolean {
+  const normalized = normalize(message);
+  return [
+    "tibbi teshis", "tibbi tavsiye", "ilac oner", "tedavi oner", "medical diagnosis", "medical advice",
+    "hukuki tavsiye", "yasal tavsiye", "dava ac", "legal advice", "sue someone",
+    "alerjen garantisi", "alerji garantisi", "alerjime kesin", "allergen guarantee", "allergy guarantee", "allergy safe",
+    "odeme garantisi", "odemeyi garanti", "payment guarantee", "guarantee payment",
+  ].some((phrase) => normalized.includes(phrase));
+}
+
+export interface LocalAssistantAnswer {
+  matched: boolean;
+  reply: string;
+  links: AssistantKnowledgeLink[];
+}
+
+interface LocalCandidate {
+  answer: string;
+  href: string;
+  label: string;
+  priority: number;
+  score: number;
+}
+
+export function buildLocalAssistantAnswer(message: string, locale: Locale): LocalAssistantAnswer {
+  const candidates: LocalCandidate[] = [];
+
+  for (const faq of faqItems) {
+    candidates.push({
+      answer: faq.answer[locale],
+      href: `/${locale}/info/help#${faq.id}`,
+      label: faq.question[locale],
+      priority: 4,
+      score: relevanceScore(message, `${faq.question[locale]} ${faq.answer[locale]}`),
+    });
+  }
+
+  for (const guide of guideArticles) {
+    const sectionText = guide.sections.flatMap((section) => [
+      section.title[locale],
+      ...section.paragraphs[locale],
+      ...(section.bullets?.[locale] ?? []),
+    ]).join(" ");
+    const searchable = [
+      guide.title[locale], guide.summary[locale], guide.category[locale], guide.intro[locale],
+      sectionText, guide.conclusion[locale], guide.note?.[locale] ?? "",
+    ].join(" ");
+    candidates.push({
+      answer: `${guide.summary[locale]} ${assistantUi[locale].readGuide}`,
+      href: `/${locale}/guide/${guide.slug}`,
+      label: guide.title[locale],
+      priority: 3,
+      score: relevanceScore(message, searchable),
+    });
+  }
+
+  for (const page of Object.values(infoPages)) {
+    const sectionText = page.sections.flatMap((section) => [
+      section.title[locale],
+      ...section.paragraphs[locale],
+      ...("bullets" in section ? section.bullets[locale] : []),
+      "callout" in section ? section.callout[locale] : "",
+    ]).join(" ");
+    candidates.push({
+      answer: page.intro[locale],
+      href: `/${locale}/info/${page.slug}`,
+      label: page.title[locale],
+      priority: 2,
+      score: relevanceScore(message, `${page.title[locale]} ${page.description[locale]} ${page.intro[locale]} ${sectionText}`),
+    });
+  }
+
+  for (const route of localRouteKnowledge) {
+    candidates.push({
+      answer: route.answer[locale],
+      href: `/${locale}${route.path}`,
+      label: route.label[locale],
+      priority: 5,
+      score: relevanceScore(message, `${route.search[locale]} ${route.answer[locale]}`),
+    });
+  }
+
+  const best = candidates.sort((left, right) =>
+    right.score - left.score || right.priority - left.priority || left.label.localeCompare(right.label, locale)
+  )[0];
+  if (best && best.score >= 6) {
+    return {
+      matched: true,
+      reply: best.answer,
+      links: [{ href: best.href, label: best.label }],
+    };
+  }
+
+  const ui = assistantUi[locale];
+  return {
+    matched: false,
+    reply: `${ui.noMatch}\n• ${ui.quickQuestions.slice(0, 3).join("\n• ")}`,
+    links: [
+      { href: `/${locale}/info/help`, label: locale === "tr" ? "Yardım Merkezi" : "Help Center" },
+      { href: `/${locale}/guide`, label: locale === "tr" ? "Rehberler" : "Guides" },
+    ],
+  };
 }
 
 export function isAssistantScopeQuestion(message: string): boolean {
@@ -189,4 +420,3 @@ Keep the answer concise: at most three short paragraphs. Mention when a feature 
 CONTROLLED KNOWLEDGE:
 ${knowledge}`;
 }
-

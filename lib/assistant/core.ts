@@ -2,7 +2,9 @@ import type { Locale } from "../types";
 import {
   assistantUi,
   buildAssistantInstructions,
+  buildLocalAssistantAnswer,
   isAssistantScopeQuestion,
+  isRestrictedAdviceQuestion,
   looksLikePromptInjection,
   selectAssistantKnowledge,
   type AssistantKnowledgeLink,
@@ -42,19 +44,27 @@ export async function answerAssistant(input: {
   const ui = assistantUi[locale];
   const knowledge = selectAssistantKnowledge(message, locale);
 
+  if (looksLikePromptInjection(message)) {
+    return { status: "blocked", reply: ui.blocked, links: [] };
+  }
+  if (isRestrictedAdviceQuestion(message)) {
+    return {
+      status: "blocked",
+      reply: ui.safetyReply,
+      links: [{ href: `/${locale}/info/safety`, label: locale === "tr" ? "Güvenlik" : "Safety" }],
+    };
+  }
+  if (!isAssistantScopeQuestion(message)) {
+    return { status: "out_of_scope", reply: ui.outOfScope, links: knowledge.links };
+  }
   if (!client) {
-    return { status: "unavailable", reply: ui.unavailable, links: knowledge.links };
+    const localAnswer = buildLocalAssistantAnswer(message, locale);
+    return { status: "ok", reply: localAnswer.reply, links: localAnswer.links };
   }
 
   try {
     if (await client.isFlagged(message)) {
       return { status: "blocked", reply: ui.blocked, links: [] };
-    }
-    if (looksLikePromptInjection(message)) {
-      return { status: "blocked", reply: ui.blocked, links: [] };
-    }
-    if (!isAssistantScopeQuestion(message)) {
-      return { status: "out_of_scope", reply: ui.outOfScope, links: knowledge.links };
     }
 
     const reply = await client.createResponse({

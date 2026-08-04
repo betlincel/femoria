@@ -36,10 +36,39 @@ describe("FEMORIA assistant request boundary", () => {
 });
 
 describe("FEMORIA assistant safeguards", () => {
-  it("returns the localized unavailable state without an API client", async () => {
-    const result = await answerAssistant({ locale: "tr", message: "Ürünleri nasıl bulurum?", history: [], client: null });
-    expect(result.status).toBe("unavailable");
-    expect(result.reply).toBe(assistantUi.tr.unavailable);
+  it("answers a matching FAQ without an API client", async () => {
+    const result = await answerAssistant({ locale: "tr", message: "Favoriler nasıl çalışıyor?", history: [], client: null });
+    expect(result.status).toBe("ok");
+    expect(result.reply).toContain("feature flag");
+    expect(result.links).toContainEqual(expect.objectContaining({ href: "/tr/info/help#favorites-disabled" }));
+  });
+
+  it("answers a Turkish account question from local knowledge", async () => {
+    const result = await answerAssistant({ locale: "tr", message: "Şifremi unuttum, ne yapmalıyım?", history: [], client: null });
+    expect(result.status).toBe("ok");
+    expect(result.reply).toContain("henüz");
+    expect(result.links).toContainEqual(expect.objectContaining({ href: "/tr/info/help#forgot-password" }));
+  });
+
+  it("answers an English question from local knowledge", async () => {
+    const result = await answerAssistant({ locale: "en", message: "How can I change my preferred language?", history: [], client: null });
+    expect(result.status).toBe("ok");
+    expect(result.reply).toContain("TR/EN");
+    expect(result.links).toContainEqual(expect.objectContaining({ href: "/en/info/help#profile-language" }));
+  });
+
+  it("matches a local guide and includes its localized route", async () => {
+    const result = await answerAssistant({ locale: "tr", message: "Seramik ürünleri nasıl temizlerim?", history: [], client: null });
+    expect(result.status).toBe("ok");
+    expect(result.links).toContainEqual(expect.objectContaining({ href: "/tr/guide/seramik-urun-bakimi" }));
+  });
+
+  it("offers quick questions when local knowledge has no match", async () => {
+    const result = await answerAssistant({ locale: "tr", message: "FEMORIA'da mor uzay gemisi var mı?", history: [], client: null });
+    expect(result.status).toBe("ok");
+    expect(result.reply).toContain(assistantUi.tr.noMatch);
+    expect(result.reply).toContain(assistantUi.tr.quickQuestions[0]);
+    expect(result.links).toContainEqual(expect.objectContaining({ href: "/tr/info/help" }));
   });
 
   it("blocks moderated input before creating a model response", async () => {
@@ -62,11 +91,21 @@ describe("FEMORIA assistant safeguards", () => {
   });
 
   it("declines out-of-scope questions in English", async () => {
-    const ai = client();
-    const result = await answerAssistant({ locale: "en", message: "Who won the football match?", history: [], client: ai });
+    const result = await answerAssistant({ locale: "en", message: "Who won the football match?", history: [], client: null });
     expect(result.status).toBe("out_of_scope");
     expect(result.reply).toContain("FEMORIA");
-    expect(ai.createResponse).not.toHaveBeenCalled();
+  });
+
+  it("keeps restricted advice inside the safety boundary without an API client", async () => {
+    const result = await answerAssistant({
+      locale: "tr",
+      message: "FEMORIA ürününün alerjime kesin uygun olduğunu garanti eder misin?",
+      history: [],
+      client: null,
+    });
+    expect(result.status).toBe("blocked");
+    expect(result.reply).toBe(assistantUi.tr.safetyReply);
+    expect(result.links).toContainEqual(expect.objectContaining({ href: "/tr/info/safety" }));
   });
 
   it("returns a localized safe error when the AI service fails", async () => {
