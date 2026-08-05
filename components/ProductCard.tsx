@@ -7,6 +7,7 @@ import { Badge } from "./Badge";
 import { FavoriteButton } from "./FavoriteButton";
 import { Icon } from "./Icons";
 import { SafeImage } from "./SafeImage";
+import { AddToCartButton } from "./AddToCartButton";
 
 export function ProductCard({
   product,
@@ -108,6 +109,7 @@ export function ProductCard({
 
         <div className="product-foot">
           <span className="price">{price}</span>
+          <AddToCartButton productId={product.id} locale={locale} disabled={!product.commerceReady || product.stockMode === "unavailable"} compact />
           <Link
             className="card-arrow"
             href={`/${locale}/products/${product.slug}`}

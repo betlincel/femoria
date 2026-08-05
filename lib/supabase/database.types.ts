@@ -232,6 +232,7 @@ export type Database = {
           address_line: string;
           city: string;
           district: string;
+          neighborhood: string | null;
           postal_code: string | null;
           delivery_instructions: string | null;
           is_default: boolean;
@@ -247,6 +248,7 @@ export type Database = {
           address_line: string;
           city: string;
           district: string;
+          neighborhood?: string | null;
           postal_code?: string | null;
           delivery_instructions?: string | null;
           is_default?: boolean;
@@ -264,9 +266,81 @@ export type Database = {
           },
         ];
       };
+      carts: {
+        Row: { id: string; user_id: string; created_at: string; updated_at: string };
+        Insert: { id?: string; user_id: string; created_at?: string; updated_at?: string };
+        Update: Partial<Database["public"]["Tables"]["carts"]["Insert"]>;
+        Relationships: [{ foreignKeyName: "carts_user_id_fkey"; columns: ["user_id"]; isOneToOne: true; referencedRelation: "profiles"; referencedColumns: ["id"] }];
+      };
+      cart_items: {
+        Row: { id: string; cart_id: string; product_id: string; quantity: number; created_at: string; updated_at: string };
+        Insert: { id?: string; cart_id: string; product_id: string; quantity: number; created_at?: string; updated_at?: string };
+        Update: Partial<Database["public"]["Tables"]["cart_items"]["Insert"]>;
+        Relationships: [
+          { foreignKeyName: "cart_items_cart_id_fkey"; columns: ["cart_id"]; isOneToOne: false; referencedRelation: "carts"; referencedColumns: ["id"] },
+          { foreignKeyName: "cart_items_product_id_fkey"; columns: ["product_id"]; isOneToOne: false; referencedRelation: "products"; referencedColumns: ["id"] },
+        ];
+      };
+      orders: {
+        Row: {
+          id: string; checkout_group_id: string; checkout_attempt_id: string; buyer_id: string; producer_id: string;
+          producer_name_snapshot: string; order_number: string; order_status: Database["public"]["Enums"]["order_status"];
+          payment_status: Database["public"]["Enums"]["payment_status"]; currency: string; subtotal_minor: number;
+          shipping_minor: number; total_minor: number; recipient_name: string; phone: string; city: string; district: string;
+          neighborhood: string; address_line: string; postal_code: string | null; delivery_note: string | null;
+          created_at: string; updated_at: string; paid_at: string | null; expires_at: string | null;
+        };
+        Insert: {
+          id?: string; checkout_group_id: string; checkout_attempt_id: string; buyer_id: string; producer_id: string;
+          producer_name_snapshot: string; order_number: string; order_status?: Database["public"]["Enums"]["order_status"];
+          payment_status?: Database["public"]["Enums"]["payment_status"]; currency: string; subtotal_minor: number;
+          shipping_minor?: number; total_minor: number; recipient_name: string; phone: string; city: string; district: string;
+          neighborhood: string; address_line: string; postal_code?: string | null; delivery_note?: string | null;
+          created_at?: string; updated_at?: string; paid_at?: string | null; expires_at?: string | null;
+        };
+        Update: Partial<Database["public"]["Tables"]["orders"]["Insert"]>;
+        Relationships: [
+          { foreignKeyName: "orders_buyer_id_fkey"; columns: ["buyer_id"]; isOneToOne: false; referencedRelation: "profiles"; referencedColumns: ["id"] },
+          { foreignKeyName: "orders_producer_id_fkey"; columns: ["producer_id"]; isOneToOne: false; referencedRelation: "profiles"; referencedColumns: ["id"] },
+        ];
+      };
+      order_items: {
+        Row: {
+          id: string; order_id: string; product_id: string | null; product_slug_snapshot: string;
+          product_title_tr_snapshot: string; product_title_en_snapshot: string; unit_price_minor: number;
+          quantity: number; line_total_minor: number; image_path_snapshot: string | null; created_at: string;
+        };
+        Insert: {
+          id?: string; order_id: string; product_id?: string | null; product_slug_snapshot: string;
+          product_title_tr_snapshot: string; product_title_en_snapshot: string; unit_price_minor: number;
+          quantity: number; line_total_minor: number; image_path_snapshot?: string | null; created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["order_items"]["Insert"]>;
+        Relationships: [
+          { foreignKeyName: "order_items_order_id_fkey"; columns: ["order_id"]; isOneToOne: false; referencedRelation: "orders"; referencedColumns: ["id"] },
+          { foreignKeyName: "order_items_product_id_fkey"; columns: ["product_id"]; isOneToOne: false; referencedRelation: "products"; referencedColumns: ["id"] },
+        ];
+      };
     };
     Views: { [_ in never]: never };
     Functions: {
+      add_product_to_cart: { Args: { target_product_id: string; input_quantity?: number }; Returns: string };
+      clear_cart: { Args: Record<PropertyKey, never>; Returns: number };
+      create_awaiting_payment_orders: { Args: { target_address_id: string; checkout_attempt_id: string }; Returns: Json };
+      create_user_address: {
+        Args: { input_label: string; input_recipient_name: string; input_phone: string; input_city: string; input_district: string; input_neighborhood: string; input_address_line: string; input_postal_code?: string | null; input_delivery_note?: string | null; input_is_default?: boolean };
+        Returns: string;
+      };
+      delete_user_address: { Args: { target_address_id: string }; Returns: boolean };
+      get_cart_quantity: { Args: Record<PropertyKey, never>; Returns: number };
+      get_cart_snapshot: { Args: Record<PropertyKey, never>; Returns: Json };
+      remove_cart_item: { Args: { target_cart_item_id: string }; Returns: boolean };
+      set_default_user_address: { Args: { target_address_id: string }; Returns: boolean };
+      update_cart_item_quantity: { Args: { target_cart_item_id: string; input_quantity: number }; Returns: boolean };
+      update_user_address: {
+        Args: { target_address_id: string; input_label: string; input_recipient_name: string; input_phone: string; input_city: string; input_district: string; input_neighborhood: string; input_address_line: string; input_postal_code?: string | null; input_delivery_note?: string | null; input_is_default?: boolean };
+        Returns: boolean;
+      };
       add_seller_product_image: {
         Args: { target_product_id: string; input_storage_path: string; input_alt_tr: string; input_alt_en: string };
         Returns: string | null;
@@ -320,6 +394,8 @@ export type Database = {
       category_kind: "food" | "craft";
       product_status: "draft" | "pending" | "approved" | "rejected";
       stock_mode: "in_stock" | "made_to_order" | "unavailable";
+      order_status: "awaiting_payment" | "confirmed" | "preparing" | "shipped" | "delivered" | "cancelled" | "expired";
+      payment_status: "unpaid" | "pending" | "paid" | "failed" | "refunded";
     };
     CompositeTypes: { [_ in never]: never };
   };

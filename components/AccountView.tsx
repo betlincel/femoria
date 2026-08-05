@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { z } from "zod";
 import type { profileSchema } from "@/lib/auth";
-import type { Messages } from "@/lib/i18n";
+import { commerceUi, type Messages } from "@/lib/i18n";
 import type { Locale } from "@/lib/types";
 import { isActiveAdminProfile, isAdminProfile, isApprovedSeller } from "@/lib/account-access";
 import { accountEditorial } from "@/lib/content/editorial-content";
@@ -26,6 +26,7 @@ export function AccountView({
   messages: Messages;
 }) {
   const admin = isAdminProfile(profile);
+  const commerce = commerceUi[locale];
   const activeAdmin = isActiveAdminProfile(profile);
   const approvedSeller = isApprovedSeller(
     profile,
@@ -55,6 +56,9 @@ export function AccountView({
           </div>
         </div>
         <div className="account-actions">
+          <Link className="btn btn-primary" href={`/${locale}/account/orders`}>
+            <Icon name="bag" />{commerce.ordersTitle}
+          </Link>
           <Link className="btn btn-secondary" href={`/${locale}/favorites`}>
             <Icon name="heart" />{m.favorites}
           </Link>

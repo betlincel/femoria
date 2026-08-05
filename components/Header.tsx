@@ -24,10 +24,12 @@ export function Header({
   locale,
   messages: m,
   sellerNavigation,
+  cartQuantity,
 }: {
   locale: Locale;
   messages: Messages;
   sellerNavigation: SellerNavigationState;
+  cartQuantity: number;
 }) {
   const pathname = usePathname();
   const otherLocale = locale === "tr" ? "en" : "tr";
@@ -148,8 +150,9 @@ export function Header({
               <Icon name="heart" />
               {ids.length ? <span className="nav-count">{ids.length}</span> : null}
             </Link>
-            <Link className="icon-button desktop-action" href={`/${locale}/cart`} aria-label={m.cart}>
+            <Link className="icon-button desktop-action nav-count-link" href={`/${locale}/cart`} aria-label={m.cart}>
               <Icon name="bag" />
+              {cartQuantity ? <span className="nav-count">{cartQuantity}</span> : null}
             </Link>
             <Link className="login-button desktop-action" href={`/${locale}/login`}>{m.login}</Link>
             <button
@@ -175,6 +178,7 @@ export function Header({
         pathname={pathname}
         messages={m}
         sellerNavigation={sellerNavigation}
+        cartQuantity={cartQuantity}
         onClose={() => setDrawerOpen(false)}
         onLocation={() => {
           setDrawerOpen(false);

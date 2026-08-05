@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { productWorlds, type Messages } from "@/lib/i18n";
+import { commerceUi, productWorlds, type Messages } from "@/lib/i18n";
 import type { Locale, ProductWorld } from "@/lib/types";
 import { Icon } from "./Icons";
 import { Logo } from "./Logo";
@@ -12,6 +12,7 @@ export function MobileDrawer({
   pathname,
   messages: m,
   sellerNavigation,
+  cartQuantity,
   onClose,
   onLocation,
 }: {
@@ -21,6 +22,7 @@ export function MobileDrawer({
   pathname: string;
   messages: Messages;
   sellerNavigation: SellerNavigationState;
+  cartQuantity: number;
   onClose: () => void;
   onLocation: () => void;
 }) {
@@ -97,8 +99,9 @@ export function MobileDrawer({
           {sellerNavigation === "none" ? <Link className="drawer-link" href={`/${locale}/info/producer-application`} onClick={onClose}>{m.startApplication}<Icon name="chevron" size={18} /></Link> : null}
         </nav>
         <div className="drawer-account-links">
+          <Link className={pathname.startsWith(`/${locale}/account/orders`) ? "active" : ""} href={`/${locale}/account/orders`} onClick={onClose}>{commerceUi[locale].ordersTitle}</Link>
           <Link className={pathname.startsWith(`/${locale}/favorites`) ? "active" : ""} href={`/${locale}/favorites`} onClick={onClose}>{m.favorites}</Link>
-          <Link className={pathname.startsWith(`/${locale}/cart`) ? "active" : ""} href={`/${locale}/cart`} onClick={onClose}>{m.cart}</Link>
+          <Link className={pathname.startsWith(`/${locale}/cart`) ? "active" : ""} href={`/${locale}/cart`} onClick={onClose}>{m.cart}{cartQuantity ? ` (${cartQuantity})` : ""}</Link>
           <Link className={pathname.startsWith(`/${locale}/account`) ? "active" : ""} href={`/${locale}/account`} onClick={onClose}>{m.nav.account}</Link>
         </div>
         <div className="drawer-actions">

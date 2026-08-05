@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { Icon } from "@/components/Icons";
 import { FavoriteButton } from "@/components/FavoriteButton";
 import { SafeImage } from "@/components/SafeImage";
+import { AddToCartButton } from "@/components/AddToCartButton";
 import { getCatalogProductBySlug } from "@/lib/catalog";
 import { deliveryLabels, getLocale, translations } from "@/lib/i18n";
 
@@ -62,7 +63,7 @@ export default async function ProductDetailPage({
         <p className="detail-description">{product.description[locale]}</p>
         <div className="detail-price">{price}</div>
         <div className="detail-actions">
-          <Link className="btn btn-primary order-button" href={`/${locale}/how-it-works`}>{m.requestOrder}<Icon name="arrow" /></Link>
+          <AddToCartButton productId={product.id} locale={locale} disabled={!product.commerceReady || product.stockMode === "unavailable"} />
           <FavoriteButton productId={product.id} addLabel={m.addFavorite} removeLabel={m.removeFavorite} className="btn btn-secondary detail-favorite" withText />
         </div>
         {hasProductInfo ? <h2 className="detail-subtitle">{m.aboutProduct}</h2> : null}

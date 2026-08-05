@@ -9,9 +9,11 @@ import { Icon } from "./Icons";
 export function BottomNav({
   locale,
   messages: m,
+  cartQuantity,
 }: {
   locale: Locale;
   messages: Messages;
+  cartQuantity: number;
 }) {
   const pathname = usePathname();
   const items = [
@@ -32,6 +34,7 @@ export function BottomNav({
         return (
           <Link className={active ? "active" : ""} href={item.href} key={`${item.label}-${item.icon}`}>
             <Icon name={item.icon} size={20} />
+            {item.icon === "bag" && cartQuantity ? <span className="bottom-nav-count">{cartQuantity}</span> : null}
             <span>{item.label}</span>
           </Link>
         );

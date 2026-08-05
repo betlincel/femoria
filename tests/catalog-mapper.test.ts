@@ -78,7 +78,11 @@ describe("catalog row mapper", () => {
       category: "dried",
       producer: "Emine'nin Kileri",
       price: 145.5,
+      priceMinor: 14550,
       currency: "TRY",
+      stockMode: "in_stock",
+      stockQuantity: 4,
+      commerceReady: true,
       image: "https://storage.example/products/main.webp",
     });
     expect(product?.imageAlt?.tr).toBe("Ana görsel");

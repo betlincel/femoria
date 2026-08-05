@@ -1197,6 +1197,45 @@ export const deliveryLabels: Record<DeliveryType, Record<Locale, string>> = {
   shipping: { tr: "Kargo", en: "Shipping" },
 };
 
+export const commerceUi = {
+  tr: {
+    cartTitle: "Sepetim", cartEyebrow: "Güvenli alışveriş", cartIntro: "Ürünlerinizi üretici bazında inceleyin ve teslimat adımına geçin.",
+    addToCart: "Sepete ekle", addedToCart: "Sepete eklendi", remove: "Sepetten kaldır", increase: "Adedi artır", decrease: "Adedi azalt",
+    cartEmptyTitle: "Sepetiniz boş", cartEmptyText: "FEMORIA üreticilerinin ürünlerini keşfederek sepetinizi oluşturabilirsiniz.", explore: "Ürünleri keşfet",
+    unitPrice: "Birim fiyat", quantity: "Adet", lineTotal: "Satır toplamı", subtotal: "Ara toplam", total: "Toplam", shipping: "Kargo",
+    checkout: "Ödeme aşamasına geç", clearCart: "Sepeti temizle", processing: "İşleniyor…", unavailable: "Bu ürün artık satışta değil.",
+    insufficientStock: "Yeterli stok bulunmuyor.", ownProduct: "Kendi ürününüzü satın alamazsınız.", operationFailed: "İşlem gerçekleştirilemedi.",
+    madeToOrder: "Sipariş üzerine hazırlanır", inStock: "Stokta", preparationDays: "{days} gün içinde hazırlanır", invalidItems: "Sepette checkout'a dahil edilemeyen ürünler var. Devam etmeden önce kaldırın.",
+    checkoutTitle: "Sipariş özeti", checkoutEyebrow: "Teslimat ve onay", deliveryAddress: "Teslimat adresi", selectAddress: "Bir teslimat adresi seçin", newAddress: "Yeni adres ekle", editAddress: "Adresi düzenle",
+    defaultAddress: "Varsayılan adres", makeDefault: "Varsayılan yap", deleteAddress: "Adresi sil", saveAddress: "Adresi kaydet", cancel: "Vazgeç",
+    label: "Adres etiketi", recipientName: "Alıcı adı", phone: "Telefon", city: "Şehir", district: "İlçe", neighborhood: "Mahalle", addressLine: "Açık adres", postalCode: "Posta kodu", deliveryNote: "Teslimat notu",
+    addressLimit: "En fazla 10 adres ekleyebilirsiniz.", noAddress: "Checkout için önce bir teslimat adresi ekleyin.", shippingNotice: "Kargo hesaplaması ödeme entegrasyonu aşamasında netleşecektir.",
+    paymentNotice: "Bu aşamada kartınızdan ödeme alınmaz. Sipariş, ödeme bekliyor durumunda oluşturulur.", createOrder: "Siparişi oluştur", created: "Sipariş başarıyla oluşturuldu.",
+    ordersTitle: "Siparişlerim", ordersEyebrow: "Sipariş geçmişi", ordersIntro: "Ödeme bekleyen ve geçmiş siparişlerinizi güvenli biçimde görüntüleyin.", noOrders: "Henüz siparişiniz bulunmuyor", orderDetail: "Sipariş detayı", orderNumber: "Sipariş numarası", producer: "Üretici", productCount: "Ürün adedi", createdAt: "Oluşturulma tarihi", viewDetail: "Detayı görüntüle",
+    orderStatus: { awaiting_payment: "Ödeme bekleniyor", confirmed: "Onaylandı", preparing: "Hazırlanıyor", shipped: "Kargoya verildi", delivered: "Teslim edildi", cancelled: "İptal edildi", expired: "Süresi doldu" },
+    paymentStatus: { unpaid: "Ödenmedi", pending: "Ödeme bekleniyor", paid: "Ödendi", failed: "Ödeme başarısız", refunded: "İade edildi" },
+    unpaidNotice: "Bu sipariş için henüz ödeme alınmadı.", addressSnapshot: "Teslimat adresi", backOrders: "Siparişlere dön", loading: "Bilgiler hazırlanıyor", retry: "Tekrar dene",
+  },
+  en: {
+    cartTitle: "My cart", cartEyebrow: "Secure shopping", cartIntro: "Review your items by maker and continue to delivery.",
+    addToCart: "Add to cart", addedToCart: "Added to cart", remove: "Remove from cart", increase: "Increase quantity", decrease: "Decrease quantity",
+    cartEmptyTitle: "Your cart is empty", cartEmptyText: "Discover products from FEMORIA makers to start your cart.", explore: "Discover products",
+    unitPrice: "Unit price", quantity: "Quantity", lineTotal: "Line total", subtotal: "Subtotal", total: "Total", shipping: "Shipping",
+    checkout: "Continue to checkout", clearCart: "Clear cart", processing: "Processing…", unavailable: "This product is no longer available.",
+    insufficientStock: "There is not enough stock.", ownProduct: "You cannot purchase your own product.", operationFailed: "The operation could not be completed.",
+    madeToOrder: "Made to order", inStock: "In stock", preparationDays: "Prepared within {days} days", invalidItems: "Some cart items cannot be checked out. Remove them before continuing.",
+    checkoutTitle: "Order summary", checkoutEyebrow: "Delivery and confirmation", deliveryAddress: "Delivery address", selectAddress: "Select a delivery address", newAddress: "Add new address", editAddress: "Edit address",
+    defaultAddress: "Default address", makeDefault: "Make default", deleteAddress: "Delete address", saveAddress: "Save address", cancel: "Cancel",
+    label: "Address label", recipientName: "Recipient name", phone: "Phone", city: "City", district: "District", neighborhood: "Neighborhood", addressLine: "Address line", postalCode: "Postal code", deliveryNote: "Delivery note",
+    addressLimit: "You can add up to 10 addresses.", noAddress: "Add a delivery address before checking out.", shippingNotice: "Shipping costs will be confirmed when payment integration is added.",
+    paymentNotice: "Your card will not be charged at this stage. The order is created as awaiting payment.", createOrder: "Create order", created: "Order created successfully.",
+    ordersTitle: "My orders", ordersEyebrow: "Order history", ordersIntro: "Securely review awaiting-payment and past orders.", noOrders: "You do not have any orders yet", orderDetail: "Order details", orderNumber: "Order number", producer: "Maker", productCount: "Product count", createdAt: "Created at", viewDetail: "View details",
+    orderStatus: { awaiting_payment: "Awaiting payment", confirmed: "Confirmed", preparing: "Preparing", shipped: "Shipped", delivered: "Delivered", cancelled: "Cancelled", expired: "Expired" },
+    paymentStatus: { unpaid: "Unpaid", pending: "Payment pending", paid: "Paid", failed: "Payment failed", refunded: "Refunded" },
+    unpaidNotice: "No payment has been collected for this order yet.", addressSnapshot: "Delivery address", backOrders: "Back to orders", loading: "Preparing information", retry: "Try again",
+  },
+} as const;
+
 export const guides = [
   {
     no: "01",

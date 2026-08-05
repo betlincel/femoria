@@ -32,9 +32,15 @@ export interface Product {
   title: LocalizedText;
   description: LocalizedText;
   producer: string;
+  producerId?: string;
   producerStory: LocalizedText;
   price: number;
+  priceMinor?: number;
   currency: string;
+  stockMode?: "in_stock" | "made_to_order" | "unavailable";
+  stockQuantity?: number | null;
+  preparationDays?: number;
+  commerceReady?: boolean;
   city: string;
   district: string;
   distanceKm?: number;
