@@ -19,6 +19,7 @@ const productRowSchema = z.object({
   status: z.enum(["draft", "pending", "approved", "rejected"]),
   stock_mode: z.enum(["in_stock", "made_to_order", "unavailable"]), stock_quantity: z.number().int().nullable(),
   preparation_days: z.number().int(), city: z.string(), district: z.string(), created_at: z.string(), updated_at: z.string(),
+  rejection_reason: z.string().nullable(), reviewed_at: z.string().nullable(), reviewed_by: z.string().uuid().nullable(),
   category: z.union([categorySchema, z.array(categorySchema)]), images: z.array(imageSchema),
 }).strict();
 
@@ -31,7 +32,7 @@ export type SellerProduct = Omit<z.infer<typeof productRowSchema>, "category" | 
 const PRODUCT_SELECT = `
   id, category_id, slug, title_tr, title_en, description_tr, description_en,
   price_minor, currency, status, stock_mode, stock_quantity, preparation_days,
-  city, district, created_at, updated_at,
+  city, district, rejection_reason, reviewed_at, reviewed_by, created_at, updated_at,
   category:categories!products_category_id_fkey!inner(id, slug, name_tr, name_en, kind, active, sort_order),
   images:product_images(id, storage_path, alt_tr, alt_en, sort_order)
 `;

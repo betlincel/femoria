@@ -36,6 +36,7 @@ describe("single-account access model", () => {
     expect(isActiveAdminProfile(activeUser)).toBe(false);
     expect(isStandardUser(admin)).toBe(false);
     expect(canApplyAsSeller(admin, null)).toBe(false);
+    expect(canManageOwnProducts(admin, approved)).toBe(false);
   });
 
   it("treats legacy buyer and producer values as standard users", () => {

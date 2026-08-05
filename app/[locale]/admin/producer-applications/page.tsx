@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { AdminSectionNav } from "@/components/AdminSectionNav";
 import { AdminProducerApplicationsPanel } from "@/components/AdminProducerApplicationsPanel";
 import { EmptyState } from "@/components/EmptyState";
 import {
@@ -122,6 +123,7 @@ export default async function AdminProducerApplicationsPage({
       </section>
       <section className="section admin-applications-section">
         <div className="container">
+          <AdminSectionNav locale={locale} active="applications" />
           <nav className="admin-filter-tabs" aria-label={ui.status}>
             {tabs.map((tab) => (
               <Link

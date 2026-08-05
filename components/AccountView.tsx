@@ -3,7 +3,7 @@ import type { z } from "zod";
 import type { profileSchema } from "@/lib/auth";
 import type { Messages } from "@/lib/i18n";
 import type { Locale } from "@/lib/types";
-import { isAdminProfile, isApprovedSeller } from "@/lib/account-access";
+import { isActiveAdminProfile, isAdminProfile, isApprovedSeller } from "@/lib/account-access";
 import { accountEditorial } from "@/lib/content/editorial-content";
 import type { ProducerApplicationStatus } from "@/lib/producer-application";
 import { signOut } from "@/app/[locale]/account/actions";
@@ -26,6 +26,7 @@ export function AccountView({
   messages: Messages;
 }) {
   const admin = isAdminProfile(profile);
+  const activeAdmin = isActiveAdminProfile(profile);
   const approvedSeller = isApprovedSeller(
     profile,
     sellerStatus ? { verification_status: sellerStatus } : null,
@@ -64,15 +65,20 @@ export function AccountView({
         </div>
       </article>
       <ProfileForm profile={profile} locale={locale} messages={m} />
-      {admin ? (
+      {activeAdmin ? (
         <section className="account-admin-tools" aria-labelledby="account-admin-tools-title">
           <div>
             <p className="eyebrow">{m.adminManagement}</p>
-            <h2 id="account-admin-tools-title">{m.adminProducerApplications}</h2>
+            <h2 id="account-admin-tools-title">{m.adminManagement}</h2>
           </div>
-          <Link className="btn btn-primary" href={`/${locale}/admin/producer-applications`}>
-            {m.adminProducerApplications}<Icon name="arrow" size={18} />
-          </Link>
+          <div className="account-admin-links">
+            <Link className="btn btn-secondary" href={`/${locale}/admin/producer-applications`}>
+              {m.adminProducerApplications}<Icon name="arrow" size={18} />
+            </Link>
+            <Link className="btn btn-primary" href={`/${locale}/admin/products`}>
+              {m.adminProductReviews}<Icon name="arrow" size={18} />
+            </Link>
+          </div>
         </section>
       ) : null}
       <section className="account-info-grid" aria-label={locale === "tr" ? "Hesap bilgileri" : "Account information"}>

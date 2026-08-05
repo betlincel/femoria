@@ -26,10 +26,10 @@ export function isStandardUser(profile: AccessProfile): boolean {
 }
 
 export function isApprovedSeller(
-  profile: Pick<AccessProfile, "status">,
+  profile: AccessProfile,
   sellerProfile: SellerProfile | null | undefined,
 ): boolean {
-  return profile.status === "active" && sellerProfile?.verification_status === "approved";
+  return profile.role !== "admin" && profile.status === "active" && sellerProfile?.verification_status === "approved";
 }
 
 export function canApplyAsSeller(
@@ -40,7 +40,7 @@ export function canApplyAsSeller(
 }
 
 export function canManageOwnProducts(
-  profile: Pick<AccessProfile, "status">,
+  profile: AccessProfile,
   sellerProfile: SellerProfile | null | undefined,
 ): boolean {
   return isApprovedSeller(profile, sellerProfile);
@@ -50,19 +50,20 @@ export function getSellerAccessState(
   profile: AccessProfile,
   sellerProfile: SellerProfile | null | undefined,
 ): SellerAccessState {
+  if (profile.role === "admin") return "none";
   if (profile.status !== "active") return "suspended";
   return sellerProfile?.verification_status ?? "none";
 }
 
 export function canCreateProduct(
-  profile: Pick<AccessProfile, "status">,
+  profile: AccessProfile,
   sellerProfile: SellerProfile | null | undefined,
 ): boolean {
   return isApprovedSeller(profile, sellerProfile);
 }
 
 export function canEditProduct(
-  profile: Pick<AccessProfile, "status">,
+  profile: AccessProfile,
   sellerProfile: SellerProfile | null | undefined,
   productStatus: SellerManagedProductStatus,
 ): boolean {

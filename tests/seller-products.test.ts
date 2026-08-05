@@ -33,7 +33,7 @@ describe("seller access and product validation", () => {
     expect(canCreateProduct(active, pending)).toBe(false);
     const admin: AccessProfile = { role: "admin", status: "active" };
     expect(canCreateProduct(admin, null)).toBe(false);
-    expect(canCreateProduct(admin, approved)).toBe(true);
+    expect(canCreateProduct(admin, approved)).toBe(false);
   });
 
   it("edits, submits, deletes, and manages images only for draft or rejected products", () => {

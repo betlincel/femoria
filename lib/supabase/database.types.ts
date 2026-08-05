@@ -115,6 +115,9 @@ export type Database = {
           preparation_days: number;
           city: string;
           district: string;
+          rejection_reason: string | null;
+          reviewed_at: string | null;
+          reviewed_by: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -135,6 +138,9 @@ export type Database = {
           preparation_days?: number;
           city: string;
           district: string;
+          rejection_reason?: string | null;
+          reviewed_at?: string | null;
+          reviewed_by?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -150,6 +156,13 @@ export type Database = {
           {
             foreignKeyName: "products_producer_id_fkey";
             columns: ["producer_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "products_reviewed_by_fkey";
+            columns: ["reviewed_by"];
             isOneToOne: false;
             referencedRelation: "profiles";
             referencedColumns: ["id"];
@@ -273,6 +286,14 @@ export type Database = {
         Args: {
           target_profile_id: string;
           review_action: string;
+        };
+        Returns: boolean;
+      };
+      review_product: {
+        Args: {
+          target_product_id: string;
+          review_action: string;
+          input_rejection_reason?: string | null;
         };
         Returns: boolean;
       };

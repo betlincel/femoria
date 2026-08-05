@@ -35,6 +35,7 @@ function catalogRow() {
     },
     producer: {
       id: producerId,
+      role: "user",
       display_name: "Emine'nin Kileri",
       status: "active",
       producer_profile: {
@@ -98,6 +99,12 @@ describe("catalog row mapper", () => {
   it("does not expose products from a suspended producer profile owner", () => {
     const row = catalogRow();
     row.producer.status = "suspended";
+    expect(mapCatalogProduct(row, (path) => path)).toBeNull();
+  });
+
+  it("does not grant seller catalog visibility to an administrator role", () => {
+    const row = catalogRow();
+    row.producer.role = "admin";
     expect(mapCatalogProduct(row, (path) => path)).toBeNull();
   });
 });
