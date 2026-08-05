@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { reviewAdminProduct } from "@/app/[locale]/admin/products/actions";
+import { getAdminProductReviewState, type AdminProductWorkflowStatus } from "@/lib/admin-products";
 import { adminProductsUi } from "@/lib/i18n";
 import type { Locale } from "@/lib/types";
 import { Icon } from "./Icons";
@@ -18,7 +19,7 @@ export function AdminProductReviewPanel({
   locale: Locale;
   productId: string;
   productTitle: string;
-  status: "draft" | "pending" | "approved" | "rejected";
+  status: AdminProductWorkflowStatus;
 }) {
   const ui = adminProductsUi[locale];
   const router = useRouter();
@@ -27,6 +28,7 @@ export function AdminProductReviewPanel({
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [pending, startTransition] = useTransition();
   const dialogRef = useRef<HTMLElement>(null);
+  const { isPending, isReviewed, canReview } = getAdminProductReviewState(status);
 
   useEffect(() => {
     if (!selection) return;
@@ -38,9 +40,11 @@ export function AdminProductReviewPanel({
     return () => document.removeEventListener("keydown", closeOnEscape);
   }, [pending, selection]);
 
-  if (status !== "pending") {
+  if (isReviewed) {
     return <p className="admin-product-reviewed-note" role="status"><Icon name="shield" />{ui.alreadyReviewed}</p>;
   }
+
+  if (!isPending || !canReview) return null;
 
   const trimmedReason = rejectionReason.trim();
   const validReason = trimmedReason.length >= 10 && trimmedReason.length <= 1_000;
@@ -68,7 +72,7 @@ export function AdminProductReviewPanel({
         return;
       }
       if (result.status === "conflict") {
-        setFeedback({ type: "error", text: ui.staleProduct });
+        setFeedback({ type: "error", text: ui.operationFailed });
         setSelection(null);
         router.refresh();
         return;

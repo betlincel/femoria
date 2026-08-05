@@ -3,6 +3,7 @@ import {
   adminProductReviewInputSchema,
   countAdminProductStatuses,
   filterAdminProducts,
+  getAdminProductReviewState,
   mapAdminProduct,
   parseAdminProductFilters,
 } from "@/lib/admin-products";
@@ -51,6 +52,27 @@ function product(overrides: Record<string, unknown> = {}) {
 }
 
 describe("admin product review model", () => {
+  it("keeps pending review actions visible regardless of audit timestamps", () => {
+    const withoutAudit = getAdminProductReviewState("pending");
+    const withAudit = getAdminProductReviewState(product({ reviewed_at: "2026-08-04T10:00:00.000Z" }).status);
+
+    expect(withoutAudit).toEqual({ isPending: true, isReviewed: false, canReview: true });
+    expect(withAudit).toEqual({ isPending: true, isReviewed: false, canReview: true });
+  });
+
+  it.each(["approved", "rejected"] as const)("treats %s as reviewed even when audit fields are null", (status) => {
+    const reviewedProduct = product({ status, reviewed_at: null, reviewed_by: null });
+
+    expect(getAdminProductReviewState(reviewedProduct.status)).toEqual({ isPending: false, isReviewed: true, canReview: false });
+  });
+
+  it("keeps the rejection reason on a rejected reviewed product", () => {
+    const rejectedProduct = product({ status: "rejected", rejection_reason: "Ürün açıklaması malzeme bilgisini içermiyor." });
+
+    expect(getAdminProductReviewState(rejectedProduct.status)).toEqual({ isPending: false, isReviewed: true, canReview: false });
+    expect(rejectedProduct.rejection_reason).toBe("Ürün açıklaması malzeme bilgisini içermiyor.");
+  });
+
   it("parses safe filters and defaults invalid input", () => {
     expect(parseAdminProductFilters({ status: "approved", query: " kupa ", page: "2" })).toEqual({ status: "approved", query: "kupa", page: 2 });
     expect(parseAdminProductFilters({ status: "hidden", query: "", page: 1 }).status).toBe("pending");

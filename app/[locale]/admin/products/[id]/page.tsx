@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { AdminProductReviewPanel } from "@/components/AdminProductReviewPanel";
 import { AdminSectionNav } from "@/components/AdminSectionNav";
 import { SafeImage } from "@/components/SafeImage";
-import { adminProductIdSchema } from "@/lib/admin-products";
+import { adminProductIdSchema, getAdminProductReviewState } from "@/lib/admin-products";
 import { adminProductsUi, getLocale } from "@/lib/i18n";
 import { hasActiveAdminProfile } from "@/lib/supabase/admin";
 import { getAdminProduct } from "@/lib/supabase/admin-products";
@@ -42,6 +42,7 @@ export default async function AdminProductDetailPage({ params }: { params: Promi
   if (!productId.success) notFound();
   const product = await getAdminProduct(supabase, productId.data);
   if (!product) notFound();
+  const reviewState = getAdminProductReviewState(product.status);
   const localizedTitle = locale === "tr" ? product.title_tr : product.title_en || product.title_tr;
   const producerStory = locale === "tr" ? product.producer.producerProfile?.story_tr : product.producer.producerProfile?.story_en || product.producer.producerProfile?.story_tr;
 
@@ -84,10 +85,12 @@ export default async function AdminProductDetailPage({ params }: { params: Promi
             </dl>{producerStory ? <div className="admin-producer-story"><h3>{ui.producerStory}</h3><p>{producerStory}</p></div> : null}</section>
 
             <section className="admin-detail-card" aria-labelledby="admin-review-history-title"><h2 id="admin-review-history-title">{ui.reviewHistory}</h2><dl className="admin-product-detail-facts compact">
-              <div><dt>{ui.status}</dt><dd>{ui.statusLabels[product.status]}</dd></div><div><dt>{ui.reviewedAt}</dt><dd>{formatDate(product.reviewed_at, locale, ui.notProvided)}</dd></div><div><dt>{ui.reviewedBy}</dt><dd>{product.reviewer?.display_name || ui.notProvided}</dd></div>
-            </dl>{product.rejection_reason ? <div className="admin-full-rejection"><h3>{ui.rejectionReason}</h3><p>{product.rejection_reason}</p></div> : null}</section>
+              <div><dt>{ui.status}</dt><dd>{ui.statusLabels[product.status]}</dd></div>
+              {reviewState.isReviewed && product.reviewed_at ? <div><dt>{ui.reviewedAt}</dt><dd>{formatDate(product.reviewed_at, locale, ui.notProvided)}</dd></div> : null}
+              {reviewState.isReviewed && product.reviewer ? <div><dt>{ui.reviewedBy}</dt><dd>{product.reviewer.display_name}</dd></div> : null}
+            </dl>{product.status === "rejected" && product.rejection_reason ? <div className="admin-full-rejection"><h3>{ui.rejectionReason}</h3><p>{product.rejection_reason}</p></div> : null}</section>
 
-            <AdminProductReviewPanel locale={locale} productId={product.id} productTitle={localizedTitle} status={product.status} />
+            {reviewState.canReview || reviewState.isReviewed ? <AdminProductReviewPanel locale={locale} productId={product.id} productTitle={localizedTitle} status={product.status} /> : null}
           </aside>
         </div>
         <Link className="text-link" href={`/${locale}/admin/products`}>{ui.backList}</Link>

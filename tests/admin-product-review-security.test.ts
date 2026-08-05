@@ -108,10 +108,16 @@ describe("admin product review security contract", () => {
   });
 
   it("prevents client double review and hides actions for reviewed products", () => {
-    expect(reviewPanel).toContain("if (status !== \"pending\")");
+    expect(reviewPanel).toContain("const { isPending, isReviewed, canReview }");
+    expect(reviewPanel).toContain("if (isReviewed)");
+    expect(reviewPanel).toContain("if (!isPending || !canReview) return null");
     expect(reviewPanel).toContain("if (!selection || pending");
     expect(reviewPanel).toContain("disabled={pending");
     expect(reviewPanel).toContain("router.refresh()");
+    expect(reviewPanel).not.toContain("text: ui.staleProduct");
+    expect(detailPage).toContain("reviewState.isReviewed && product.reviewed_at");
+    expect(detailPage).toContain("reviewState.isReviewed && product.reviewer");
+    expect(detailPage).toContain('product.status === "rejected" && product.rejection_reason');
   });
 
   it("shows rejection reasons to sellers and keeps the public catalog approved-only", () => {

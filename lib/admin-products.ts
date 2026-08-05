@@ -12,6 +12,17 @@ export const adminProductFiltersSchema = z.object({
 export type AdminProductFilters = z.infer<typeof adminProductFiltersSchema>;
 export const adminProductIdSchema = z.string().uuid();
 
+export const adminProductWorkflowStatusSchema = z.enum(["draft", "pending", "approved", "rejected"]);
+export type AdminProductWorkflowStatus = z.infer<typeof adminProductWorkflowStatusSchema>;
+
+export function getAdminProductReviewState(status: AdminProductWorkflowStatus) {
+  const isPending = status === "pending";
+  const isReviewed = status === "approved" || status === "rejected";
+  const canReview = isPending;
+
+  return { isPending, isReviewed, canReview };
+}
+
 export function parseAdminProductFilters(value: unknown): AdminProductFilters {
   const parsed = adminProductFiltersSchema.safeParse(value);
   return parsed.success ? parsed.data : { status: "pending", query: "", page: 1 };
@@ -86,7 +97,7 @@ const adminProductRowSchema = z.object({
   description_en: z.string(),
   price_minor: z.number().int(),
   currency: z.string(),
-  status: z.enum(["draft", "pending", "approved", "rejected"]),
+  status: adminProductWorkflowStatusSchema,
   stock_mode: z.enum(["in_stock", "made_to_order", "unavailable"]),
   stock_quantity: z.number().int().nullable(),
   preparation_days: z.number().int(),
