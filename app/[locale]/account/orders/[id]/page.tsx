@@ -2,17 +2,151 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { SafeImage } from "@/components/SafeImage";
-import { commerceUuidSchema, formatMinorPrice, localizeOrderTitle } from "@/lib/commerce";
+import {
+  commerceUuidSchema,
+  formatMinorPrice,
+  localizeOrderTitle,
+} from "@/lib/commerce";
 import { commerceUi, getLocale } from "@/lib/i18n";
 import { requireUser } from "@/lib/supabase/auth";
 import { getBuyerOrder } from "@/lib/supabase/commerce";
 
-export async function generateMetadata({ params }: { params: Promise<{ locale: string; id: string }> }): Promise<Metadata> { const locale = getLocale((await params).locale); return { title: commerceUi[locale].orderDetail }; }
-export default async function OrderDetailPage({ params, searchParams }: { params: Promise<{ locale: string; id: string }>; searchParams: Promise<{ created?: string }> }) {
-  const values = await params; const locale = getLocale(values.locale); const ui = commerceUi[locale];
-  const id = commerceUuidSchema.safeParse(values.id); if (!id.success) notFound();
-  const { supabase, user } = await requireUser(locale, `/${locale}/account/orders/${values.id}`);
-  const order = await getBuyerOrder(supabase, user.id, id.data); if (!order) notFound();
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string; id: string }>;
+}): Promise<Metadata> {
+  const locale = getLocale((await params).locale);
+  return { title: commerceUi[locale].orderDetail };
+}
+export default async function OrderDetailPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ locale: string; id: string }>;
+  searchParams: Promise<{ created?: string }>;
+}) {
+  const values = await params;
+  const locale = getLocale(values.locale);
+  const ui = commerceUi[locale];
+  const id = commerceUuidSchema.safeParse(values.id);
+  if (!id.success) notFound();
+  const { supabase, user } = await requireUser(
+    locale,
+    `/${locale}/account/orders/${values.id}`,
+  );
+  const order = await getBuyerOrder(supabase, user.id, id.data);
+  if (!order) notFound();
   const created = (await searchParams).created === "1";
-  return <><section className="page-hero order-detail-hero"><div className="container"><p className="eyebrow">{ui.orderDetail}</p><h1 className="page-title">{order.order_number}</h1><div className="order-badges"><span className={`order-status ${order.order_status}`}>{ui.orderStatus[order.order_status]}</span><span className={`payment-status ${order.payment_status}`}>{ui.paymentStatus[order.payment_status]}</span></div></div></section><section className="section commerce-section"><div className="container">{created ? <p className="commerce-feedback success" role="status">{ui.created}</p> : null}<p className="commerce-notice important"><strong>{ui.unpaidNotice}</strong> {ui.paymentNotice}</p><div className="order-detail-layout"><div className="order-detail-main"><section className="checkout-card"><h2>{ui.checkoutTitle}</h2><div className="order-detail-items">{order.items.map((item) => <article key={item.id}><span><SafeImage src={item.imageUrl} alt={localizeOrderTitle(item, locale)} sizes="96px" /></span><div><h3>{localizeOrderTitle(item, locale)}</h3><p>{ui.unitPrice}: {formatMinorPrice(item.unit_price_minor, locale)} · {ui.quantity}: {item.quantity}</p></div><strong>{formatMinorPrice(item.line_total_minor, locale)}</strong></article>)}</div></section><section className="checkout-card"><h2>{ui.addressSnapshot}</h2><address><strong>{order.recipient_name}</strong><span>{order.phone}</span><span>{order.neighborhood}, {order.district}, {order.city}</span><span>{order.address_line}</span>{order.postal_code ? <span>{order.postal_code}</span> : null}{order.delivery_note ? <small>{order.delivery_note}</small> : null}</address></section></div><aside className="order-summary-card"><h2>{ui.orderDetail}</h2><dl><div><dt>{ui.producer}</dt><dd>{order.producer_name_snapshot}</dd></div><div><dt>{ui.createdAt}</dt><dd>{new Intl.DateTimeFormat(locale === "tr" ? "tr-TR" : "en-GB", { dateStyle: "medium", timeStyle: "short" }).format(new Date(order.created_at))}</dd></div><div><dt>{ui.subtotal}</dt><dd>{formatMinorPrice(order.subtotal_minor, locale)}</dd></div><div><dt>{ui.shipping}</dt><dd>{formatMinorPrice(order.shipping_minor, locale)}</dd></div><div className="total"><dt>{ui.total}</dt><dd>{formatMinorPrice(order.total_minor, locale)}</dd></div></dl></aside></div><Link className="text-link" href={`/${locale}/account/orders`}>{ui.backOrders}</Link></div></section></>;
+  return (
+    <>
+      <section className="page-hero order-detail-hero">
+        <div className="container">
+          <p className="eyebrow">{ui.orderDetail}</p>
+          <h1 className="page-title">{order.order_number}</h1>
+          <div className="order-badges">
+            <span className={`order-status ${order.order_status}`}>
+              {ui.orderStatus[order.order_status]}
+            </span>
+            <span className={`payment-status ${order.payment_status}`}>
+              {ui.paymentStatus[order.payment_status]}
+            </span>
+          </div>
+        </div>
+      </section>
+      <section className="section commerce-section">
+        <div className="container">
+          {created ? (
+            <p className="commerce-feedback success" role="status">
+              {ui.created}
+            </p>
+          ) : null}
+          {order.payment_status !== "paid" ? (
+            <p className="commerce-notice important">
+              <strong>{ui.unpaidNotice}</strong> {ui.paymentNotice}
+            </p>
+          ) : null}
+          <div className="order-detail-layout">
+            <div className="order-detail-main">
+              <section className="checkout-card">
+                <h2>{ui.checkoutTitle}</h2>
+                <div className="order-detail-items">
+                  {order.items.map((item) => (
+                    <article key={item.id}>
+                      <span>
+                        <SafeImage
+                          src={item.imageUrl}
+                          alt={localizeOrderTitle(item, locale)}
+                          sizes="96px"
+                        />
+                      </span>
+                      <div>
+                        <h3>{localizeOrderTitle(item, locale)}</h3>
+                        <p>
+                          {ui.unitPrice}:{" "}
+                          {formatMinorPrice(item.unit_price_minor, locale)} ·{" "}
+                          {ui.quantity}: {item.quantity}
+                        </p>
+                      </div>
+                      <strong>
+                        {formatMinorPrice(item.line_total_minor, locale)}
+                      </strong>
+                    </article>
+                  ))}
+                </div>
+              </section>
+              <section className="checkout-card">
+                <h2>{ui.addressSnapshot}</h2>
+                <address>
+                  <strong>{order.recipient_name}</strong>
+                  <span>{order.phone}</span>
+                  <span>
+                    {order.neighborhood}, {order.district}, {order.city}
+                  </span>
+                  <span>{order.address_line}</span>
+                  {order.postal_code ? <span>{order.postal_code}</span> : null}
+                  {order.delivery_note ? (
+                    <small>{order.delivery_note}</small>
+                  ) : null}
+                </address>
+              </section>
+            </div>
+            <aside className="order-summary-card">
+              <h2>{ui.orderDetail}</h2>
+              <dl>
+                <div>
+                  <dt>{ui.producer}</dt>
+                  <dd>{order.producer_name_snapshot}</dd>
+                </div>
+                <div>
+                  <dt>{ui.createdAt}</dt>
+                  <dd>
+                    {new Intl.DateTimeFormat(
+                      locale === "tr" ? "tr-TR" : "en-GB",
+                      { dateStyle: "medium", timeStyle: "short" },
+                    ).format(new Date(order.created_at))}
+                  </dd>
+                </div>
+                <div>
+                  <dt>{ui.subtotal}</dt>
+                  <dd>{formatMinorPrice(order.subtotal_minor, locale)}</dd>
+                </div>
+                <div>
+                  <dt>{ui.shipping}</dt>
+                  <dd>{formatMinorPrice(order.shipping_minor, locale)}</dd>
+                </div>
+                <div className="total">
+                  <dt>{ui.total}</dt>
+                  <dd>{formatMinorPrice(order.total_minor, locale)}</dd>
+                </div>
+              </dl>
+            </aside>
+          </div>
+          <Link className="text-link" href={`/${locale}/account/orders`}>
+            {ui.backOrders}
+          </Link>
+        </div>
+      </section>
+    </>
+  );
 }

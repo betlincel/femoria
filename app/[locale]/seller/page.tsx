@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { SellerAccessStatePanel } from "@/components/SellerAccessStatePanel";
 import { SellerProductStatusBadge } from "@/components/SellerProductStatusBadge";
-import { sellerUi } from "@/lib/i18n";
+import { sellerOrdersUi, sellerUi } from "@/lib/i18n";
 import { listSellerProducts } from "@/lib/seller-catalog";
 import { requireApprovedSeller } from "@/lib/supabase/seller";
 import { getLocale } from "@/lib/i18n";
@@ -27,8 +27,8 @@ export default async function SellerDashboardPage({ params }: { params: Promise<
         <article><strong>{products.length}</strong><span>{ui.totalProducts}</span></article>
         {(["draft", "pending", "approved", "rejected"] as const).map((status) => <article key={status}><strong>{statuses[status]}</strong><span>{ui[status]}</span></article>)}
       </div>
-      <nav className="seller-dashboard-actions"><Link className="btn btn-primary" href={`/${locale}/seller/products/new`}>{ui.newProduct}<Icon name="arrow" /></Link><Link className="btn btn-secondary" href={`/${locale}/seller/products`}>{ui.products}</Link><Link className="btn btn-secondary" href={`/${locale}/producers`}>{ui.viewProfile}</Link><Link className="btn btn-secondary" href={`/${locale}/info/producer-application`}>{ui.applicationStatus}</Link></nav>
-      <article className="seller-orders-soon"><Icon name="bag" /><div><h2>{ui.ordersSoon}</h2><p>{ui.ordersSoonText}</p></div></article>
+      <nav className="seller-dashboard-actions"><Link className="btn btn-primary" href={`/${locale}/seller/products/new`}>{ui.newProduct}<Icon name="arrow" /></Link><Link className="btn btn-secondary" href={`/${locale}/seller/products`}>{ui.products}</Link><Link className="btn btn-secondary" href={`/${locale}/seller/orders`}>{sellerOrdersUi[locale].title}</Link><Link className="btn btn-secondary" href={`/${locale}/producers`}>{ui.viewProfile}</Link><Link className="btn btn-secondary" href={`/${locale}/info/producer-application`}>{ui.applicationStatus}</Link></nav>
+      <Link className="seller-orders-soon" href={`/${locale}/seller/orders`}><Icon name="bag" /><div><h2>{sellerOrdersUi[locale].title}</h2><p>{sellerOrdersUi[locale].intro}</p></div><Icon name="arrow" /></Link>
     </div></section>
   </>;
 }

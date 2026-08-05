@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addressInputSchema, cartItemMutationInputSchema, cartMutationInputSchema, checkoutResultSchema, formatMinorPrice, parseCartSnapshot } from "@/lib/commerce";
+import { addressInputSchema, cartItemMutationInputSchema, cartMutationInputSchema, checkoutResultSchema, formatMinorPrice, parseCartSnapshot, sellerShippingInputSchema } from "@/lib/commerce";
 import { commerceUi } from "@/lib/i18n";
 
 const productId = "11111111-1111-4111-8111-111111111111";
@@ -46,5 +46,14 @@ describe("commerce boundary models", () => {
     expect(commerceUi.en.checkoutTitle).toBe("Order summary");
     expect(commerceUi.tr.orderStatus.awaiting_payment).toBe("Ödeme bekleniyor");
     expect(commerceUi.en.paymentStatus.unpaid).toBe("Unpaid");
+  });
+
+  it("validates seller shipping input without accepting payment or status fields", () => {
+    const valid = { locale: "tr", orderId: productId, carrier: "PTT Kargo", trackingNumber: "TR123456", trackingUrl: "https://tracking.example/TR123456" };
+    expect(sellerShippingInputSchema.safeParse(valid).success).toBe(true);
+    expect(sellerShippingInputSchema.safeParse({ ...valid, trackingUrl: "javascript:alert(1)" }).success).toBe(false);
+    expect(sellerShippingInputSchema.safeParse({ ...valid, carrier: "" }).success).toBe(false);
+    expect(sellerShippingInputSchema.safeParse({ ...valid, paymentStatus: "paid" }).success).toBe(false);
+    expect(sellerShippingInputSchema.safeParse({ ...valid, orderStatus: "shipped" }).success).toBe(false);
   });
 });

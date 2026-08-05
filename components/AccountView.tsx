@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { z } from "zod";
 import type { profileSchema } from "@/lib/auth";
-import { commerceUi, type Messages } from "@/lib/i18n";
+import { commerceUi, sellerOrdersUi, type Messages } from "@/lib/i18n";
 import type { Locale } from "@/lib/types";
 import { isActiveAdminProfile, isAdminProfile, isApprovedSeller } from "@/lib/account-access";
 import { accountEditorial } from "@/lib/content/editorial-content";
@@ -103,6 +103,7 @@ export function AccountView({
           <div><p className="eyebrow">{m.sellerTools}</p><h2>{m.accountSellerApproved}</h2></div>
           <Link className="btn btn-secondary" href={`/${locale}/seller`}>{m.sellerPanel}</Link>
           <Link className="btn btn-secondary" href={`/${locale}/seller/products`}>{m.myProducts}</Link>
+          <Link className="btn btn-secondary" href={`/${locale}/seller/orders`}>{sellerOrdersUi[locale].title}</Link>
           <Link className="btn btn-primary" href={`/${locale}/seller/products/new`}>{m.addProduct}</Link>
         </section>
       ) : null}

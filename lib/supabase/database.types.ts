@@ -288,6 +288,7 @@ export type Database = {
           payment_status: Database["public"]["Enums"]["payment_status"]; currency: string; subtotal_minor: number;
           shipping_minor: number; total_minor: number; recipient_name: string; phone: string; city: string; district: string;
           neighborhood: string; address_line: string; postal_code: string | null; delivery_note: string | null;
+          shipping_carrier: string | null; tracking_number: string | null; tracking_url: string | null; shipped_at: string | null;
           created_at: string; updated_at: string; paid_at: string | null; expires_at: string | null;
         };
         Insert: {
@@ -296,6 +297,7 @@ export type Database = {
           payment_status?: Database["public"]["Enums"]["payment_status"]; currency: string; subtotal_minor: number;
           shipping_minor?: number; total_minor: number; recipient_name: string; phone: string; city: string; district: string;
           neighborhood: string; address_line: string; postal_code?: string | null; delivery_note?: string | null;
+          shipping_carrier?: string | null; tracking_number?: string | null; tracking_url?: string | null; shipped_at?: string | null;
           created_at?: string; updated_at?: string; paid_at?: string | null; expires_at?: string | null;
         };
         Update: Partial<Database["public"]["Tables"]["orders"]["Insert"]>;
@@ -334,6 +336,8 @@ export type Database = {
       delete_user_address: { Args: { target_address_id: string }; Returns: boolean };
       get_cart_quantity: { Args: Record<PropertyKey, never>; Returns: number };
       get_cart_snapshot: { Args: Record<PropertyKey, never>; Returns: Json };
+      mark_seller_order_preparing: { Args: { target_order_id: string }; Returns: boolean };
+      mark_seller_order_shipped: { Args: { target_order_id: string; input_shipping_carrier: string; input_tracking_number: string; input_tracking_url?: string | null }; Returns: boolean };
       remove_cart_item: { Args: { target_cart_item_id: string }; Returns: boolean };
       set_default_user_address: { Args: { target_address_id: string }; Returns: boolean };
       update_cart_item_quantity: { Args: { target_cart_item_id: string; input_quantity: number }; Returns: boolean };

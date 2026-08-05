@@ -1236,6 +1236,27 @@ export const commerceUi = {
   },
 } as const;
 
+export const sellerOrdersUi = {
+  tr: {
+    eyebrow: "Üretici sipariş yönetimi", title: "Siparişler", intro: "Size ait siparişleri ve ödeme durumlarını güvenli biçimde takip edin.", detail: "Sipariş detayı",
+    all: "Tümü", awaiting_payment: "Ödeme bekleyen", confirmed: "Onaylandı", preparing: "Hazırlanıyor", shipped: "Kargoda", delivered: "Teslim edildi", cancelled: "İptal edildi", expired: "Süresi doldu",
+    unpaid: "Ödenmedi", paid: "Ödendi", pending: "Ödeme bekleniyor", failed: "Ödeme başarısız", refunded: "İade edildi",
+    orderNumber: "Sipariş numarası", orderDate: "Sipariş tarihi", recipient: "Teslimat alıcısı", productCount: "Ürün adedi", total: "Toplam", orderStatus: "Sipariş durumu", paymentStatus: "Ödeme durumu", shippingStatus: "Kargo durumu", notShipped: "Henüz kargoya verilmedi", viewDetail: "Detayı görüntüle",
+    noOrders: "Henüz siparişiniz bulunmuyor.", noMatchingOrders: "Bu filtreyle eşleşen sipariş bulunmuyor.", products: "Ürünler", unitPrice: "Birim fiyat", quantity: "Adet", lineTotal: "Satır toplamı", delivery: "Teslimat bilgileri", shipping: "Kargo bilgileri",
+    carrier: "Kargo firması", trackingNumber: "Takip numarası", trackingUrl: "Takip bağlantısı", shippedAt: "Kargoya verilme zamanı", noShipping: "Bu sipariş henüz kargoya verilmedi.",
+    startPreparing: "Hazırlamaya başla", markShipped: "Kargoya verildi", paymentRequired: "Ödeme tamamlanmadığı için bu sipariş üzerinde işlem yapılamaz.", invalidTransition: "Sipariş durumu değişti veya bu geçişe izin verilmiyor.", updated: "Sipariş başarıyla güncellendi.", operationFailed: "İşlem gerçekleştirilemedi.", processing: "İşleniyor…", backOrders: "Siparişlere dön", retry: "Tekrar dene", trackingUrlOptional: "İsteğe bağlı HTTPS takip bağlantısı",
+  },
+  en: {
+    eyebrow: "Maker order management", title: "Orders", intro: "Securely track orders assigned to you and their payment state.", detail: "Order details",
+    all: "All", awaiting_payment: "Awaiting payment", confirmed: "Confirmed", preparing: "Preparing", shipped: "Shipped", delivered: "Delivered", cancelled: "Cancelled", expired: "Expired",
+    unpaid: "Unpaid", paid: "Paid", pending: "Payment pending", failed: "Payment failed", refunded: "Refunded",
+    orderNumber: "Order number", orderDate: "Order date", recipient: "Delivery recipient", productCount: "Product count", total: "Total", orderStatus: "Order status", paymentStatus: "Payment status", shippingStatus: "Shipping status", notShipped: "Not shipped yet", viewDetail: "View details",
+    noOrders: "You do not have any orders yet.", noMatchingOrders: "No orders match this filter.", products: "Products", unitPrice: "Unit price", quantity: "Quantity", lineTotal: "Line total", delivery: "Delivery information", shipping: "Shipping information",
+    carrier: "Shipping carrier", trackingNumber: "Tracking number", trackingUrl: "Tracking link", shippedAt: "Shipped at", noShipping: "This order has not been shipped yet.",
+    startPreparing: "Start preparing", markShipped: "Mark as shipped", paymentRequired: "You cannot process this order until payment is completed.", invalidTransition: "The order status changed or this transition is not allowed.", updated: "Order updated successfully.", operationFailed: "The operation could not be completed.", processing: "Processing…", backOrders: "Back to orders", retry: "Try again", trackingUrlOptional: "Optional HTTPS tracking link",
+  },
+} as const;
+
 export const guides = [
   {
     no: "01",

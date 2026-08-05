@@ -666,6 +666,50 @@ img { display: block; width: 100%; max-width: 100%; }
   .order-detail-items article > strong { grid-column: 2; }
 }
 
+/* Approved seller order management */
+.seller-order-filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
+.seller-order-filters a { padding: 9px 14px; border: 1px solid var(--color-border); border-radius: 999px; color: var(--color-text-muted); background: var(--color-surface); font-size: .82rem; font-weight: 750; }
+.seller-order-filters a.active { border-color: var(--color-accent); color: #fff; background: var(--color-accent); }
+.seller-order-list { display: grid; gap: 16px; }
+.seller-order-card { display: grid; grid-template-columns: minmax(210px, 1fr) auto minmax(310px, 1.35fr) auto; align-items: center; gap: 20px; padding: 21px; border: 1px solid var(--color-border); border-radius: 20px; background: var(--color-surface); box-shadow: var(--shadow-sm); }
+.seller-order-card h2 { margin: 2px 0 6px; font-family: var(--font-display); font-size: 1.35rem; }
+.seller-order-card > div:nth-child(2) { display: flex; flex-wrap: wrap; gap: 7px; }
+.seller-order-card dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 18px; margin: 0; }
+.seller-order-card dl div { min-width: 0; }
+.seller-order-card dt { color: var(--color-text-muted); font-size: .7rem; text-transform: uppercase; letter-spacing: .07em; }
+.seller-order-card dd { margin: 3px 0 0; overflow-wrap: anywhere; font-weight: 750; }
+.seller-order-detail-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(290px, 370px); gap: 28px; align-items: start; }
+.seller-order-detail-main, .seller-order-detail-sidebar { display: grid; gap: 22px; min-width: 0; }
+.seller-order-detail-sidebar .order-summary-card { position: static; }
+.seller-order-payment-guard { padding: 15px 17px; border: 1px solid color-mix(in srgb, var(--gold) 48%, var(--color-border)); border-radius: 16px; color: var(--color-text); background: color-mix(in srgb, var(--gold) 12%, var(--color-surface)); font-weight: 750; line-height: 1.5; }
+.seller-order-detail-layout > .seller-order-detail-sidebar > .seller-order-payment-guard { margin: 0; }
+.seller-order-actions { display: grid; gap: 15px; padding: 21px; border: 1px solid var(--color-border); border-radius: 20px; background: var(--color-surface); box-shadow: var(--shadow-sm); }
+.seller-order-actions h2 { margin: 0; font-family: var(--font-display); }
+.seller-order-actions form { display: grid; gap: 13px; }
+.seller-order-actions label { display: grid; gap: 6px; min-width: 0; font-size: .82rem; font-weight: 750; }
+.seller-order-actions input { width: 100%; min-width: 0; padding: 12px 13px; border: 1px solid var(--color-border); border-radius: 11px; color: var(--color-text); background: var(--color-surface-muted); }
+.seller-shipping-detail dl { display: grid; gap: 12px; margin: 0; }
+.seller-shipping-detail dl div { display: grid; grid-template-columns: minmax(120px, .35fr) minmax(0, 1fr); gap: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--color-border); }
+.seller-shipping-detail dd { min-width: 0; margin: 0; overflow-wrap: anywhere; }
+.seller-shipping-detail a { color: var(--color-accent); word-break: break-all; }
+.seller-orders-soon { color: inherit; }
+
+@media (max-width: 1100px) {
+  .seller-order-card { grid-template-columns: minmax(210px, 1fr) auto; }
+  .seller-order-card dl { grid-column: 1 / -1; }
+}
+@media (max-width: 820px) {
+  .seller-order-detail-layout { grid-template-columns: 1fr; }
+}
+@media (max-width: 580px) {
+  .seller-order-filters { flex-wrap: nowrap; margin-inline: -10px; padding-inline: 10px; overflow-x: auto; scrollbar-width: none; }
+  .seller-order-filters a { flex: 0 0 auto; }
+  .seller-order-card { grid-template-columns: 1fr; padding: 17px; }
+  .seller-order-card dl { grid-column: auto; grid-template-columns: 1fr; }
+  .seller-order-card .btn { width: 100%; justify-content: center; }
+  .seller-shipping-detail dl div { grid-template-columns: 1fr; }
+}
+
 .account-admin-tools {
   display: flex; align-items: center; justify-content: space-between; gap: 22px;
   padding: 24px; border: 1px solid var(--color-border); border-radius: var(--radius-md);

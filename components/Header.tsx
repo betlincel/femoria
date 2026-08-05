@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import type { Messages } from "@/lib/i18n";
+import { sellerOrdersUi, type Messages } from "@/lib/i18n";
 import {
   preserveLocalePath,
   reduceMegaMenu,
@@ -86,7 +86,7 @@ export function Header({
     { href: `/${locale}/nearby`, label: m.nav.nearby },
     { href: `/${locale}/producers`, label: m.nav.producers },
     { href: `/${locale}/guide`, label: m.nav.guide },
-    ...(sellerNavigation === "approved" ? [{ href: `/${locale}/seller`, label: m.sellerPanel }] : []),
+    ...(sellerNavigation === "approved" ? [{ href: `/${locale}/seller`, label: m.sellerPanel }, { href: `/${locale}/seller/orders`, label: sellerOrdersUi[locale].title }] : []),
   ];
 
   const toggleMega = (world: ProductWorld) => {

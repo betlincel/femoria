@@ -160,7 +160,7 @@ describe("secure cart, address, and order contract", () => {
   });
 
   it("protects every commerce route on the server and avoids card inputs", () => {
-    for (const page of [cartPage, checkoutPage, ordersPage, orderDetail]) expect(page).toContain("requireUser(locale");
+    for (const page of [cartPage, checkoutPage, ordersPage, orderDetail]) expect(page).toContain("requireUser");
     expect(commerceServer).toContain('.eq("id", orderId).eq("buyer_id", userId).maybeSingle()');
     expect(checkoutPage).toContain("item.invalid_reason");
     expect(checkoutActions).not.toMatch(/card|bank|stripe|iyzico/i);

@@ -114,6 +114,18 @@ export function parseAddressFormData(formData: FormData) {
 
 export const orderStatusSchema = z.enum(["awaiting_payment", "confirmed", "preparing", "shipped", "delivered", "cancelled", "expired"]);
 export const paymentStatusSchema = z.enum(["unpaid", "pending", "paid", "failed", "refunded"]);
+export const sellerOrderFilterSchema = z.enum(["all", "awaiting_payment", "confirmed", "preparing", "shipped", "delivered"]);
+
+export const sellerOrderMutationSchema = z.object({
+  locale: commerceLocaleSchema,
+  orderId: commerceUuidSchema,
+}).strict();
+
+export const sellerShippingInputSchema = sellerOrderMutationSchema.extend({
+  carrier: z.string().trim().min(2).max(80),
+  trackingNumber: z.string().trim().min(2).max(120),
+  trackingUrl: z.union([z.literal(""), z.string().trim().url().max(500).refine((value) => /^https?:\/\//i.test(value))]),
+}).strict();
 
 const orderItemSchema = z.object({
   id: commerceUuidSchema,
@@ -148,6 +160,10 @@ export const orderSchema = z.object({
   address_line: z.string(),
   postal_code: z.string().nullable(),
   delivery_note: z.string().nullable(),
+  shipping_carrier: z.string().nullable(),
+  tracking_number: z.string().nullable(),
+  tracking_url: z.string().url().refine((value) => /^https?:\/\//i.test(value)).nullable(),
+  shipped_at: z.string().nullable(),
   created_at: z.string(),
   paid_at: z.string().nullable(),
   items: z.array(orderItemSchema),
