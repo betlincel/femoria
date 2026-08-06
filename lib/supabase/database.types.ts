@@ -340,6 +340,8 @@ export type Database = {
       delete_user_address: { Args: { target_address_id: string }; Returns: boolean };
       get_cart_quantity: { Args: Record<PropertyKey, never>; Returns: number };
       get_cart_snapshot: { Args: Record<PropertyKey, never>; Returns: Json };
+      get_seller_order: { Args: { target_order_id: string }; Returns: Json };
+      get_seller_orders: { Args: Record<PropertyKey, never>; Returns: Json };
       expire_admin_order: { Args: { target_order_id: string }; Returns: boolean };
       mark_seller_order_preparing: { Args: { target_order_id: string }; Returns: boolean };
       mark_seller_order_shipped: { Args: { target_order_id: string; input_shipping_carrier: string; input_tracking_number: string; input_tracking_url?: string | null }; Returns: boolean };

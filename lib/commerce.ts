@@ -114,7 +114,7 @@ export function parseAddressFormData(formData: FormData) {
 
 export const orderStatusSchema = z.enum(["awaiting_payment", "confirmed", "preparing", "shipped", "delivered", "cancelled", "expired"]);
 export const paymentStatusSchema = z.enum(["unpaid", "pending", "paid", "failed", "refunded"]);
-export const sellerOrderFilterSchema = z.enum(["all", "awaiting_payment", "confirmed", "preparing", "shipped", "delivered"]);
+export const sellerOrderFilterSchema = z.enum(["all", "awaiting_payment", "confirmed", "preparing", "shipped", "delivered", "cancelled", "expired"]);
 
 export const sellerOrderMutationSchema = z.object({
   locale: commerceLocaleSchema,
@@ -164,6 +164,8 @@ export const orderSchema = z.object({
   tracking_number: z.string().nullable(),
   tracking_url: z.string().url().refine((value) => /^https?:\/\//i.test(value)).nullable(),
   shipped_at: z.string().nullable(),
+  cancellation_reason: z.string().nullable(),
+  cancelled_at: z.string().nullable(),
   created_at: z.string(),
   paid_at: z.string().nullable(),
   items: z.array(orderItemSchema),
@@ -172,6 +174,35 @@ export const orderSchema = z.object({
 export type BuyerOrder = Omit<z.infer<typeof orderSchema>, "items"> & {
   items: Array<z.infer<typeof orderItemSchema> & { imageUrl: string }>;
 };
+
+export const sellerOrderSchema = orderSchema.extend({
+  phone: z.string().nullable(),
+  neighborhood: z.string().nullable(),
+  address_line: z.string().nullable(),
+});
+
+export type SellerOrder = Omit<z.infer<typeof sellerOrderSchema>, "items"> & {
+  items: Array<z.infer<typeof orderItemSchema> & { imageUrl: string }>;
+};
+
+export function shouldShowBuyerPaymentNotice(
+  paymentStatus: z.infer<typeof paymentStatusSchema>,
+  orderStatus?: z.infer<typeof orderStatusSchema>,
+) {
+  if (orderStatus === "cancelled" || orderStatus === "expired") return false;
+  return paymentStatus === "unpaid" || paymentStatus === "pending" || paymentStatus === "failed";
+}
+
+export function sellerCanViewDelivery(paymentStatus: z.infer<typeof paymentStatusSchema>) {
+  return paymentStatus === "paid";
+}
+
+export function matchesSellerOrderFilter(
+  order: Pick<SellerOrder, "order_status">,
+  filter: z.infer<typeof sellerOrderFilterSchema>,
+) {
+  return filter === "all" || order.order_status === filter;
+}
 
 export const checkoutResultSchema = z.object({
   checkout_group_id: commerceUuidSchema,

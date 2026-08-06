@@ -8,6 +8,7 @@ import {
   commerceUuidSchema,
   formatMinorPrice,
   localizeOrderTitle,
+  sellerCanViewDelivery,
 } from "@/lib/commerce";
 import { getLocale, sellerOrdersUi } from "@/lib/i18n";
 import { getSellerOrder } from "@/lib/supabase/commerce";
@@ -43,9 +44,13 @@ export default async function SellerOrderDetailPage({
         admin={access.profile.role === "admin"}
       />
     );
-  const order = await getSellerOrder(access.supabase, access.user.id, id.data);
+  const order = await getSellerOrder(access.supabase, id.data);
   if (!order) notFound();
   const statusLabel = ui[order.order_status];
+  const canViewDelivery = sellerCanViewDelivery(order.payment_status);
+  const hasDeliveryDetails = canViewDelivery && Boolean(
+    order.phone && order.neighborhood && order.address_line,
+  );
   return (
     <>
       <section className="page-hero">
@@ -64,10 +69,23 @@ export default async function SellerOrderDetailPage({
       </section>
       <section className="section seller-order-detail-section">
         <div className="container">
-          {order.payment_status !== "paid" ? (
+          {order.payment_status !== "paid" &&
+          order.order_status !== "cancelled" &&
+          order.order_status !== "expired" ? (
             <p className="seller-order-payment-guard" role="status">
               {ui.paymentRequired}
             </p>
+          ) : null}
+          {order.order_status === "cancelled" ? (
+            <div className="seller-order-payment-guard" role="status">
+              <strong>{ui.cancelledNotice}</strong>
+              {order.cancellation_reason ? (
+                <p>{ui.cancellationReason}: {order.cancellation_reason}</p>
+              ) : null}
+            </div>
+          ) : null}
+          {order.order_status === "expired" ? (
+            <p className="seller-order-payment-guard" role="status">{ui.expiredNotice}</p>
           ) : null}
           <div className="seller-order-detail-layout">
             <div className="seller-order-detail-main">
@@ -100,18 +118,18 @@ export default async function SellerOrderDetailPage({
               </section>
               <section className="checkout-card">
                 <h2>{ui.delivery}</h2>
-                <address>
-                  <strong>{order.recipient_name}</strong>
-                  <span>{order.phone}</span>
-                  <span>
-                    {order.neighborhood}, {order.district}, {order.city}
-                  </span>
-                  <span>{order.address_line}</span>
-                  {order.postal_code ? <span>{order.postal_code}</span> : null}
-                  {order.delivery_note ? (
-                    <small>{order.delivery_note}</small>
-                  ) : null}
-                </address>
+                {hasDeliveryDetails ? (
+                  <address>
+                    <strong>{order.recipient_name}</strong>
+                    <span>{order.phone}</span>
+                    <span>{order.neighborhood}, {order.district}, {order.city}</span>
+                    <span>{order.address_line}</span>
+                    {order.postal_code ? <span>{order.postal_code}</span> : null}
+                    {order.delivery_note ? <small>{order.delivery_note}</small> : null}
+                  </address>
+                ) : (
+                  <p>{ui.deliveryHidden}</p>
+                )}
               </section>
               <section className="checkout-card seller-shipping-detail">
                 <h2>{ui.shipping}</h2>

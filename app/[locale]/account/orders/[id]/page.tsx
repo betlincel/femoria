@@ -6,6 +6,7 @@ import {
   commerceUuidSchema,
   formatMinorPrice,
   localizeOrderTitle,
+  shouldShowBuyerPaymentNotice,
 } from "@/lib/commerce";
 import { commerceUi, getLocale } from "@/lib/i18n";
 import { requireUser } from "@/lib/supabase/auth";
@@ -61,9 +62,22 @@ export default async function OrderDetailPage({
               {ui.created}
             </p>
           ) : null}
-          {order.payment_status !== "paid" ? (
+          {shouldShowBuyerPaymentNotice(order.payment_status, order.order_status) ? (
             <p className="commerce-notice important">
               <strong>{ui.unpaidNotice}</strong> {ui.paymentNotice}
+            </p>
+          ) : null}
+          {order.order_status === "cancelled" ? (
+            <div className="commerce-notice important" role="status">
+              <strong>{ui.cancelledNotice}</strong>
+              {order.cancellation_reason ? (
+                <p>{ui.cancellationReason}: {order.cancellation_reason}</p>
+              ) : null}
+            </div>
+          ) : null}
+          {order.order_status === "expired" ? (
+            <p className="commerce-notice important" role="status">
+              {ui.expiredNotice}
             </p>
           ) : null}
           <div className="order-detail-layout">
@@ -110,6 +124,22 @@ export default async function OrderDetailPage({
                   ) : null}
                 </address>
               </section>
+              {(order.order_status === "shipped" || order.order_status === "delivered") &&
+              (order.tracking_number || order.tracking_url || order.shipping_carrier) ? (
+                <section className="checkout-card">
+                  <h2>{ui.trackingDetails}</h2>
+                  <dl>
+                    {order.shipping_carrier ? <div><dt>{ui.carrier}</dt><dd>{order.shipping_carrier}</dd></div> : null}
+                    {order.tracking_number ? <div><dt>{ui.trackingNumber}</dt><dd>{order.tracking_number}</dd></div> : null}
+                    {order.tracking_url ? (
+                      <div>
+                        <dt>{ui.trackingLink}</dt>
+                        <dd><a href={order.tracking_url} target="_blank" rel="noopener noreferrer">{ui.openTracking}</a></dd>
+                      </div>
+                    ) : null}
+                  </dl>
+                </section>
+              ) : null}
             </div>
             <aside className="order-summary-card">
               <h2>{ui.orderDetail}</h2>

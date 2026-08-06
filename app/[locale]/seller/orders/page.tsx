@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { EmptyState } from "@/components/EmptyState";
 import { SellerAccessStatePanel } from "@/components/SellerAccessStatePanel";
-import { formatMinorPrice, sellerOrderFilterSchema } from "@/lib/commerce";
+import { formatMinorPrice, matchesSellerOrderFilter, sellerOrderFilterSchema } from "@/lib/commerce";
 import { getLocale, sellerOrdersUi } from "@/lib/i18n";
 import { listSellerOrders } from "@/lib/supabase/commerce";
 import { requireApprovedSeller } from "@/lib/supabase/seller";
@@ -43,14 +43,8 @@ export default async function SellerOrdersPage({
         admin={access.profile.role === "admin"}
       />
     );
-  const orders = await listSellerOrders(access.supabase, access.user.id);
-  const filtered = orders.filter(
-    (order) =>
-      filter === "all" ||
-      (filter === "awaiting_payment"
-        ? order.payment_status === "unpaid"
-        : order.order_status === filter),
-  );
+  const orders = await listSellerOrders(access.supabase);
+  const filtered = orders.filter((order) => matchesSellerOrderFilter(order, filter));
   const filters = [
     "all",
     "awaiting_payment",
@@ -58,6 +52,8 @@ export default async function SellerOrdersPage({
     "preparing",
     "shipped",
     "delivered",
+    "cancelled",
+    "expired",
   ] as const;
 
   return (

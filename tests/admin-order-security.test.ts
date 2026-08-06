@@ -22,6 +22,13 @@ const sellerMigration = readFileSync(
   ),
   "utf8",
 );
+const stabilizationMigration = readFileSync(
+  new URL(
+    "../supabase/migrations/20260806120000_stabilize_order_privacy_catalog.sql",
+    import.meta.url,
+  ),
+  "utf8",
+);
 const actions = readFileSync(
   new URL("../app/[locale]/admin/orders/actions.ts", import.meta.url),
   "utf8",
@@ -71,7 +78,7 @@ describe("secure admin order management contract", () => {
     expect(migration).not.toMatch(/for select to anon/);
   });
 
-  it("preserves buyer and approved-seller read policies", () => {
+  it("preserves buyer/admin reads while replacing broad seller reads", () => {
     expect(commerceMigration).toContain("create policy orders_read_own");
     expect(commerceMigration).toContain("create policy order_items_read_own");
     expect(sellerMigration).toContain(
@@ -81,6 +88,14 @@ describe("secure admin order management contract", () => {
       "create policy order_items_read_approved_seller_own",
     );
     expect(migration).not.toMatch(/drop policy/);
+    expect(stabilizationMigration).toContain(
+      "drop policy if exists orders_read_approved_seller_own",
+    );
+    expect(stabilizationMigration).toContain(
+      "drop policy if exists order_items_read_approved_seller_own",
+    );
+    expect(stabilizationMigration).not.toContain("drop policy if exists orders_read_own");
+    expect(stabilizationMigration).not.toContain("drop policy if exists orders_read_active_admin_all");
   });
 
   it("uses narrow fixed-search-path RPCs with deterministic order row locks", () => {

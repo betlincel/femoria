@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { EmptyState } from "@/components/EmptyState";
-import { formatMinorPrice } from "@/lib/commerce";
+import { formatMinorPrice, shouldShowBuyerPaymentNotice } from "@/lib/commerce";
 import { commerceUi, getLocale } from "@/lib/i18n";
 import { requireUser } from "@/lib/supabase/auth";
 import { listBuyerOrders } from "@/lib/supabase/commerce";
@@ -96,7 +96,7 @@ export default async function OrdersPage({
                             </dd>
                           </div>
                         </dl>
-                        {order.payment_status !== "paid" ? (
+                        {shouldShowBuyerPaymentNotice(order.payment_status, order.order_status) ? (
                           <p className="unpaid-inline">{ui.unpaidNotice}</p>
                         ) : null}
                         <Link

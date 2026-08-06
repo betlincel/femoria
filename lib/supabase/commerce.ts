@@ -1,7 +1,7 @@
 import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { addressSchema, checkoutResultSchema, orderSchema, parseCartSnapshot, type BuyerOrder, type CartSnapshot, type UserAddress } from "@/lib/commerce";
+import { addressSchema, checkoutResultSchema, orderSchema, parseCartSnapshot, sellerOrderSchema, type BuyerOrder, type CartSnapshot, type SellerOrder, type UserAddress } from "@/lib/commerce";
 import type { Database, Json } from "./database.types";
 import { createClient } from "./server";
 
@@ -9,7 +9,8 @@ const ORDER_SELECT = `
   id, checkout_group_id, producer_id, producer_name_snapshot, order_number,
   order_status, payment_status, currency, subtotal_minor, shipping_minor, total_minor,
   recipient_name, phone, city, district, neighborhood, address_line, postal_code,
-  delivery_note, shipping_carrier, tracking_number, tracking_url, shipped_at, created_at, paid_at,
+  delivery_note, shipping_carrier, tracking_number, tracking_url, shipped_at,
+  cancellation_reason, cancelled_at, created_at, paid_at,
   items:order_items(id, product_id, product_slug_snapshot, product_title_tr_snapshot,
     product_title_en_snapshot, unit_price_minor, quantity, line_total_minor,
     image_path_snapshot, created_at)
@@ -59,6 +60,17 @@ function mapOrder(value: unknown, imageUrl: (path: string) => string): BuyerOrde
   };
 }
 
+function mapSellerOrder(value: unknown, imageUrl: (path: string) => string): SellerOrder {
+  const order = sellerOrderSchema.parse(value);
+  return {
+    ...order,
+    items: order.items.map((item) => ({
+      ...item,
+      imageUrl: item.image_path_snapshot ? imageUrl(item.image_path_snapshot) : "/brand/product-placeholder.svg",
+    })),
+  };
+}
+
 export async function listBuyerOrders(supabase: SupabaseClient<Database>, userId: string): Promise<BuyerOrder[]> {
   const { data, error } = await supabase.from("orders").select(ORDER_SELECT)
     .eq("buyer_id", userId).order("created_at", { ascending: false });
@@ -74,19 +86,20 @@ export async function getBuyerOrder(supabase: SupabaseClient<Database>, userId: 
   return data ? mapOrder(data, imageUrlBuilder(supabase)) : null;
 }
 
-export async function listSellerOrders(supabase: SupabaseClient<Database>, producerId: string): Promise<BuyerOrder[]> {
-  const { data, error } = await supabase.from("orders").select(ORDER_SELECT)
-    .eq("producer_id", producerId).order("created_at", { ascending: false }).limit(200);
+export async function listSellerOrders(supabase: SupabaseClient<Database>): Promise<SellerOrder[]> {
+  const { data, error } = await supabase.rpc("get_seller_orders");
   if (error) throw new Error("Seller orders could not be loaded.");
   const imageUrl = imageUrlBuilder(supabase);
-  return (data ?? []).map((row) => mapOrder(row, imageUrl));
+  const rows = Array.isArray(data) ? data : [];
+  return rows.map((row) => mapSellerOrder(row, imageUrl));
 }
 
-export async function getSellerOrder(supabase: SupabaseClient<Database>, producerId: string, orderId: string): Promise<BuyerOrder | null> {
-  const { data, error } = await supabase.from("orders").select(ORDER_SELECT)
-    .eq("id", orderId).eq("producer_id", producerId).maybeSingle();
+export async function getSellerOrder(supabase: SupabaseClient<Database>, orderId: string): Promise<SellerOrder | null> {
+  const { data, error } = await supabase.rpc("get_seller_order", {
+    target_order_id: orderId,
+  });
   if (error) throw new Error("Seller order could not be loaded.");
-  return data ? mapOrder(data, imageUrlBuilder(supabase)) : null;
+  return data ? mapSellerOrder(data, imageUrlBuilder(supabase)) : null;
 }
 
 export function parseCheckoutRpcResult(value: Json) {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addressInputSchema, cartItemMutationInputSchema, cartMutationInputSchema, checkoutResultSchema, formatMinorPrice, parseCartSnapshot, sellerShippingInputSchema } from "@/lib/commerce";
+import { addressInputSchema, cartItemMutationInputSchema, cartMutationInputSchema, checkoutResultSchema, formatMinorPrice, matchesSellerOrderFilter, parseCartSnapshot, sellerCanViewDelivery, sellerShippingInputSchema, shouldShowBuyerPaymentNotice } from "@/lib/commerce";
 import { commerceUi } from "@/lib/i18n";
 
 const productId = "11111111-1111-4111-8111-111111111111";
@@ -55,5 +55,30 @@ describe("commerce boundary models", () => {
     expect(sellerShippingInputSchema.safeParse({ ...valid, carrier: "" }).success).toBe(false);
     expect(sellerShippingInputSchema.safeParse({ ...valid, paymentStatus: "paid" }).success).toBe(false);
     expect(sellerShippingInputSchema.safeParse({ ...valid, orderStatus: "shipped" }).success).toBe(false);
+  });
+
+  it("does not label refunded buyer orders as unpaid", () => {
+    expect(shouldShowBuyerPaymentNotice("unpaid")).toBe(true);
+    expect(shouldShowBuyerPaymentNotice("pending")).toBe(true);
+    expect(shouldShowBuyerPaymentNotice("failed")).toBe(true);
+    expect(shouldShowBuyerPaymentNotice("paid")).toBe(false);
+    expect(shouldShowBuyerPaymentNotice("refunded")).toBe(false);
+    expect(shouldShowBuyerPaymentNotice("unpaid", "cancelled")).toBe(false);
+    expect(shouldShowBuyerPaymentNotice("unpaid", "expired")).toBe(false);
+  });
+
+  it("shows seller delivery PII only after payment is paid", () => {
+    expect(sellerCanViewDelivery("paid")).toBe(true);
+    expect(sellerCanViewDelivery("unpaid")).toBe(false);
+    expect(sellerCanViewDelivery("pending")).toBe(false);
+    expect(sellerCanViewDelivery("failed")).toBe(false);
+    expect(sellerCanViewDelivery("refunded")).toBe(false);
+  });
+
+  it("does not put a cancelled unpaid order in the awaiting-payment filter", () => {
+    expect(matchesSellerOrderFilter({ order_status: "cancelled" }, "awaiting_payment")).toBe(false);
+    expect(matchesSellerOrderFilter({ order_status: "awaiting_payment" }, "awaiting_payment")).toBe(true);
+    expect(matchesSellerOrderFilter({ order_status: "cancelled" }, "cancelled")).toBe(true);
+    expect(matchesSellerOrderFilter({ order_status: "expired" }, "expired")).toBe(true);
   });
 });

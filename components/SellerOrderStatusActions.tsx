@@ -29,6 +29,15 @@ export function SellerOrderStatusActions({
   } | null>(null);
   const [pending, startTransition] = useTransition();
 
+  if (
+    orderStatus === "shipped" ||
+    orderStatus === "delivered" ||
+    orderStatus === "cancelled" ||
+    orderStatus === "expired"
+  ) {
+    return null;
+  }
+
   if (paymentStatus !== "paid") {
     return (
       <p className="seller-order-payment-guard" role="status">

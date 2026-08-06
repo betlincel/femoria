@@ -15,6 +15,13 @@ const commerceMigration = readFileSync(
   ),
   "utf8",
 );
+const stabilizationMigration = readFileSync(
+  new URL(
+    "../supabase/migrations/20260806120000_stabilize_order_privacy_catalog.sql",
+    import.meta.url,
+  ),
+  "utf8",
+);
 const actions = readFileSync(
   new URL("../app/[locale]/seller/orders/actions.ts", import.meta.url),
   "utf8",
@@ -152,21 +159,27 @@ describe("secure seller order management contract", () => {
     expect(actions).toContain("sellerShippingInputSchema.safeParse(input)");
   });
 
-  it("protects list and detail routes with approved-seller authorization and owned queries", () => {
+  it("protects list and detail routes with approved-seller authorization and narrow read RPCs", () => {
     for (const page of [listPage, detailPage])
       expect(page).toMatch(/requireApprovedSeller\(\s*locale,/);
-    expect(commerceServer).toContain('.eq("producer_id", producerId)');
-    expect(commerceServer).toContain(
-      '.eq("id", orderId).eq("producer_id", producerId).maybeSingle()',
-    );
+    expect(commerceServer).toContain('supabase.rpc("get_seller_orders")');
+    expect(commerceServer).toContain('supabase.rpc("get_seller_order"');
+    expect(stabilizationMigration).toContain("where seller_order.producer_id = seller_id");
+    expect(stabilizationMigration).toContain("and owned_order.producer_id = seller_id");
     expect(detailPage).toContain("if (!order) notFound()");
   });
 
-  it("keeps unpaid orders visible but blocks operational UI", () => {
-    expect(listPage).toMatch(
-      /filter === "awaiting_payment"\s*\? order\.payment_status === "unpaid"/,
-    );
+  it("keeps awaiting-payment orders visible but blocks operational UI", () => {
+    expect(listPage).toContain("matchesSellerOrderFilter(order, filter)");
+    expect(listPage).toContain('"cancelled"');
+    expect(listPage).toContain('"expired"');
     expect(actionPanel).toContain('if (paymentStatus !== "paid")');
+    expect(actionPanel.indexOf('orderStatus === "cancelled"')).toBeLessThan(
+      actionPanel.indexOf('if (paymentStatus !== "paid")'),
+    );
+    expect(actionPanel.indexOf('orderStatus === "expired"')).toBeLessThan(
+      actionPanel.indexOf('if (paymentStatus !== "paid")'),
+    );
     expect(actionPanel).toContain("ui.paymentRequired");
     expect(actionPanel).toContain('orderStatus === "confirmed"');
     expect(actionPanel).toContain('orderStatus === "preparing"');
