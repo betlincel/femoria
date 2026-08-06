@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { z } from "zod";
 import type { profileSchema } from "@/lib/auth";
-import { commerceUi, sellerOrdersUi, type Messages } from "@/lib/i18n";
+import { adminOrdersUi, commerceUi, sellerOrdersUi, type Messages } from "@/lib/i18n";
 import type { Locale } from "@/lib/types";
 import { isActiveAdminProfile, isAdminProfile, isApprovedSeller } from "@/lib/account-access";
 import { accountEditorial } from "@/lib/content/editorial-content";
@@ -81,6 +81,9 @@ export function AccountView({
             </Link>
             <Link className="btn btn-primary" href={`/${locale}/admin/products`}>
               {m.adminProductReviews}<Icon name="arrow" size={18} />
+            </Link>
+            <Link className="btn btn-secondary" href={`/${locale}/admin/orders`}>
+              {adminOrdersUi[locale].orders}<Icon name="arrow" size={18} />
             </Link>
           </div>
         </section>

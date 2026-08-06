@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { commerceUi, productWorlds, sellerOrdersUi, type Messages } from "@/lib/i18n";
+import { adminOrdersUi, commerceUi, productWorlds, sellerOrdersUi, type Messages } from "@/lib/i18n";
 import type { Locale, ProductWorld } from "@/lib/types";
 import { Icon } from "./Icons";
 import { Logo } from "./Logo";
@@ -95,6 +95,7 @@ export function MobileDrawer({
             </Link>
           ))}
           {sellerNavigation === "approved" ? <><Link className={`drawer-link ${pathname === `/${locale}/seller` ? "active" : ""}`} href={`/${locale}/seller`} onClick={onClose}>{m.sellerPanel}<Icon name="chevron" size={18} /></Link><Link className={`drawer-link ${pathname.startsWith(`/${locale}/seller/orders`) ? "active" : ""}`} href={`/${locale}/seller/orders`} onClick={onClose}>{sellerOrdersUi[locale].title}<Icon name="chevron" size={18} /></Link></> : null}
+          {sellerNavigation === "admin" ? <Link className={`drawer-link ${pathname.startsWith(`/${locale}/admin/orders`) ? "active" : ""}`} href={`/${locale}/admin/orders`} onClick={onClose}>{adminOrdersUi[locale].orders}<Icon name="chevron" size={18} /></Link> : null}
           {sellerNavigation === "pending" || sellerNavigation === "rejected" ? <Link className="drawer-link" href={`/${locale}/info/producer-application`} onClick={onClose}>{sellerNavigation === "pending" ? m.accountSellerPending : m.accountSellerRejected}<Icon name="chevron" size={18} /></Link> : null}
           {sellerNavigation === "none" ? <Link className="drawer-link" href={`/${locale}/info/producer-application`} onClick={onClose}>{m.startApplication}<Icon name="chevron" size={18} /></Link> : null}
         </nav>

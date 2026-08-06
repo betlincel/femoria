@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { adminProductsUi } from "@/lib/i18n";
+import { adminOrdersUi, adminProductsUi } from "@/lib/i18n";
 import type { Locale } from "@/lib/types";
 
-export function AdminSectionNav({ locale, active }: { locale: Locale; active: "applications" | "products" }) {
+export function AdminSectionNav({ locale, active }: { locale: Locale; active: "applications" | "products" | "orders" }) {
   const ui = adminProductsUi[locale];
   return (
     <nav className="admin-section-nav" aria-label={locale === "tr" ? "Yönetim bölümleri" : "Administration sections"}>
@@ -11,6 +11,9 @@ export function AdminSectionNav({ locale, active }: { locale: Locale; active: "a
       </Link>
       <Link className={active === "products" ? "active" : ""} href={`/${locale}/admin/products`} aria-current={active === "products" ? "page" : undefined}>
         {ui.productReviews}
+      </Link>
+      <Link className={active === "orders" ? "active" : ""} href={`/${locale}/admin/orders`} aria-current={active === "orders" ? "page" : undefined}>
+        {adminOrdersUi[locale].orders}
       </Link>
     </nav>
   );

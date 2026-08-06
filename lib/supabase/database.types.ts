@@ -289,6 +289,7 @@ export type Database = {
           shipping_minor: number; total_minor: number; recipient_name: string; phone: string; city: string; district: string;
           neighborhood: string; address_line: string; postal_code: string | null; delivery_note: string | null;
           shipping_carrier: string | null; tracking_number: string | null; tracking_url: string | null; shipped_at: string | null;
+          cancellation_reason: string | null; cancelled_at: string | null; cancelled_by: string | null;
           created_at: string; updated_at: string; paid_at: string | null; expires_at: string | null;
         };
         Insert: {
@@ -298,12 +299,14 @@ export type Database = {
           shipping_minor?: number; total_minor: number; recipient_name: string; phone: string; city: string; district: string;
           neighborhood: string; address_line: string; postal_code?: string | null; delivery_note?: string | null;
           shipping_carrier?: string | null; tracking_number?: string | null; tracking_url?: string | null; shipped_at?: string | null;
+          cancellation_reason?: string | null; cancelled_at?: string | null; cancelled_by?: string | null;
           created_at?: string; updated_at?: string; paid_at?: string | null; expires_at?: string | null;
         };
         Update: Partial<Database["public"]["Tables"]["orders"]["Insert"]>;
         Relationships: [
           { foreignKeyName: "orders_buyer_id_fkey"; columns: ["buyer_id"]; isOneToOne: false; referencedRelation: "profiles"; referencedColumns: ["id"] },
           { foreignKeyName: "orders_producer_id_fkey"; columns: ["producer_id"]; isOneToOne: false; referencedRelation: "profiles"; referencedColumns: ["id"] },
+          { foreignKeyName: "orders_cancelled_by_fkey"; columns: ["cancelled_by"]; isOneToOne: false; referencedRelation: "profiles"; referencedColumns: ["id"] },
         ];
       };
       order_items: {
@@ -328,6 +331,7 @@ export type Database = {
     Functions: {
       add_product_to_cart: { Args: { target_product_id: string; input_quantity?: number }; Returns: string };
       clear_cart: { Args: Record<PropertyKey, never>; Returns: number };
+      cancel_admin_order: { Args: { target_order_id: string; input_reason: string }; Returns: boolean };
       create_awaiting_payment_orders: { Args: { target_address_id: string; checkout_attempt_id: string }; Returns: Json };
       create_user_address: {
         Args: { input_label: string; input_recipient_name: string; input_phone: string; input_city: string; input_district: string; input_neighborhood: string; input_address_line: string; input_postal_code?: string | null; input_delivery_note?: string | null; input_is_default?: boolean };
@@ -336,6 +340,7 @@ export type Database = {
       delete_user_address: { Args: { target_address_id: string }; Returns: boolean };
       get_cart_quantity: { Args: Record<PropertyKey, never>; Returns: number };
       get_cart_snapshot: { Args: Record<PropertyKey, never>; Returns: Json };
+      expire_admin_order: { Args: { target_order_id: string }; Returns: boolean };
       mark_seller_order_preparing: { Args: { target_order_id: string }; Returns: boolean };
       mark_seller_order_shipped: { Args: { target_order_id: string; input_shipping_carrier: string; input_tracking_number: string; input_tracking_url?: string | null }; Returns: boolean };
       remove_cart_item: { Args: { target_cart_item_id: string }; Returns: boolean };
