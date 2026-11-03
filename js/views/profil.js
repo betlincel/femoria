@@ -21,8 +21,8 @@ export default async function render(root) {
     root.append(h("h1", {}, "Profilim"),
       emptyState("user", "Henüz giriş yapmadınız", "Önce üye olmadan etrafa bakabilirsiniz. Üyelik ancak bir şey satmak ya da almak istediğinizde sorulur.",
         h("div", { class: "stack", style: { maxWidth: "320px", margin: "0 auto" } },
-          h("a", { class: "btn btn-primary", href: "#/giris?next=/profil" }, "Giriş yap"),
-          h("a", { class: "btn btn-secondary", href: "#/giris?mod=kayit&next=/profil" }, "Üye ol"),
+          h("a", { class: "btn btn-primary", href: "#/giris" }, "Giriş yap"),
+          h("a", { class: "btn btn-secondary", href: "#/giris?mod=kayit" }, "Üye ol"),
         )),
       linkList(),
     );

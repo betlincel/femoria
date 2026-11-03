@@ -55,6 +55,13 @@ function cleanAuthParams() {
   }
 }
 
+/**
+ * Giriş / üyelik sonrası oturumu HEMEN işle. onAuthStateChange geri çağırımı bir an sonra
+ * (setTimeout) çalıştığından, beklemeden profil okunursa boş gelir ve kullanıcı yanlışlıkla
+ * "Son adım" formuna düşerdi. Aynı kullanıcı için profil ikinci kez yüklenmez.
+ */
+export const syncSession = (session) => setSession(session);
+
 async function setSession(session) {
   const prevUser = state.user?.id;
   state.session = session;

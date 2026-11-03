@@ -2,7 +2,7 @@
 // Üyelik ürün yüklemenin önüne konmaz; yalnızca satmak, yazmak ya da almak istenince sorulur.
 import { h, toast, icon, withIcon, iconCircle, GENDERS } from "../ui.js";
 import { supabase, isConfigured, NOT_CONFIGURED, authRedirectUrl } from "../supabase.js";
-import { state, loadProfile, updateProfile } from "../store.js";
+import { state, syncSession, updateProfile } from "../store.js";
 import { navigate } from "../router.js";
 import { askLocation } from "../components.js";
 import { track } from "../api.js";
@@ -85,6 +85,13 @@ export function genderField(initial = null) {
   };
 }
 
+/**
+ * Giriş sonrası nereye gidilir: her zaman ana sayfa. Yalnızca yarıda kalmış bir işlem için
+ * giriş istendiyse (ürün yayınlama, satıcıya yazma, bir sohbeti açma) o işe geri dönülür.
+ */
+const RESUME = [/^\/sat$/, /^\/urun\/[\w-]+$/, /^\/sohbet\/[\w-]+$/];
+export const afterLogin = (next) => (RESUME.some((re) => re.test(next || "")) ? next : "/");
+
 export default async function render(root, { query }) {
   const next = query.next || "/";
   let mode = query.mod === "kayit" ? "signup" : "signin";
@@ -126,7 +133,7 @@ export default async function render(root, { query }) {
         e.preventDefault();
         if (!EMAIL_RE.test(email.value.trim())) return toast("E-posta adresini kontrol edin.");
         btn.disabled = true;
-        const { error } = await supabase.auth.signInWithPassword({ email: email.value.trim(), password: pw.input.value });
+        const { data, error } = await supabase.auth.signInWithPassword({ email: email.value.trim(), password: pw.input.value });
         btn.disabled = false;
         errSlot.replaceChildren();
         if (error) {
@@ -135,7 +142,7 @@ export default async function render(root, { query }) {
           return;
         }
         track("login_success", { method: "email" });
-        await loadProfile();
+        await syncSession(data.session);
         finish();
       } },
         h("div", {}, h("label", { for: "email" }, "E-posta adresiniz"), email),
@@ -183,7 +190,7 @@ export default async function render(root, { query }) {
         }
         track("signup", { method: "email", needs_confirm: !data.session });
         if (!data.session) return checkInbox(email.value.trim());
-        await loadProfile();
+        await syncSession(data.session);
         finish();
       } },
         h("div", {}, h("label", { for: "name" }, "Adınız"), name),
@@ -278,7 +285,7 @@ export default async function render(root, { query }) {
     const p = state.profile;
     if (!p?.full_name || !p?.gender || (p?.approx_lat == null && !state.location?.lat)) return stepProfile();
     toast("Hoş geldiniz! Artık hem satabilir hem alışveriş yapabilirsiniz.");
-    navigate(next, { replace: true });
+    navigate(afterLogin(next), { replace: true });
   }
 
   drawTabs();

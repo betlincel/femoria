@@ -39,6 +39,7 @@ function renderAvatar() {
   else if (p?.full_name) el.textContent = p.full_name.trim()[0].toLocaleUpperCase("tr-TR");
   else el.innerHTML = iconSVG("user", 22);
   document.getElementById("account-label").textContent = state.user ? (p?.full_name?.split(" ")[0] || "Hesabım") : "Giriş yap";
+  document.querySelector('.header-link[data-route="profil"]').setAttribute("href", state.user ? "#/profil" : "#/giris");
   document.querySelector(".fab-face").innerHTML = ayseAvatarSVG(40);
 }
 

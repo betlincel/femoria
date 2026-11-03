@@ -27,7 +27,7 @@ export default async function render(root, { query }) {
   const s = state.settings;
   const p = state.profile || {};
   const loggedIn = !!state.user;
-  const needLogin = () => { toast("Bu ayar için giriş yapmanız gerekiyor."); navigate("/giris?next=/ayarlar"); };
+  const needLogin = () => { toast("Bu ayar için giriş yapmanız gerekiyor."); navigate("/giris"); };
   const guarded = (fn) => (v) => (loggedIn ? fn(v) : needLogin());
 
   const fontButtons = h("div", { class: "btn-group", role: "group", "aria-label": "Yazı büyüklüğü" });
@@ -53,7 +53,7 @@ export default async function render(root, { query }) {
       loggedIn
         ? h("button", { class: "list-item", onclick: async () => { await signOut(); toast("Çıkış yaptınız."); navigate("/"); } },
             icon("logout"), h("div", { class: "body" }, h("strong", {}, "Çıkış yap")))
-        : h("a", { class: "list-item", href: "#/giris?next=/ayarlar" },
+        : h("a", { class: "list-item", href: "#/giris" },
             icon("user"), h("div", { class: "body" }, h("strong", {}, "Giriş yap / Üye ol")), icon("chevron-right")),
     ),
 
