@@ -23,7 +23,7 @@ mobil öncelikli web uygulaması + Supabase altyapısı + "Ayşe Abla" yapay zek
 ## Teknoloji
 
 - **Ön yüz:** HTML5, CSS3, Vanilla JavaScript (ES modülleri) — derleme adımı yok.
-- **Arka uç:** [Supabase](https://supabase.com) — PostgreSQL, telefonla giriş (SMS kodu), dosya depolama, canlı mesajlaşma (Realtime), Edge Functions.
+- **Arka uç:** [Supabase](https://supabase.com) — PostgreSQL, e-posta + şifreyle giriş, dosya depolama, canlı mesajlaşma (Realtime), Edge Functions.
 - **Yapay zeka:** OpenAI API (sohbet + konuşmayı yazıya çevirme), anahtar yalnızca Edge Function'da durur.
 - **Harita:** OpenStreetMap + Leaflet (ücretsiz, anahtarsız).
 - **Ses:** Tarayıcının kendi konuşma tanıma (tr-TR) ve sesli okuma özellikleri.
@@ -74,13 +74,21 @@ supabase db push
 
 4. Başlangıç verilerini yükleyin: Dashboard → SQL Editor'de `supabase/seed.sql` içeriğini çalıştırın.
 
-### 2. Telefonla girişi açın
+### 2. E-posta + şifre ile girişi ayarlayın
 
-Dashboard → **Authentication → Sign In / Providers → Phone**:
+Dashboard → **Authentication → Sign In / Providers → Email**:
 
-- Phone provider'ı açın, bir SMS sağlayıcısı seçin (Twilio, MessageBird, Vonage veya Textlocal) ve bilgilerini girin.
-- Geliştirme sırasında SMS göndermeden denemek için **Test Phone Numbers** bölümüne numara + sabit kod ekleyebilirsiniz.
-- **Email** girişini kapatabilirsiniz (formdaki "e-posta/şifre yok" ilkesi).
+- **Email** sağlayıcısı açık olsun (varsayılan olarak açıktır).
+- **Confirm email** açık olsun. Kullanıcı e-postasındaki bağlantıya tıklayınca hesabı açılır ve "e-postası doğrulanmış" sayılır (güvenilir alıcı ve "Doğrulanmış Komşu" rozeti bunu kullanır).
+- **Minimum password length**: `8` (uygulama da 8 karakter ister).
+- **Phone** sağlayıcısına artık gerek yok; kapalı kalabilir.
+
+Dashboard → **Authentication → URL Configuration**:
+
+- **Site URL**: sitenin adresi (yerelde `http://localhost:5173`, yayında Vercel/Netlify adresiniz).
+- **Redirect URLs**: aynı adresleri ekleyin. Onay ve "şifremi unuttum" bağlantıları buraya döner; listede olmayan adrese yönlendirme yapılmaz.
+
+**E-posta gönderimi:** Supabase'in hazır e-posta servisi yalnızca deneme içindir ve saatte birkaç e-postayla sınırlıdır. Yayına çıkmadan önce **Authentication → Emails → SMTP Settings** bölümüne kendi SMTP sağlayıcınızı (ör. Resend, Brevo, Amazon SES) girin. Aynı sayfadaki şablonlardan onay ve şifre yenileme e-postalarını Türkçeleştirebilirsiniz.
 
 ### 3. Ayşe Abla'yı (yapay zeka) yayınlayın
 
@@ -121,7 +129,7 @@ Tarayıcıda `http://localhost:5173` açılır. Telefonda denemek için kamera v
 npm run db:start
 ```
 
-Çıktıdaki `API URL` ve `anon key` değerlerini `js/config.js`'e yazın. `supabase/config.toml` içinde tanımlı test numaralarıyla (`905551112233`, kod `123456`) SMS olmadan giriş yapılabilir. Yapay zekayı yerelde denemek için `supabase/.env.example` dosyasını `supabase/.env` olarak kopyalayıp `npm run functions:serve` çalıştırın.
+Çıktıdaki `API URL` ve `anon key` değerlerini `js/config.js`'e yazın. Yerelde gönderilen onay ve şifre yenileme e-postaları gerçek adrese gitmez; `http://127.0.0.1:54324` adresindeki test gelen kutusunda (Inbucket) görünür. Yapay zekayı yerelde denemek için `supabase/.env.example` dosyasını `supabase/.env` olarak kopyalayıp `npm run functions:serve` çalıştırın.
 
 ## Yayınlama
 

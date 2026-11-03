@@ -115,7 +115,9 @@ function setChoices(buttons) {
 
 /** "Burayı göster": ekrandaki düğmeyi parlatır. */
 export function highlight(key) {
-  const el = document.querySelector(`[data-highlight="${key}"]`);
+  // Masaüstünde alt menü gizlidir; aynı işin başlıktaki karşılığını ("…-top") parlat.
+  const el = [...document.querySelectorAll(`[data-highlight="${key}"], [data-highlight="${key}-top"]`)]
+    .find((e) => e.offsetParent !== null || getComputedStyle(e).position === "fixed");
   if (!el) return;
   el.classList.add("pulse-highlight");
   el.scrollIntoView({ behavior: "smooth", block: "center" });

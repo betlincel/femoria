@@ -37,10 +37,22 @@ export async function initAuth() {
   if (!isConfigured) return;
   const { data } = await supabase.auth.getSession();
   await setSession(data.session);
-  supabase.auth.onAuthStateChange((_event, session) => {
+  cleanAuthParams();
+  supabase.auth.onAuthStateChange((event, session) => {
+    // E-postadaki "şifremi yenile" bağlantısından gelindi
+    if (event === "PASSWORD_RECOVERY") state.passwordRecovery = true;
     // Supabase önerisi: geri çağırım içinde await etmeyin.
     setTimeout(() => setSession(session), 0);
   });
+}
+
+// E-posta bağlantısından dönüşte adres çubuğundaki ?code=… / ?error=… parametrelerini temizle.
+function cleanAuthParams() {
+  const params = new URLSearchParams(location.search);
+  if (params.has("error_description")) state.authLinkError = params.get("error_description");
+  if (["code", "error", "error_code", "error_description"].some((k) => params.has(k))) {
+    history.replaceState(null, "", location.pathname + location.hash);
+  }
 }
 
 async function setSession(session) {

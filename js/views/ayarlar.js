@@ -9,11 +9,11 @@ import { navigate } from "../router.js";
 
 const KVKK_TEXT = [
   "Femoria olarak bilgilerinizi korumak bizim sözümüzdür.",
-  "Sizden yalnızca telefon numaranızı, adınızı ve mahallenizi alırız.",
+  "Sizden yalnızca e-posta adresinizi, adınızı ve mahallenizi alırız. Şifreniz şifrelenmiş olarak saklanır; biz de göremeyiz.",
   "Ev adresiniz hiçbir zaman alınmaz ve kimseye gösterilmez. Konumunuz mahalle düzeyinde, kaydırılarak saklanır.",
   "Mesajlarınızı yalnızca siz ve konuştuğunuz kişi görebilir. Şikayet edilen sohbetleri güvenliğiniz için ekibimiz inceleyebilir.",
   "Uygulamayı geliştirmek için hangi ekranların kullanıldığını isimsiz olarak sayarız.",
-  "Ayşe Abla'ya yazdıklarınız cevap üretmek için yapay zeka hizmetine gönderilir; telefon numaranız gönderilmez.",
+  "Ayşe Abla'ya yazdıklarınız cevap üretmek için yapay zeka hizmetine gönderilir; e-posta adresiniz gönderilmez.",
   "Hesabınızı ve tüm bilgilerinizi istediğiniz an, bu sayfadaki tek düğmeyle silebilirsiniz.",
 ];
 
@@ -64,14 +64,14 @@ export default async function render(root, { query }) {
         ? h("button", { class: "list-item", onclick: async () => { await signOut(); toast("Çıkış yaptınız."); navigate("/"); } },
             icon("logout"), h("div", { class: "body" }, h("strong", {}, "Çıkış yap")))
         : h("a", { class: "list-item", href: "#/giris?next=/ayarlar" },
-            icon("phone"), h("div", { class: "body" }, h("strong", {}, "Telefonumla giriş yap")), icon("chevron-right")),
+            icon("user"), h("div", { class: "body" }, h("strong", {}, "Giriş yap / Üye ol")), icon("chevron-right")),
     ),
 
     h("div", { class: "group-title", id: "guvenlik" }, "Güvenlik ve gizlilik"),
     h("div", { class: "list" },
       item("moon", "Gece sessizliği", "22:00–08:00 arası mesajlar sessize alınır; karşı tarafa \"sabah dönecek\" notu gider.",
         toggle("Gece sessizliği", !!p.quiet_hours_enabled, guarded((v) => updateProfile({ quiet_hours_enabled: v })))),
-      item("user-check", "Yalnız güvenilir alıcılar", "Sadece telefonu doğrulanmış ve daha önce alışveriş yapmış kişiler size yazabilir.",
+      item("user-check", "Yalnız güvenilir alıcılar", "Sadece e-postası doğrulanmış ve daha önce alışveriş yapmış kişiler size yazabilir.",
         toggle("Yalnız güvenilir alıcılar", !!p.only_trusted_messages, guarded((v) => updateProfile({ only_trusted_messages: v })))),
       emergencyBlock(loggedIn, needLogin, !!query.acil),
       h("button", { class: "list-item", onclick: kvkk }, icon("file"), h("div", { class: "body" }, h("strong", {}, "Aydınlatma metni (KVKK)")), icon("chevron-right")),

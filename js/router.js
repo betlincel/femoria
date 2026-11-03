@@ -6,7 +6,8 @@ let cleanup = null;
 let current = { screen: "vitrin", path: "/" };
 const listeners = new Set();
 
-export const route = (pattern, screen, load) => routes.push({ pattern, screen, load });
+// layout: "wide" (vitrin, ürün listesi) | "medium" (sohbet, rehber) | "narrow" (formlar)
+export const route = (pattern, screen, load, layout = "wide") => routes.push({ pattern, screen, load, layout });
 export const currentScreen = () => current.screen;
 export const onRoute = (fn) => (listeners.add(fn), () => listeners.delete(fn));
 
@@ -44,6 +45,8 @@ export async function render() {
   listeners.forEach((fn) => fn(current));
 
   root.replaceChildren();
+  root.className = `app app-${match.r.layout}`;
+  document.body.dataset.screen = match.r.screen;
   document.getElementById("sheet-root")?.replaceChildren(); // önceki sayfanın açık alt sayfaları kapanır
   window.scrollTo(0, 0);
   try {

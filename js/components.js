@@ -1,7 +1,7 @@
 // Ekranlar arasında paylaşılan bileşenler.
 import { h, formatPrice, formatDistance, toast, sheet, icon, withIcon } from "./ui.js";
 import { categoryIconName } from "./icons.js";
-import { photoUrl, getLocations, DELIVERY_LABEL } from "./api.js";
+import { photoUrl, getLocations } from "./api.js";
 import { state, saveLocation } from "./store.js";
 
 export function pageTitle(text, { back } = {}) {
@@ -19,18 +19,34 @@ export function productPhoto(product, cls = "ph") {
 }
 
 export function productCard(p) {
-  return h("a", { class: "card card-link product-card", href: `#/urun/${p.id}` },
-    productPhoto(p),
-    h("div", {},
-      h("div", { class: "title" }, p.title),
+  const url = photoUrl(p.photos?.[0]);
+  return h("a", { class: "pcard", href: `#/urun/${p.id}` },
+    h("div", { class: "pcard-img" },
+      url ? h("img", { src: url, alt: p.title, loading: "lazy" }) : icon(categoryIconName(p.category)),
+      p.status === "satildi" ? h("span", { class: "chip pcard-badge" }, "Satıldı") : null,
+    ),
+    h("div", { class: "pcard-body" },
+      h("div", { class: "pcard-title" }, p.title),
       h("div", { class: "price" }, formatPrice(p.price)),
       h("div", { class: "meta" },
         p.distance_km != null || p.neighborhood ? icon("map-pin") : null,
         p.distance_km != null ? formatDistance(p.distance_km) : p.neighborhood || "",
-        p.delivery ? h("span", {}, `· ${DELIVERY_LABEL[p.delivery]}`) : null,
       ),
     ),
   );
+}
+
+/** Ürün ızgarası: telefonda 2, tablette 3, masaüstünde 4 sütun */
+export const productGrid = (items, { cols4 = true } = {}) =>
+  h("div", { class: `pgrid ${cols4 ? "pgrid-4" : ""}` }, items.map(productCard));
+
+export function breadcrumb(...parts) {
+  const out = [];
+  parts.forEach(([label, href], i) => {
+    if (i) out.push(icon("chevron-right"));
+    out.push(href ? h("a", { href }, label) : h("span", { "aria-current": "page" }, label));
+  });
+  return h("nav", { class: "breadcrumb", "aria-label": "Konumunuz" }, out);
 }
 
 export function categoryTiles(categories, { selected = null, onSelect, hrefFor } = {}) {

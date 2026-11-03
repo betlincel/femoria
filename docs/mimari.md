@@ -4,7 +4,7 @@
 
 | Konu | Karar | Gerekçe |
 |---|---|---|
-| **Veritabanı** (MySQL mi PostgreSQL mi?) | **PostgreSQL (Supabase)** | Hazır telefonla giriş, dosya depolama, canlı mesajlaşma ve satır düzeyi güvenlik prototipi hızlandırır. Taslağın da önerisi bu. |
+| **Veritabanı** (MySQL mi PostgreSQL mi?) | **PostgreSQL (Supabase)** | Hazır e-posta/şifre girişi, dosya depolama, canlı mesajlaşma ve satır düzeyi güvenlik prototipi hızlandırır. Taslağın da önerisi bu. |
 | **Barındırma** (PHP Vercel/Netlify'da çalışmaz) | **PHP yok.** Ön yüz statik (Vercel/Netlify), sunucu mantığı PostgreSQL fonksiyonları + Supabase Edge Functions | İş kuralları (sipariş, rozet, konum gizliliği) veritabanında; yapay zeka anahtarı Edge Function'da. Ayrı bir PHP sunucusuna gerek kalmaz. |
 | **Takvim** (önce backend mi önce arayüz mü?) | **Önce veri modeli + arayüz iskeleti birlikte**, sonra özellikler | Bu depo ikisini birlikte kurar; taslak 4.4'teki öncelik sırası aşağıda. |
 
@@ -15,7 +15,7 @@ Tarayıcı (HTML/CSS/Vanilla JS)
   │  supabase-js (anon anahtar + kullanıcı JWT'si)
   ▼
 Supabase
-  ├─ Auth ............ telefon + SMS kodu
+  ├─ Auth ............ e-posta + şifre (onay e-postası, şifre yenileme; PKCE akışı)
   ├─ PostgREST ....... tablolar (RLS ile korunur) + RPC fonksiyonları
   ├─ Realtime ........ messages, orders, conversations
   ├─ Storage ......... product-photos (açık), avatars (açık), voice-messages (yalnız katılımcılar)
@@ -42,10 +42,10 @@ Supabase
 
 - **Yaklaşık konum:** `profiles` ve `products` tetikleyicileri gelen koordinatı her kayıtta ~500 m (ürünlerde ek ~200 m) rastgele kaydırır. Tam konum hiç saklanmaz. Haritada nokta yerine 500 m'lik daire çizilir.
 - **Akıllı mesaj kalkanı:** `message_shield_flags()` telefon, IBAN, adres ve "önce kapora at" kalıplarını işaretler. İstemci aynı kurallarla göndermeden önce yumuşak uyarı verir; mesaj engellenmez, karar kullanıcının.
-- **Kadın satıcı koruması:** `only_trusted_messages` açıksa yalnız telefonu doğrulanmış ve en az bir tamamlanmış alışverişi olan alıcılar yazabilir (`can_message()`, `start_conversation()`).
+- **Kadın satıcı koruması:** `only_trusted_messages` açıksa yalnız e-postası (ya da telefonu) doğrulanmış ve en az bir tamamlanmış alışverişi olan alıcılar yazabilir (`can_message()`, `start_conversation()`).
 - **Gece sessizliği:** `quiet_hours_enabled` açıksa 22:00–08:00 (İstanbul) arası gelen ilk mesaja otomatik "sabah dönecek" sistem notu düşer.
 - **Engelleme:** Engellenen kişi sohbet başlatamaz ve mesaj gönderemez (RLS + RPC).
-- **Doğrulama alanları** (`phone_verified`, `identity_verified`, `cooperative_name`) kullanıcı tarafından değiştirilemez; telefon doğrulaması Auth'tan otomatik gelir.
+- **Doğrulama alanları** (`email_verified`, `phone_verified`, `identity_verified`, `cooperative_name`) kullanıcı tarafından değiştirilemez; e-posta doğrulaması Auth'tan otomatik gelir.
 - **KVKK:** Aydınlatma metni sade dilde ve sesli okunabilir; `delete_my_account()` hesabı ve bağlı tüm verileri tek düğmeyle siler.
 
 ## RPC fonksiyonları
