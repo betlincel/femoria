@@ -60,10 +60,20 @@ export function monthsSince(date) {
   return Math.max(0, (now.getFullYear() - d.getFullYear()) * 12 + now.getMonth() - d.getMonth());
 }
 
-export function greeting(name) {
+export const GENDERS = [["kadin", "Kadın"], ["erkek", "Erkek"], ["belirtilmedi", "Belirtmek istemiyorum"]];
+
+/** Hitap: kadın → "Ayşe Hanım", erkek → "Erdem Bey", belirtilmedi/bilinmiyor → "Ayşe" */
+export function hitap(name, gender) {
+  const first = String(name || "").trim().split(/\s+/)[0];
+  if (!first) return "";
+  return gender === "kadin" ? `${first} Hanım` : gender === "erkek" ? `${first} Bey` : first;
+}
+
+export function greeting(name, gender) {
   const hr = new Date().getHours();
   const g = hr < 11 ? "Günaydın" : hr < 18 ? "İyi günler" : "İyi akşamlar";
-  return name ? `${g} ${name.split(" ")[0]} Hanım` : `${g}`;
+  const who = hitap(name, gender);
+  return who ? `${g} ${who}` : g;
 }
 
 // ---------- Bildirim ve alt sayfa ----------

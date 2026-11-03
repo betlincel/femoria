@@ -1,6 +1,6 @@
 // Giriş / Üye ol — e-posta + şifre.
 // Üyelik ürün yüklemenin önüne konmaz; yalnızca satmak, yazmak ya da almak istenince sorulur.
-import { h, toast, icon, withIcon, iconCircle } from "../ui.js";
+import { h, toast, icon, withIcon, iconCircle, GENDERS } from "../ui.js";
 import { supabase, isConfigured, NOT_CONFIGURED, authRedirectUrl } from "../supabase.js";
 import { state, loadProfile, updateProfile } from "../store.js";
 import { navigate } from "../router.js";
@@ -38,6 +38,26 @@ export function passwordField(id, label, { autocomplete = "current-password", hi
         h("label", { for: id, style: { margin: 0, flex: "1" } }, label), toggle),
       input,
       hint ? h("div", { class: "small muted", style: { marginTop: "6px" } }, hint) : null,
+    ),
+  };
+}
+
+/** Cinsiyet seçimi (yalnız hitap için). value() → "kadin" | "erkek" | "belirtilmedi" | null */
+export function genderField(initial = null) {
+  let value = initial;
+  const group = h("div", { class: "btn-group gender-group", role: "radiogroup", "aria-labelledby": "gender-label" });
+  const draw = () => group.replaceChildren(...GENDERS.map(([k, l]) => h("button", {
+    type: "button", class: "btn btn-secondary btn-choice", role: "radio",
+    "aria-checked": String(value === k), "aria-pressed": String(value === k),
+    onclick: () => { value = k; draw(); },
+  }, l)));
+  draw();
+  return {
+    value: () => value,
+    el: h("div", {},
+      h("label", { id: "gender-label" }, "Cinsiyetiniz"),
+      group,
+      h("div", { class: "small muted", style: { marginTop: "6px" } }, "Size nasıl hitap edeceğimizi bilmek için soruyoruz (Hanım / Bey). Başkalarına gösterilmez."),
     ),
   };
 }
@@ -109,12 +129,14 @@ export default async function render(root, { query }) {
     const name = h("input", { class: "input", id: "name", autocomplete: "given-name", required: true, placeholder: "Adınız", value: "" });
     const email = h("input", { class: "input", id: "email", type: "email", inputmode: "email", autocomplete: "email", required: true, placeholder: "ornek@eposta.com" });
     const pw = passwordField("password", "Şifre", { autocomplete: "new-password", hint: `En az ${MIN_PASSWORD} karakter. Kolay hatırlayacağınız ama tahmin edilemeyecek bir şey seçin.` });
+    const gender = genderField();
     const kvkk = h("input", { type: "checkbox", id: "kvkk", required: true, style: { width: "22px", height: "22px", flex: "0 0 auto", marginTop: "2px" } });
     const btn = h("button", { class: "btn btn-primary btn-xl", type: "submit" }, "Üye ol");
     body.replaceChildren(
       h("form", { class: "stack", onsubmit: async (e) => {
         e.preventDefault();
         if (name.value.trim().length < 2) return toast("Adınızı yazın.");
+        if (!gender.value()) return toast("Cinsiyetinizi seçin. İsterseniz \"Belirtmek istemiyorum\"u seçebilirsiniz.");
         if (!EMAIL_RE.test(email.value.trim())) return toast("E-posta adresini kontrol edin.");
         if (pw.input.value.length < MIN_PASSWORD) return toast(`Şifre en az ${MIN_PASSWORD} karakter olmalı.`);
         if (!kvkk.checked) return toast("Devam etmek için aydınlatma metnini onaylayın.");
@@ -122,7 +144,7 @@ export default async function render(root, { query }) {
         const { data, error } = await supabase.auth.signUp({
           email: email.value.trim(),
           password: pw.input.value,
-          options: { data: { full_name: name.value.trim() }, emailRedirectTo: authRedirectUrl() },
+          options: { data: { full_name: name.value.trim(), gender: gender.value() }, emailRedirectTo: authRedirectUrl() },
         });
         btn.disabled = false;
         if (error) return toast(authError(error));
@@ -137,6 +159,7 @@ export default async function render(root, { query }) {
         finish();
       } },
         h("div", {}, h("label", { for: "name" }, "Adınız"), name),
+        gender.el,
         h("div", {}, h("label", { for: "email" }, "E-posta adresiniz"), email),
         pw.el,
         h("label", { for: "kvkk", class: "row", style: { alignItems: "flex-start", gap: "10px", fontWeight: "400", cursor: "pointer" } },
@@ -198,13 +221,15 @@ export default async function render(root, { query }) {
   // ---------- İlk girişte eksik bilgiler ----------
   async function stepProfile() {
     const name = h("input", { class: "input", id: "name", autocomplete: "given-name", placeholder: "Adınız", value: state.profile?.full_name || "" });
+    const gender = genderField(state.profile?.gender || null);
     tabs.hidden = true;
     body.replaceChildren(
       h("h2", {}, "Son adım"),
       h("form", { class: "stack", onsubmit: async (e) => {
         e.preventDefault();
         if (name.value.trim().length < 2) return toast("Adınızı yazın.");
-        await updateProfile({ full_name: name.value.trim() });
+        if (!gender.value()) return toast("Cinsiyetinizi seçin. İsterseniz \"Belirtmek istemiyorum\"u seçebilirsiniz.");
+        await updateProfile({ full_name: name.value.trim(), gender: gender.value() });
         if (!state.location?.neighborhood) await pickLocation();
         else await updateProfile({
           approx_lat: state.location.lat, approx_lng: state.location.lng, city: state.location.city,
@@ -213,14 +238,16 @@ export default async function render(root, { query }) {
         finish();
       } },
         h("div", {}, h("label", { for: "name" }, "Adınız"), name),
+        gender.el,
         h("div", { class: "tip" }, icon("lock"), h("p", {}, "Ev adresinizi kimse görmez; insanlar sadece hangi mahallede olduğunuzu bilir.")),
-        h("button", { class: "btn btn-primary btn-xl", type: "submit" }, "Mahallemi seç ve bitir"),
+        h("button", { class: "btn btn-primary btn-xl", type: "submit" }, state.location?.neighborhood ? "Kaydet ve devam et" : "Mahallemi seç ve bitir"),
       ),
     );
   }
 
   function finish() {
-    if (!state.profile?.full_name || !state.profile?.neighborhood && !state.location?.neighborhood) return stepProfile();
+    const p = state.profile;
+    if (!p?.full_name || !p?.gender || (!p?.neighborhood && !state.location?.neighborhood)) return stepProfile();
     toast("Hoş geldiniz! Artık hem satabilir hem alışveriş yapabilirsiniz.");
     navigate(next, { replace: true });
   }

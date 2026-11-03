@@ -25,6 +25,7 @@ function heroArt(items) {
 
 export default async function render(root) {
   const name = state.profile?.full_name;
+  const gender = state.profile?.gender;
   const loc = state.location;
   const newArrivals = h("div", {}, loading());
   const extras = h("div", { class: "stack" });
@@ -35,7 +36,7 @@ export default async function render(root) {
       h("div", { class: "hero-grid" },
         h("div", {},
           h("div", { class: "eyebrow" }, loc?.neighborhood ? `${loc.neighborhood}, ${loc.district}` : "Mahallenin el emeği pazarı"),
-          h("h1", {}, name ? `${greeting(name)},` : "Komşunuzun elinden,"),
+          h("h1", {}, name ? `${greeting(name, gender)},` : "Komşunuzun elinden,"),
           h("h1", { style: { color: "var(--primary)" } }, name ? "bugün ne satıyoruz?" : "sofranıza ve evinize."),
           h("p", {}, "Ev yemekleri, örgü, takı ve daha fazlası. Evde ürettiğinizi 3 adımda satışa çıkarın; mahallenizdeki el emeğini keşfedin."),
           h("div", { class: "hero-actions" },
@@ -97,6 +98,15 @@ export default async function render(root) {
     : h("div", { class: "card" }, emptyState("bag", "Henüz ürün yok", "Mahallenizde ilk ürünü siz koyun.", h("a", { class: "btn btn-primary", href: "#/sat" }, "İlk ürünü koy"))));
 
   // Kooperatif / buluşma günü duyuruları + "Mahallende Aranıyor"
+  // Cinsiyet seçmemiş (eski) hesaplara bir kerelik hatırlatma
+  if (state.user && state.profile && !state.profile.gender) {
+    extras.append(h("div", { class: "section" }, featureCard({
+      ico: "user", title: "Size nasıl hitap edelim?",
+      text: "Cinsiyetinizi seçerseniz size \"Hanım\" ya da \"Bey\" diye hitap ederiz. Başkalarına gösterilmez.",
+      href: "#/ayarlar?hitap=1", warm: true,
+    })));
+  }
+
   const [ann, demand] = await Promise.all([announcements(), state.user ? districtDemand() : []]);
   for (const a of ann.slice(0, 1)) {
     extras.append(h("div", { class: "section" }, featureCard({ ico: "megaphone", title: a.title, text: a.body, warm: true })));
