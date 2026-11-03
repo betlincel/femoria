@@ -143,6 +143,20 @@ npm run db:start
 
 Çıktıdaki `API URL` ve `anon key` değerlerini `js/config.js`'e yazın. Yerelde gönderilen onay ve şifre yenileme e-postaları gerçek adrese gitmez; `http://127.0.0.1:54324` adresindeki test gelen kutusunda (Inbucket) görünür. Yapay zekayı yerelde denemek için `supabase/.env.example` dosyasını `supabase/.env` olarak kopyalayıp `npm run functions:serve` çalıştırın.
 
+## Konum verisi
+
+Listeden konum seçimi için Türkiye'nin 81 ili, 973 ilçesi ve ~73 bin mahalle/köyü `assets/tr/` klasöründedir (kaynaklar ve lisanslar: `assets/tr/KAYNAK.md`). Veriyi güncellemek için:
+
+```bash
+npm pack turkey-neighbourhoods memleketim-tr-cities
+```
+
+Paketleri açtıktan sonra:
+
+```bash
+node scripts/build-tr-locations.mjs <turkey-neighbourhoods/package> <memleketim-tr-cities/package>
+```
+
 ## Aydınlatma metni (KVKK)
 
 Metin `js/kvkk.js` dosyasındadır. Yayına çıkmadan önce:

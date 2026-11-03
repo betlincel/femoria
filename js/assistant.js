@@ -50,7 +50,7 @@ function buildPanel() {
 
   panel().replaceChildren(
     h("div", { class: "assistant-head" },
-      ayseAvatar(state.profile?.assistant_look, 48),
+      ayseAvatar(48),
       h("div", { class: "who" }, h("strong", {}, "Ayşe Abla"), h("div", { class: "small muted" }, "Takıldığınız her an buradayım")),
       canSpeak ? ttsBtn : null,
       h("button", { class: "icon-btn", "aria-label": "Kapat", onclick: close }, icon("x", 22)),

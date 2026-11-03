@@ -26,7 +26,7 @@ Supabase
 
 | Tablo | Amaç |
 |---|---|
-| `profiles` | Tek hesap (alıcı + satıcı). Ayarlar, acil kişi, yaklaşık konum. Yalnız sahibi okur. |
+| `profiles` | Tek hesap (alıcı + satıcı). Ayarlar, cinsiyet (hitap), yaklaşık konum, onay kayıtları. Yalnız sahibi okur. |
 | `public_profiles` (görünüm) | Başkalarının görebileceği güvenli alanlar (ad, mahalle, doğrulama durumu). |
 | `categories`, `locations`, `badges` | Sözlükler. `locations`: il/ilçe/mahalle + mahalle merkezi. |
 | `products` | Ürünler. Konum satıcıdan devralınır ve kaydırılır. |
@@ -47,6 +47,8 @@ Supabase
 - **Engelleme:** Engellenen kişi sohbet başlatamaz ve mesaj gönderemez (RLS + RPC).
 - **Doğrulama alanları** (`email_verified`, `phone_verified`, `identity_verified`, `cooperative_name`) kullanıcı tarafından değiştirilemez; e-posta doğrulaması Auth'tan otomatik gelir.
 - **Konum (açık rıza):** Konum yalnızca cihazdan, tarayıcı izniyle alınır. İlk seferde kısa aydınlatma + "açık rıza veriyorum" onayı istenir (`profiles.location_consent_at`). Koordinat istemcide ~100 m'ye yuvarlanır; mahalle adı için yalnız bu yuvarlanmış değer OpenStreetMap Nominatim'e gönderilir, sunucu da kaydederken ~500 m kaydırır. İzin reddedilirse nasıl açılacağı anlatılır; listeden mahalle seçimi yedektir. Ayarlar → Konum → "Konum iznimi geri al" konumu cihazdan ve hesaptan siler.
+- **Listeden konum:** Türkiye'nin 81 ili, 973 ilçesi ve ~73 bin mahalle/köyü `assets/tr/` altında (kaynaklar ve lisanslar: `assets/tr/KAYNAK.md`, üretim: `scripts/build-tr-locations.mjs`). Seçilen yerin koordinatı tarayıcıda OpenStreetMap ile bulunur; bulunamazsa ilçe, o da olmazsa il merkezi kullanılır.
+- **Ayşe Abla görünümü:** sabittir (başı açık); kullanıcı tarafından değiştirilemez.
 - **KVKK aydınlatma metni:** Tek kaynak `js/kvkk.js` (`KVKK_VERSION`), tam metin `#/aydinlatma` sayfasında. Üye olurken onaylanan sürüm ve zaman `profiles.kvkk_version` / `kvkk_accepted_at`'e yazılır. Sürüm değişince giriş yapmış herkese kapatılamayan bir onay ekranı çıkar (`js/consent.js`). Hesap ve tüm veriler `delete_my_account()` ile tek düğmeyle silinir.
 
 ## RPC fonksiyonları
@@ -76,7 +78,7 @@ Supabase
 | Özellik | Bu prototipte | Sonraki adım |
 |---|---|---|
 | Sesle Vitrin | ✅ Tarayıcı ses tanıma + `describe` modu | Yöresel ağız/Karadeniz şivesi test cümleleri toplamak |
-| Güven Kalkanı (yaklaşık konum, mesaj kalkanı, acil durum, KVKK) | ✅ | Kimlik doğrulama akışı (e-Devlet/NFC) |
+| Güven Kalkanı (yaklaşık konum, mesaj kalkanı, KVKK) | ✅ (acil durum kişisi kaldırıldı) | Kimlik doğrulama akışı (e-Devlet/NFC) |
 | Emek Defteri ve rozetler | ✅ 5 rozet kuralı | Aylık "Emek Defteri" bildirimi |
 | Mahallende Aranıyor panosu | ✅ Talep kaydı + Vitrin kartı | Haftalık bildirim (zamanlanmış Edge Function) |
 | Mahalle Buluşma Günleri | ✅ Duyuru kartı (`announcements`) | Saha işi |

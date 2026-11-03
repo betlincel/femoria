@@ -81,26 +81,21 @@ export function icon(name, size = 24, cls = "") {
 
 export const categoryIconName = (slug) => (P[`cat-${slug}`] ? `cat-${slug}` : "cat-diger");
 
-// ---------- Ayşe Abla avatarı (düz illüstrasyon, iki görünüm) ----------
-export function ayseAvatarSVG(look = "basortulu", size = 44) {
-  const face = `
-    <ellipse cx="24" cy="25.5" rx="7.4" ry="8.4" fill="#E9BC9C"/>
-    <circle cx="21.2" cy="24.6" r=".95" fill="#3B2A20"/><circle cx="26.8" cy="24.6" r=".95" fill="#3B2A20"/>
-    <path d="M21.3 29c1.6 1.1 3.8 1.1 5.4 0" stroke="#8A4F35" stroke-width="1.2" fill="none" stroke-linecap="round"/>`;
-  const headwear = look === "basi_acik"
-    ? `<path d="M15.2 27.5C14 17 18.6 12.5 24 12.5s10 4.5 8.8 15c-.6-4.6-3.4-8.4-8.8-8.8-5.4.4-8.2 4.2-8.8 8.8z" fill="#4A2E22"/>
-       <circle cx="24" cy="11.6" r="3.6" fill="#4A2E22"/>`
-    : `<path d="M13.2 27c0-9.4 4.9-15.4 10.8-15.4S34.8 17.6 34.8 27c0 4.4-1.5 7.6-3.4 9.6H16.6c-1.9-2-3.4-5.2-3.4-9.6z" fill="#6B2A16"/>
-       <path d="M16.4 22.5c1.6-4 4.4-6 7.6-6s6 2 7.6 6" stroke="#8F3B21" stroke-width="1.4" fill="none"/>`;
+// ---------- Ayşe Abla avatarı (düz illüstrasyon, sabit görünüm: başı açık) ----------
+export function ayseAvatarSVG(size = 44) {
   return `<svg width="${size}" height="${size}" viewBox="0 0 48 48" aria-hidden="true" focusable="false">
     <circle cx="24" cy="24" r="24" fill="#F4E6DC"/>
     <path d="M9.5 48c.8-8.6 6.8-13.6 14.5-13.6S37.7 39.4 38.5 48z" fill="#B4441F"/>
-    ${headwear}${face}
+    <path d="M15.2 27.5C14 17 18.6 12.5 24 12.5s10 4.5 8.8 15c-.6-4.6-3.4-8.4-8.8-8.8-5.4.4-8.2 4.2-8.8 8.8z" fill="#4A2E22"/>
+    <circle cx="24" cy="11.6" r="3.6" fill="#4A2E22"/>
+    <ellipse cx="24" cy="25.5" rx="7.4" ry="8.4" fill="#E9BC9C"/>
+    <circle cx="21.2" cy="24.6" r=".95" fill="#3B2A20"/><circle cx="26.8" cy="24.6" r=".95" fill="#3B2A20"/>
+    <path d="M21.3 29c1.6 1.1 3.8 1.1 5.4 0" stroke="#8A4F35" stroke-width="1.2" fill="none" stroke-linecap="round"/>
   </svg>`;
 }
 
-export function ayseAvatar(look, size) {
+export function ayseAvatar(size) {
   const t = document.createElement("template");
-  t.innerHTML = ayseAvatarSVG(look, size).trim();
+  t.innerHTML = ayseAvatarSVG(size).trim();
   return t.content.firstChild;
 }

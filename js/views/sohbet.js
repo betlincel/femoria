@@ -1,6 +1,6 @@
 // Sohbet — WhatsApp'a benzer; üstte sabit ürün kartı (taslak 1.4).
 // Hazır mesaj baloncukları, sesli mesaj + yazıya çevirme, sipariş kartı ("Anlaştık"),
-// telefon/IBAN kalkanı, güvenli buluşma önerisi, tek dokunuşla şikayet/engelle, acil durum.
+// telefon/IBAN kalkanı, güvenli buluşma önerisi, tek dokunuşla şikayet/engelle.
 import { h, toast, sheet, ask, micButton, clockTime, formatPrice, shieldCheck, emptyState, loading, icon, withIcon } from "../ui.js";
 import { state } from "../store.js";
 import {
@@ -37,7 +37,7 @@ export default async function render(root, { params: [id] }) {
 
   // ---------- Başlık + kalkan ----------
   const title = pageTitle(conv.other.full_name || "Komşu", { back: () => navigate("/mesajlar") });
-  title.append(h("button", { class: "icon-btn", "aria-label": "Güvenlik: şikayet, engelle, acil durum", title: "Güvenlik", onclick: shieldMenu }, icon("shield")));
+  title.append(h("button", { class: "icon-btn", "aria-label": "Güvenlik: şikayet, engelle", title: "Güvenlik", onclick: shieldMenu }, icon("shield")));
 
   const productCard = h("a", { class: "card card-link conv-item chat-product", href: `#/urun/${product.id}` },
     product.photos?.[0] ? h("img", { src: photoUrl(product.photos[0]), alt: "" }) : h("div", { class: "ph" }, icon("bag")),
@@ -242,25 +242,10 @@ export default async function render(root, { params: [id] }) {
         toast("Engellendi.");
         navigate("/mesajlar");
       } }, withIcon("ban", "Engelle")),
-      h("button", { class: "btn btn-secondary", onclick: () => { close(); emergency(); } }, withIcon("sos", "Acil durum: yakınıma konumumu gönder")),
       h("div", { class: "tip small" }, icon("shield-check"), h("p", {}, "Ev adresinizi, banka bilgilerinizi ya da şifrelerinizi mesajda yazmayın. ", SAFE_SPOTS)),
     ));
   }
 
-  function emergency() {
-    const phone = state.profile?.emergency_phone;
-    if (!phone) {
-      toast("Önce ayarlardan bir yakınınızı ekleyin.");
-      return navigate("/ayarlar?acil=1");
-    }
-    const sendSms = (text) => (location.href = `sms:${phone}${/iPhone|iPad/.test(navigator.userAgent) ? "&" : "?"}body=${encodeURIComponent(text)}`);
-    track("emergency_used");
-    navigator.geolocation?.getCurrentPosition(
-      (p) => sendSms(`Femoria acil durum: Şu an buradayım https://maps.google.com/?q=${p.coords.latitude},${p.coords.longitude}`),
-      () => sendSms("Femoria acil durum: Bir alışveriş buluşmasındayım, lütfen beni arayın."),
-      { enableHighAccuracy: true, timeout: 8000 },
-    );
-  }
 
   async function refresh() {
     const fresh = await getConversation(id).catch(() => null);

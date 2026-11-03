@@ -1,7 +1,6 @@
 // Ayarlar — ana liste 5 maddeyi geçmez: yazı büyüklüğü, sesli okuma, bildirimler, konum, çıkış.
-// Güvenlik ve gizlilik ayrı grupta (gece sessizliği, kadın satıcı koruması, acil kişi, KVKK).
+// Güvenlik ve gizlilik ayrı grupta (gece sessizliği, kadın satıcı koruması, konum, KVKK).
 import { h, toast, ask, speak, sheet, icon, withIcon, canSpeak, stopSpeaking, GENDERS, hitap } from "../ui.js";
-import { ayseAvatar } from "../icons.js";
 import { state, saveSettings, updateProfile, signOut } from "../store.js";
 import { askLocation, pickLocation, pageTitle } from "../components.js";
 import { withdrawLocation, hasLocationConsent } from "../store.js";
@@ -64,13 +63,9 @@ export default async function render(root, { query }) {
         toggle("Gece sessizliği", !!p.quiet_hours_enabled, guarded((v) => updateProfile({ quiet_hours_enabled: v })))),
       item("user-check", "Yalnız güvenilir alıcılar", "Sadece e-postası doğrulanmış ve daha önce alışveriş yapmış kişiler size yazabilir.",
         toggle("Yalnız güvenilir alıcılar", !!p.only_trusted_messages, guarded((v) => updateProfile({ only_trusted_messages: v })))),
-      emergencyBlock(loggedIn, needLogin, !!query.acil),
       h("a", { class: "list-item", href: "#/aydinlatma" }, icon("file"), h("div", { class: "body" }, h("strong", {}, "Aydınlatma metni (KVKK)"),
         state.profile?.kvkk_accepted_at ? h("div", { class: "small" }, `${new Date(state.profile.kvkk_accepted_at).toLocaleDateString("tr-TR")} tarihinde onayladınız`) : null), icon("chevron-right")),
     ),
-
-    h("div", { class: "group-title" }, "Ayşe Abla"),
-    h("div", { class: "list" }, lookBlock(loggedIn, needLogin)),
 
     loggedIn ? h("div", { class: "list section" },
       h("button", { class: "list-item danger", onclick: async () => {
@@ -81,7 +76,7 @@ export default async function render(root, { query }) {
     ) : null,
   );
 
-  if (query.acil) document.getElementById("guvenlik")?.scrollIntoView({ behavior: "smooth" });
+  if (query.guvenlik) document.getElementById("guvenlik")?.scrollIntoView({ behavior: "smooth" });
   if (query.hitap) document.getElementById("hitap")?.scrollIntoView({ behavior: "smooth", block: "center" });
   if (query.kvkk) navigate("/aydinlatma", { replace: true });
   if (query.konum) document.getElementById("konum")?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -137,39 +132,5 @@ function locationBlock(loc) {
   );
 }
 
-function emergencyBlock(loggedIn, needLogin, focus) {
-  const p = state.profile || {};
-  const name = h("input", { class: "input", id: "e-name", placeholder: "Örn. Kızım Elif", value: p.emergency_name || "" });
-  const phone = h("input", { class: "input", id: "e-phone", type: "tel", inputmode: "tel", placeholder: "05XX XXX XX XX", value: p.emergency_phone || "" });
-  const block = h("div", { class: "list-block stack" },
-    h("div", { class: "row", style: { gap: "14px", alignItems: "flex-start" } },
-      icon("sos"),
-      h("div", { style: { flex: 1 } },
-        h("strong", {}, "Acil durum kişisi"),
-        h("div", { class: "small muted" }, "Elden teslimde, sohbetteki kalkan düğmesinden bu kişiye tek dokunuşla konumunuzu gönderebilirsiniz."),
-      ),
-    ),
-    h("div", {}, h("label", { for: "e-name" }, "Kim?"), name),
-    h("div", {}, h("label", { for: "e-phone" }, "Telefonu"), phone),
-    h("button", { class: "btn btn-secondary", onclick: async () => {
-      if (!loggedIn) return needLogin();
-      await updateProfile({ emergency_name: name.value.trim() || null, emergency_phone: phone.value.replace(/[^\d+]/g, "") || null });
-      toast("Kaydettim.");
-    } }, "Kaydet"),
-  );
-  if (focus) setTimeout(() => name.focus(), 300);
-  return block;
-}
 
-function lookBlock(loggedIn, needLogin) {
-  const current = state.profile?.assistant_look || "basortulu";
-  const wrap = h("div", { class: "btn-group" });
-  const draw = (v) => wrap.replaceChildren(...[["basortulu", "Başörtülü"], ["basi_acik", "Başı açık"]].map(([k, l]) =>
-    h("button", { class: "btn btn-secondary btn-choice", "aria-pressed": String(v === k), style: { minHeight: "72px" }, onclick: async () => {
-      if (!loggedIn) return needLogin();
-      await updateProfile({ assistant_look: k }); draw(k); toast("Ayşe Abla'nın görünümü değişti.");
-    } }, ayseAvatar(k, 40), l)));
-  draw(current);
-  return h("div", { class: "list-block stack" }, h("strong", {}, "Görünüm"), wrap);
-}
 
