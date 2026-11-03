@@ -39,7 +39,7 @@ function renderAvatar() {
   else if (p?.full_name) el.textContent = p.full_name.trim()[0].toLocaleUpperCase("tr-TR");
   else el.innerHTML = iconSVG("user", 22);
   document.getElementById("account-label").textContent = state.user ? (p?.full_name?.split(" ")[0] || "Hesabım") : "Giriş yap";
-  document.querySelector(".fab-face").innerHTML = ayseAvatarSVG(p?.assistant_look, 40);
+  document.querySelector(".fab-face").innerHTML = ayseAvatarSVG(40);
 }
 
 // Yeni mesaj: alt menüde kırmızı nokta + Ayşe Abla'nın ilk mesaj yardımı

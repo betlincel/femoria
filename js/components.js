@@ -4,6 +4,7 @@ import { categoryIconName } from "./icons.js";
 import { photoUrl, getLocations } from "./api.js";
 import { state, saveLocation, hasLocationConsent, recordLocationConsent } from "./store.js";
 import { LOCATION_SUMMARY } from "./kvkk.js";
+import { loadProvinces, loadNeighbourhoods, normalizeTr, locateSelection, nearestProvince } from "./tr-locations.js";
 
 export function pageTitle(text, { back } = {}) {
   return h("div", { class: "page-title" },
@@ -183,7 +184,10 @@ async function captureLocation() {
   }
   const lat = round3(pos.coords.latitude);
   const lng = round3(pos.coords.longitude);
-  const names = (await reverseGeocode(lat, lng)) || nearest(await getLocations().catch(() => []), lat, lng) || {};
+  const names = (await reverseGeocode(lat, lng))
+    || nearest(await getLocations().catch(() => []), lat, lng)
+    || await nearestProvince(lat, lng).then((p) => (p ? { city: p.n } : null))
+    || {};
   wait();
   const loc = { lat, lng, city: names.city ?? null, district: names.district ?? null, neighborhood: names.neighborhood ?? null, source: "gps" };
   await saveLocation(loc);
@@ -216,44 +220,98 @@ function locationError(err) {
   });
 }
 
-/** İl → ilçe → mahalle listesinden seçim (konum izni vermeyenler için). */
+/**
+ * İl → ilçe → mahalle listesinden seçim (konum izni vermeyenler için).
+ * Türkiye'nin 81 ili, 973 ilçesi ve tüm mahalle/köyleri; her adımda arama kutusu.
+ */
 export function pickLocation() {
-  return new Promise(async (resolve) => {
-    const all = await getLocations().catch(() => []);
-    if (!all.length) {
-      toast("Mahalle listesi yüklenemedi.");
-      return resolve(null);
-    }
-    const uniq = (arr) => [...new Set(arr)];
-    let city = state.location?.city || null;
-    let district = null;
-    const body = h("div", { class: "stack" });
-    let closeFn;
+  return new Promise((resolve) => {
+    let province = null, district = null, settled = false;
+    const body = h("div", { class: "stack pick" });
+    const done = (v) => { if (!settled) { settled = true; resolve(v); } };
+    const closeFn = sheet("Konumunuzu seçin", body);
+    // Kapatılırsa (dışarı dokunma / Esc) vazgeçti say
+    const obs = new MutationObserver(() => { if (!body.isConnected) { obs.disconnect(); done(null); } });
+    obs.observe(document.getElementById("sheet-root"), { childList: true });
 
-    const step = () => {
-      body.replaceChildren();
-      if (!city) {
-        body.append(h("p", {}, "İlinizi seçin:"),
-          ...uniq(all.map((l) => l.city)).map((c) => h("button", { class: "btn btn-secondary", onclick: () => { city = c; step(); } }, c)));
-      } else if (!district) {
-        body.append(h("p", {}, `${city} — ilçenizi seçin:`),
-          ...uniq(all.filter((l) => l.city === city).map((l) => l.district)).map((d) => h("button", { class: "btn btn-secondary", onclick: () => { district = d; step(); } }, d)),
-          h("button", { class: "btn btn-ghost", onclick: () => { city = null; step(); } }, withIcon("chevron-left", "Başka il")));
-      } else {
-        body.append(h("p", {}, `${district} — mahallenizi seçin:`),
-          ...all.filter((l) => l.city === city && l.district === district).map((l) => h("button", {
-            class: "btn btn-secondary",
-            onclick: async () => {
-              const loc = { lat: l.lat, lng: l.lng, city, district, neighborhood: l.neighborhood, source: "liste" };
-              await saveLocation(loc);
-              closeFn();
-              resolve(loc);
-            },
-          }, l.neighborhood)),
-          h("button", { class: "btn btn-ghost", onclick: () => { district = null; step(); } }, withIcon("chevron-left", "Başka ilçe")));
+    const crumbs = () => h("div", { class: "pick-crumbs" },
+      h("button", { class: `chip ${!province ? "chip-brand" : ""}`, onclick: () => { province = null; district = null; draw(); } }, province ? province.n : "İl"),
+      icon("chevron-right"),
+      h("button", { class: `chip ${province && !district ? "chip-brand" : ""}`, disabled: !province, onclick: () => { district = null; draw(); } }, district || "İlçe"),
+      icon("chevron-right"),
+      h("span", { class: `chip ${district ? "chip-brand" : ""}` }, "Mahalle"),
+    );
+
+    /** Arama kutusu + filtrelenen düğme listesi */
+    function searchList({ label, placeholder, items, onPick, extra = null, limit = 120 }) {
+      const input = h("input", { class: "input", type: "search", placeholder, "aria-label": label, autocomplete: "off", enterkeyhint: "search" });
+      const list = h("div", { class: "pick-list", role: "list" });
+      const note = h("p", { class: "small muted center", style: { margin: 0 } });
+      const render = () => {
+        const q = normalizeTr(input.value);
+        const found = q ? items.filter((it) => normalizeTr(it).includes(q)) : items;
+        list.replaceChildren(...found.slice(0, limit).map((it) => h("button", { class: "btn btn-secondary", role: "listitem", onclick: () => onPick(it) }, it)));
+        note.textContent = !found.length ? "Sonuç yok. Yazdığınızı kontrol edin."
+          : found.length > limit ? `${found.length} sonuçtan ilk ${limit} tanesi gösteriliyor; daraltmak için yazın.` : "";
+      };
+      input.addEventListener("input", render);
+      render();
+      body.replaceChildren(crumbs(), h("label", { class: "sr-only" }, label), input, extra, list, note);
+      setTimeout(() => input.focus({ preventScroll: true }), 50);
+    }
+
+    async function draw() {
+      body.replaceChildren(crumbs(), statusScreenEl("Yükleniyor…"));
+      let provinces;
+      try { provinces = await loadProvinces(); }
+      catch { body.replaceChildren(h("p", { class: "notice" }, icon("alert", 20), "Liste yüklenemedi. İnternet bağlantınızı kontrol edin.")); return; }
+
+      if (!province) {
+        return searchList({
+          label: "İlinizi arayın", placeholder: "İlinizi yazın (ör. Trabzon)",
+          items: provinces.map((p) => p.n),
+          onPick: (n) => { province = provinces.find((p) => p.n === n); draw(); },
+        });
       }
-    };
-    step();
-    closeFn = sheet("Neredesiniz?", body);
+      if (!district) {
+        return searchList({
+          label: "İlçenizi arayın", placeholder: "İlçenizi yazın",
+          items: province.d,
+          onPick: (d) => { district = d; draw(); },
+        });
+      }
+      let hoods = [];
+      try { hoods = (await loadNeighbourhoods(province.k))[district] || []; } catch { /* ilçe merkeziyle devam edilebilir */ }
+      searchList({
+        label: "Mahallenizi arayın", placeholder: "Mahallenizi ya da köyünüzü yazın",
+        items: hoods,
+        onPick: (n) => finish(n),
+        extra: h("button", { class: "btn btn-ghost", onclick: () => finish(null) }, ...withIcon("map-pin", `Mahallemi bulamadım, ${district} merkezini kullan`)),
+      });
+    }
+
+    async function finish(neighborhood) {
+      body.replaceChildren(statusScreenEl("Konumunuz bulunuyor…"));
+      const knownLocations = await getLocations().catch(() => []);
+      const pos = await locateSelection({ province, district, neighborhood, knownLocations });
+      const loc = {
+        lat: round3(pos.lat), lng: round3(pos.lng), city: province.n, district,
+        neighborhood: neighborhood ? neighborhood.replace(/\s*\(.*\)$/, "") : null,
+        precision: pos.precision, source: "liste",
+      };
+      await saveLocation(loc);
+      settled = true;
+      obs.disconnect();
+      closeFn();
+      const label = [loc.neighborhood, district, province.n].filter(Boolean).join(", ");
+      toast(pos.precision === "il" ? `Kaydedildi: ${label}. Uzaklıklar ${province.n} merkezine göre yaklaşık hesaplanacak.` : `Kaydedildi: ${label}`, 5000);
+      resolve(loc);
+    }
+
+    draw();
   });
+}
+
+function statusScreenEl(text) {
+  return h("div", { class: "status-screen" }, h("div", { class: "icon-circle", "aria-hidden": "true" }, icon("refresh", 34, "spin")), h("p", {}, text));
 }
