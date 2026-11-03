@@ -1,7 +1,7 @@
 // Profil — tek hesap: alıcı ve satıcı. "Sattıklarım" / "Aldıklarım" + "Kazancım".
-import { h, loading, emptyState, formatPrice, monthsSince, toast, prepareImage, icon } from "../ui.js";
+import { h, loading, emptyState, formatPrice, monthsSince, toast, prepareImage, icon, withIcon } from "../ui.js";
 import { state, updateProfile } from "../store.js";
-import { myEarnings, myProducts, myPurchases, userBadges, uploadAvatar } from "../api.js";
+import { myEarnings, myProducts, myPurchases, userBadges, uploadAvatar, myRemovedProducts, restoreProduct, daysUntilPurge, PHOTO_RETENTION_DAYS } from "../api.js";
 import { productCard, badgeChips, productPhoto } from "../components.js";
 import { requireAuth } from "../router.js";
 
@@ -85,13 +85,39 @@ export default async function render(root) {
     );
   }).catch(() => earningsEl.replaceChildren(h("p", { class: "muted" }, "Kazanç bilgisi şu an yüklenemedi.")));
 
+  // Vitrinden kaldırılanlar: 30 gün içinde geri alınabilir, sonra fotoğrafları silinir
+  function removedSection(list) {
+    return h("section", { class: "section" },
+      h("div", { class: "section-title" }, h("h2", {}, "Kaldırılanlar")),
+      h("p", { class: "muted small" }, `Bu ürünlerle ilgili mesajlaşmanız olduğu için sohbetleriniz bozulmasın diye saklanıyor. Kaldırdıktan ${PHOTO_RETENTION_DAYS} gün sonra fotoğrafları kalıcı olarak silinir.`),
+      h("div", { class: "stack" }, list.map((it) => {
+        const purged = !!it.photos_purged_at;
+        const days = daysUntilPurge(it.removed_at);
+        return h("div", { class: "card product-card" },
+          productPhoto(it),
+          h("div", { class: "stack", style: { gap: "6px" } },
+            h("div", { class: "title" }, it.title),
+            h("div", { class: "meta" }, icon(purged ? "trash" : "calendar"),
+              purged ? "Fotoğrafları silindi" : days > 0 ? `Fotoğrafları ${days} gün sonra silinecek` : "Fotoğrafları bu gece silinecek"),
+            purged ? null : h("button", { class: "btn btn-secondary btn-inline", style: { alignSelf: "flex-start" }, onclick: async (e) => {
+              e.currentTarget.disabled = true;
+              try { await restoreProduct(it.id); toast("Ürününüz yeniden vitrinde."); loadTab(); }
+              catch (err) { toast(err.message || "Geri alınamadı."); e.currentTarget.disabled = false; }
+            } }, ...withIcon("refresh", "Geri al")),
+          ),
+        );
+      })),
+    );
+  }
+
   async function loadTab() {
     tabBody.replaceChildren(loading());
     if (tab === "sattiklarim") {
-      const items = await myProducts().catch(() => []);
+      const [items, removed] = await Promise.all([myProducts().catch(() => []), myRemovedProducts().catch(() => [])]);
       tabBody.replaceChildren(...(items.length
         ? [h("div", { class: "pgrid pgrid-4" }, items.map((it) => { const c = productCard(it); c.querySelector(".meta").prepend(h("span", { class: `chip ${it.status === "satista" ? "chip-ok" : ""}` }, STATUS[it.status] || it.status)); return c; }))]
-        : [emptyState("camera", "Henüz ürün koymadınız", "İlk ürününüzü bugün çekin; gerisini birlikte hallederiz.", h("a", { class: "btn btn-primary", href: "#/sat" }, "Bir şey sat"))]));
+        : [emptyState("camera", "Henüz ürün koymadınız", "İlk ürününüzü bugün çekin; gerisini birlikte hallederiz.", h("a", { class: "btn btn-primary", href: "#/sat" }, "Bir şey sat"))]),
+        removed.length ? removedSection(removed) : "");
     } else {
       const orders = await myPurchases().catch(() => []);
       tabBody.replaceChildren(...(orders.length

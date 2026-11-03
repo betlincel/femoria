@@ -45,7 +45,7 @@ export async function getLocations() {
 }
 
 // ---------- Ürünler ----------
-const PRODUCT_COLS = "id,title,description,price,category,delivery,photos,status,seller_id,neighborhood,district,city,approx_lat,approx_lng,published_at,created_at";
+const PRODUCT_COLS = "id,title,description,price,category,delivery,photos,status,seller_id,neighborhood,district,city,approx_lat,approx_lng,published_at,created_at,removed_at,photos_purged_at";
 
 export function photoUrl(path) {
   if (!path) return null;
@@ -89,6 +89,40 @@ export async function myProducts() {
 export async function setProductStatus(id, status) {
   need();
   return supabase.from("products").update({ status }).eq("id", id).then(ok);
+}
+
+export const PHOTO_RETENTION_DAYS = 30;
+
+/**
+ * Vitrinden kaldır. Sohbeti/siparişi yoksa ürün hemen silinir ve fotoğrafları depodan silinir;
+ * varsa 30 gün saklanır (bu sürede geri alınabilir), sonra fotoğrafları gece temizliğinde silinir.
+ * Döner: { deleted: boolean, purge_after?: string }
+ */
+export async function removeProduct(id) {
+  need();
+  const res = await supabase.rpc("remove_product", { p_product_id: id }).then(ok);
+  if (res?.deleted && res.photos?.length) {
+    // Silinemeyen dosya kalırsa gece temizliği "sahipsiz fotoğraf" olarak siler.
+    await supabase.storage.from("product-photos").remove(res.photos).catch(() => {});
+  }
+  return res;
+}
+
+export async function restoreProduct(id) {
+  need();
+  return supabase.rpc("restore_product", { p_product_id: id }).then(ok);
+}
+
+export async function myRemovedProducts() {
+  need();
+  return supabase.from("products").select(PRODUCT_COLS).eq("seller_id", state.user.id)
+    .eq("status", "kaldirildi").order("removed_at", { ascending: false }).then(ok);
+}
+
+/** Fotoğrafların silinmesine kalan gün (0 = bugün/yarın silinecek) */
+export function daysUntilPurge(removedAt) {
+  const end = new Date(removedAt).getTime() + PHOTO_RETENTION_DAYS * 864e5;
+  return Math.max(0, Math.ceil((end - Date.now()) / 864e5));
 }
 
 export async function priceSuggestion(category, title) {
@@ -148,13 +182,30 @@ export async function uploadAvatar(dataUrl) {
   return supabase.storage.from("avatars").getPublicUrl(path).data.publicUrl;
 }
 
+/** Bir klasördeki dosyaları (sayfa sayfa) siler; filter verilirse yalnız eşleşenleri. */
+async function removeFolder(bucket, folder, filter = () => true) {
+  for (let round = 0; round < 50; round++) {
+    const files = await supabase.storage.from(bucket).list(folder, { limit: 100 }).then(ok).catch(() => []);
+    const names = files.filter((f) => f.id && filter(f.name)).map((f) => `${folder}/${f.name}`);
+    if (!names.length) return;
+    const { error } = await supabase.storage.from(bucket).remove(names);
+    if (error || files.length < 100) return;
+  }
+}
+
 export async function deleteMyAccount() {
   need();
-  // Önce kendi dosyalarımızı temizle (Storage kuralları sadece kendi klasörüne izin verir).
+  const uid = state.user.id;
+  // Önce kendi dosyalarımızı temizle (Storage kuralları sadece kendi dosyalarına izin verir).
   for (const bucket of ["product-photos", "avatars"]) {
-    const files = await supabase.storage.from(bucket).list(state.user.id).then(ok).catch(() => []);
-    if (files.length) await supabase.storage.from(bucket).remove(files.map((f) => `${state.user.id}/${f.name}`));
+    await removeFolder(bucket, uid);
   }
+  // Gönderdiğim sesli mesajlar sohbet klasörlerinde durur: <sohbet>/<uid>-<zaman>.webm
+  const convs = await supabase.from("conversations").select("id").then(ok).catch(() => []);
+  for (const c of convs) {
+    await removeFolder("voice-messages", c.id, (name) => name.startsWith(`${uid}-`));
+  }
+  // Kalan her şeyi (karşı tarafın bu sohbetlerdeki kayıtları dahil) gece temizliği siler.
   await supabase.rpc("delete_my_account").then(ok);
   await supabase.auth.signOut();
 }

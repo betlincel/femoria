@@ -143,6 +143,33 @@ npm run db:start
 
 Çıktıdaki `API URL` ve `anon key` değerlerini `js/config.js`'e yazın. Yerelde gönderilen onay ve şifre yenileme e-postaları gerçek adrese gitmez; `http://127.0.0.1:54324` adresindeki test gelen kutusunda (Inbucket) görünür. Yapay zekayı yerelde denemek için `supabase/.env.example` dosyasını `supabase/.env` olarak kopyalayıp `npm run functions:serve` çalıştırın.
 
+## Kaldırılan ürünler ve gece temizliği
+
+"Vitrinden kaldır" denince ürünün mesajlaşması yoksa ürün ve fotoğrafları hemen silinir. Mesajlaşması varsa sohbetler bozulmasın diye 30 gün saklanır (Profil → Kaldırılanlar'dan geri alınabilir), sonra fotoğrafları silinir. Dosya silme işini her gece `purge-removed-photos` Edge Function'ı yapar; aynı fonksiyon sahipsiz kalmış fotoğrafları ve sohbeti silinmiş sesli mesajları da temizler.
+
+Kurulum (bir kez):
+
+1. Dashboard → **Database → Extensions**: `pg_cron` ve `pg_net`'i açın.
+2. Gizli değeri tanımlayın (uzun, rastgele bir değer seçin):
+
+```bash
+supabase secrets set PURGE_CRON_SECRET=uzun-rastgele-bir-deger
+```
+
+3. Fonksiyonu yayınlayın:
+
+```bash
+supabase functions deploy purge-removed-photos --no-verify-jwt
+```
+
+4. `supabase/cron/purge-schedule.sql` dosyasındaki proje adresini ve gizli değeri doldurup SQL Editor'de çalıştırın (bu dosya migration değildir; depoya gizli değer yazmayın).
+
+Elle denemek için:
+
+```bash
+curl -X POST https://<PROJE-REF>.supabase.co/functions/v1/purge-removed-photos -H "x-cron-secret: <PURGE_CRON_SECRET>"
+```
+
 ## Konum verisi
 
 Listeden konum seçimi için Türkiye'nin 81 ili, 973 ilçesi ve ~73 bin mahalle/köyü `assets/tr/` klasöründedir (kaynaklar ve lisanslar: `assets/tr/KAYNAK.md`). Veriyi güncellemek için:

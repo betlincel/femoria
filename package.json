@@ -12,7 +12,7 @@
     "db:push": "supabase db push",
     "db:types": "supabase gen types typescript --local > supabase/types.ts",
     "functions:serve": "supabase functions serve ayse-abla --env-file supabase/.env",
-    "functions:deploy": "supabase functions deploy ayse-abla",
+    "functions:deploy": "supabase functions deploy ayse-abla && supabase functions deploy purge-removed-photos --no-verify-jwt",
     "check": "node scripts/check.mjs"
   }
 }
