@@ -56,3 +56,7 @@ enabled = true
 
 [functions.ayse-abla]
 verify_jwt = true
+
+# Gece temizliği: pg_cron çağırır, x-cron-secret başlığıyla korunur (JWT yok)
+[functions.purge-removed-photos]
+verify_jwt = false
