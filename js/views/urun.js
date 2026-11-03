@@ -1,9 +1,9 @@
-// Ürün sayfası — büyük fotoğraf, fiyat, mesafe, satıcı güveni ve "Satıcıya yaz".
+// Ürün sayfası — solda galeri, sağda fiyat ve "Satıcıya yaz" kutusu, altında satıcı ve güven bilgisi.
 import { h, formatPrice, formatDistance, monthsSince, toast, loading, emptyState, ask, icon, withIcon } from "../ui.js";
 import { categoryIconName } from "../icons.js";
 import { state } from "../store.js";
 import { getProduct, photoUrl, categoryOf, startConversation, setProductStatus, track, DELIVERY_LABEL } from "../api.js";
-import { pageTitle, badgeChips } from "../components.js";
+import { badgeChips, breadcrumb } from "../components.js";
 import { navigate, requireAuth } from "../router.js";
 
 const km = (a, b) => {
@@ -15,55 +15,69 @@ const km = (a, b) => {
 };
 
 export default async function render(root, { params: [id] }) {
-  root.append(pageTitle("Ürün", { back: true }), loading());
+  root.append(loading());
   const p = await getProduct(id).catch(() => null);
-  root.lastChild.remove();
+  root.replaceChildren();
   if (!p) {
-    root.append(emptyState("bag", "Bu ürün bulunamadı", "Satılmış ya da kaldırılmış olabilir.", h("a", { class: "btn btn-primary", href: "#/yakinimda" }, "Yakınımdakilere bak")));
+    root.append(h("div", { class: "card" }, emptyState("bag", "Bu ürün bulunamadı", "Satılmış ya da kaldırılmış olabilir.", h("a", { class: "btn btn-primary", href: "#/yakinimda" }, "Yakınımdakilere bak"))));
     return;
   }
 
   const mine = state.user?.id === p.seller_id;
+  const cat = categoryOf(p.category);
   const photos = p.photos.map(photoUrl).filter(Boolean);
   const main = photos.length
-    ? h("img", { class: "card", style: { padding: 0, width: "100%", aspectRatio: "1", objectFit: "cover" }, src: photos[0], alt: p.title })
-    : h("div", { class: "card", style: { aspectRatio: "1.4", display: "grid", placeItems: "center", color: "var(--text-faint)", background: "var(--surface-2)" } }, icon(categoryIconName(p.category), 72));
+    ? h("img", { class: "main-img", src: photos[0], alt: p.title })
+    : h("div", { class: "main-img", style: { display: "grid", placeItems: "center", color: "var(--text-faint)" } }, icon(categoryIconName(p.category), 96));
   const distance = km(state.location, p);
   const seller = p.seller || {};
   const months = seller.created_at ? monthsSince(seller.created_at) : 0;
+  const verified = seller.email_verified || seller.phone_verified;
 
-  root.querySelector("h1").textContent = p.title;
   root.append(
-    main,
-    photos.length > 1 ? h("div", { class: "thumbs", style: { marginTop: "8px" } }, photos.map((u, i) => h("button", {
-      style: { padding: 0, border: 0, background: "none", cursor: "pointer" }, "aria-label": `Fotoğraf ${i + 1}`,
-      onclick: () => (main.src = u),
-    }, h("img", { src: u, alt: "" })))) : null,
-
-    h("div", { class: "stack section" },
-      h("div", { class: "price", style: { fontSize: "1.8rem", letterSpacing: "-.02em" } }, formatPrice(p.price)),
-      h("div", { class: "badges" },
-        h("span", { class: "chip chip-brand" }, icon(categoryIconName(p.category)), categoryOf(p.category).name),
-        h("span", { class: "chip" }, icon("truck"), DELIVERY_LABEL[p.delivery]),
-        distance != null || p.neighborhood ? h("span", { class: "chip" }, icon("map-pin"), distance != null ? formatDistance(distance) : p.neighborhood) : null,
+    breadcrumb(["Ana sayfa", "#/"], [cat.name, `#/yakinimda?kategori=${p.category}`], [p.title]),
+    h("div", { class: "product-layout" },
+      // ----- Galeri -----
+      h("div", { class: "product-gallery stack" },
+        main,
+        photos.length > 1 ? h("div", { class: "thumbs" }, photos.map((u, i) => h("button", {
+          style: { padding: 0, border: 0, background: "none", cursor: "pointer" }, "aria-label": `Fotoğraf ${i + 1}`,
+          onclick: () => (main.src = u),
+        }, h("img", { src: u, alt: "" })))) : null,
       ),
-      p.status === "satildi" ? h("p", { class: "notice" }, icon("alert", 20), "Bu ürün satıldı.") : null,
-      p.description ? h("p", {}, p.description) : null,
-    ),
 
-    h("div", { class: "card stack section" },
-      h("div", { class: "eyebrow" }, "Satıcı"),
-      h("div", { class: "profile-head" },
-        h("span", { class: "avatar avatar-sm" }, seller.avatar_url ? h("img", { src: seller.avatar_url, alt: "" }) : (seller.full_name || "?")[0]),
-        h("div", {},
-          h("strong", {}, seller.full_name || "Komşu"),
-          h("div", { class: "meta" }, [seller.neighborhood, months ? `Femoria'da ${months} aydır` : "Femoria'ya yeni katıldı"].filter(Boolean).join(" · ")),
+      // ----- Bilgi + satın alma kutusu -----
+      h("div", { class: "product-info stack" },
+        h("div", { class: "eyebrow" }, cat.name),
+        h("h1", {}, p.title),
+        h("div", { class: "card buy-box stack" },
+          h("div", { class: "price", style: { fontSize: "2rem", letterSpacing: "-.02em" } }, formatPrice(p.price)),
+          h("div", { class: "badges" },
+            h("span", { class: "chip" }, icon("truck"), DELIVERY_LABEL[p.delivery]),
+            distance != null || p.neighborhood ? h("span", { class: "chip" }, icon("map-pin"), distance != null ? `${formatDistance(distance)} uzakta` : p.neighborhood) : null,
+          ),
+          p.status === "satildi" ? h("p", { class: "notice" }, icon("alert", 20), "Bu ürün satıldı.") : null,
+          mine ? ownerActions(p) : buyerActions(p),
+          h("div", { class: "small muted row", style: { gap: "8px" } }, icon("shield-check", 18),
+            h("span", { style: { flex: "1" } }, "Ödemeyi teslimde yapın; ev adresi ve banka bilgisi paylaşmayın.")),
+        ),
+
+        p.description ? h("section", { class: "card" }, h("h2", {}, "Ürün açıklaması"), h("p", { style: { margin: 0, whiteSpace: "pre-line" } }, p.description)) : null,
+
+        h("section", { class: "card stack" },
+          h("h2", { style: { margin: 0 } }, "Satıcı"),
+          h("div", { class: "profile-head" },
+            h("span", { class: "avatar avatar-sm" }, seller.avatar_url ? h("img", { src: seller.avatar_url, alt: "" }) : (seller.full_name || "?")[0].toLocaleUpperCase("tr-TR")),
+            h("div", {},
+              h("strong", {}, seller.full_name || "Komşu"),
+              h("div", { class: "meta" }, [seller.neighborhood, months ? `Femoria'da ${months} aydır` : "Femoria'ya yeni katıldı"].filter(Boolean).join(" · ")),
+            ),
+          ),
+          verified ? h("div", { class: "badges" }, h("span", { class: "chip chip-ok" }, icon("check"), "E-postası doğrulanmış")) : null,
+          badgeChips(p.sellerBadges),
         ),
       ),
-      badgeChips(p.sellerBadges),
     ),
-    h("div", { class: "spacer" }),
-    mine ? ownerActions(p) : buyerActions(p),
   );
 }
 

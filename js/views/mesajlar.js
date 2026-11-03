@@ -7,7 +7,7 @@ import { requireAuth } from "../router.js";
 export default async function render(root) {
   root.append(h("h1", {}, "Mesajlar"));
   if (!state.user) {
-    root.append(emptyState("message", "Mesajlarınız burada görünür", "Mesajlaşmak için telefon numaranızla giriş yapın.",
+    root.append(emptyState("message", "Mesajlarınız burada görünür", "Mesajlaşmak için hesabınıza giriş yapın ya da üye olun.",
       h("button", { class: "btn btn-primary", onclick: () => requireAuth("/mesajlar") }, "Giriş yap")));
     return;
   }

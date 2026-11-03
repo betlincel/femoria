@@ -18,17 +18,77 @@
     Supabase bağlantısı henüz ayarlanmadı. <code>js/config.js</code> dosyasına proje adresini ve anahtarını yazın.
   </div>
 
-  <header class="topbar">
-    <a href="#/" class="brand" aria-label="Femoria ana sayfa">
-      <img class="brand-mark" src="assets/icon.svg" alt="" width="32" height="32">
-      <span class="brand-name">Femoria</span>
-    </a>
-    <a href="#/profil" class="avatar-link" data-highlight="profil" aria-label="Profilim">
-      <span id="topbar-avatar" class="avatar avatar-sm"></span>
-    </a>
+  <header class="site-header">
+    <div class="header-inner">
+      <a href="#/" class="brand" aria-label="Femoria ana sayfa">
+        <img class="brand-mark" src="assets/icon.svg" alt="" width="36" height="36">
+        <span class="brand-text">
+          <span class="brand-name">Femoria</span>
+          <span class="brand-tag">Mahallenin el emeği pazarı</span>
+        </span>
+      </a>
+
+      <form class="header-search" role="search" id="header-search">
+        <label for="q" class="sr-only">Ürün ara</label>
+        <span class="search-ico" data-icon="search" aria-hidden="true"></span>
+        <input id="q" name="q" type="search" autocomplete="off" enterkeyhint="search" placeholder="Ne arıyorsunuz? Örn. ev mantısı, patik">
+        <button type="submit" class="btn btn-primary">Ara</button>
+      </form>
+
+      <nav class="header-actions" aria-label="Hesap">
+        <a href="#/mesajlar" class="header-link" data-route="mesajlar" data-highlight="nav-mesajlar-top">
+          <span class="hl-ico" data-icon="message" aria-hidden="true"><span id="unread-dot-top" class="dot" hidden></span></span>
+          <span>Mesajlar</span>
+        </a>
+        <a href="#/profil" class="header-link" data-route="profil" data-highlight="profil">
+          <span id="topbar-avatar" class="avatar avatar-sm"></span>
+          <span id="account-label">Giriş yap</span>
+        </a>
+        <a href="#/sat" class="btn btn-primary header-sell" data-highlight="nav-sat-top">
+          <span data-icon="camera" aria-hidden="true"></span>Ürün sat
+        </a>
+      </nav>
+    </div>
+    <nav class="category-bar" aria-label="Kategoriler">
+      <div class="category-inner" id="category-bar">
+        <a href="#/yakinimda">Tüm ürünler</a>
+      </div>
+    </nav>
   </header>
 
   <main id="app" class="app" tabindex="-1" aria-live="polite"></main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <a href="#/" class="brand">
+          <img class="brand-mark" src="assets/icon.svg" alt="" width="32" height="32">
+          <span class="brand-name">Femoria</span>
+        </a>
+        <p>Evde üretim yapan kadınların el emeğini mahallesindeki insanlarla buluşturan pazar yeri.</p>
+      </div>
+      <div class="footer-col">
+        <h3>Alışveriş</h3>
+        <a href="#/yakinimda">Yakınımdaki ürünler</a>
+        <a href="#/yakinimda?kategori=yemek">Ev yemekleri</a>
+        <a href="#/yakinimda?kategori=orgu">Örgü</a>
+        <a href="#/yakinimda?kategori=taki">Takı</a>
+      </div>
+      <div class="footer-col">
+        <h3>Satıcılar için</h3>
+        <a href="#/sat">Ürün sat</a>
+        <a href="#/rehber#satmak">Nasıl satarım?</a>
+        <a href="#/rehber">Kullanım rehberi</a>
+      </div>
+      <div class="footer-col">
+        <h3>Güven</h3>
+        <a href="#/rehber#mesajlasmak">Güvenli alışveriş</a>
+        <a href="#/ayarlar?kvkk=1">Aydınlatma metni (KVKK)</a>
+        <a href="#/ayarlar?acil=1">Güvenlik ayarları</a>
+      </div>
+    </div>
+    <div class="footer-bottom">© 2026 Femoria · TÜBİTAK 2209-B projesi</div>
+  </footer>
 
   <nav class="bottom-nav" aria-label="Ana menü">
     <a href="#/" data-route="vitrin" data-highlight="nav-vitrin">

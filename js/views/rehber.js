@@ -12,14 +12,15 @@ const GUIDE = `
 
 <section id="katilmak">
 <div class="section-head"><div class="feature-ico">${iconSVG("user")}</div><h2>Bölüm 1: Femoria'ya nasıl katılırım?</h2></div>
-<p>Katılmak için sadece telefon numaranız yeter. E-posta ya da şifre hatırlamanız gerekmez.</p>
+<p>Katılmak için bir e-posta adresi ve kendinize seçeceğiniz bir şifre yeter.</p>
 <ol>
-  <li><strong>Femoria'yı açın.</strong> Bir şey satmak ya da almak istediğinizde giriş düğmesi çıkar.</li>
-  <li><strong>Telefon numaranızı yazın.</strong> Numaranızı kutuya yazıp <strong>"Kod gönder"</strong>e dokunun.</li>
-  <li><strong>Size gelen şifreyi girin.</strong> Telefonunuza bir mesaj gelir. Çoğu telefonda bu rakamlar kendiliğinden yazılır. Gelmezse 1 dakika bekleyip <strong>"Tekrar gönder"</strong>e dokunun.</li>
+  <li><strong>"Üye ol"a dokunun.</strong> Sağ üstteki <strong>"Giriş yap"</strong> düğmesinden ya da bir şey satmak veya almak istediğinizde karşınıza çıkar.</li>
+  <li><strong>Adınızı, e-postanızı ve şifrenizi yazın.</strong> Şifre en az 8 karakter olmalı. <strong>"Göster"</strong>e dokunarak yazdığınızı görebilirsiniz.</li>
+  <li><strong>E-postanızı onaylayın.</strong> Gelen kutunuza bir e-posta gelir. İçindeki bağlantıya tıklayın; hesabınız açılır. Gelmezse "Gereksiz" klasörüne bakın ya da <strong>"Tekrar gönder"</strong>e dokunun.</li>
   <li><strong>Adınızı ve mahallenizi söyleyin.</strong> Adınızı yazın, sonra mahallenizi listeden seçin. Ev adresinizi kimse görmez; insanlar sadece hangi mahallede olduğunuzu bilir.</li>
 </ol>
 <p>İşte bu kadar! Artık hem satabilir hem alışveriş yapabilirsiniz. Ayrı bir dükkân açmanıza gerek yok.</p>
+<p>Şifrenizi unutursanız giriş ekranındaki <strong>"Şifremi unuttum"</strong>a dokunun; yenileme bağlantısı e-postanıza gelir.</p>
 <div class="tip">${iconSVG("sparkles")}<p><strong>Ayşe Abla'dan ipucu:</strong> İsterseniz önce üye olmadan etrafa bakabilirsiniz. Üyelik ancak bir şey satmak ya da almak istediğinizde sorulur.</p></div>
 </section>
 

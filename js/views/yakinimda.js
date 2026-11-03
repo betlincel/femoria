@@ -1,12 +1,13 @@
-// Yakınımda — varsayılan liste ("En yakından uzağa"); harita isteğe bağlı.
+// Yakınımda — katalog düzeni: solda filtreler (konum, kategori, mesafe), sağda ürün ızgarası.
+// Varsayılan görünüm liste ("en yakından uzağa"); harita isteğe bağlı.
 import { h, loading, emptyState, micButton, toast, icon, withIcon } from "../ui.js";
 import { state } from "../store.js";
 import { getCategories, nearbyProducts, RADIUS, logSearchRequest, track, photoUrl } from "../api.js";
-import { productCard, categoryTiles, askLocation, pickLocation } from "../components.js";
+import { productGrid, askLocation, pickLocation, breadcrumb } from "../components.js";
 import { navigate } from "../router.js";
 import { iconSVG, categoryIconName } from "../icons.js";
 
-const RADIUS_LABELS = [["mahallem", "Mahallem"], ["ilcem", "İlçem"], ["sehrim", "Şehrim"]];
+const RADIUS_LABELS = [["mahallem", "Mahallem", "2 km"], ["ilcem", "İlçem", "10 km"], ["sehrim", "Şehrim", "40 km"]];
 
 export default async function render(root, { query }) {
   let category = query.kategori || null;
@@ -14,73 +15,100 @@ export default async function render(root, { query }) {
   let search = query.q || "";
   let showMap = false;
   let map = null;
+  let rows = [];
 
-  const listEl = h("div", { class: "stack" });
-  const filtersEl = h("div", { class: "stack" });
-  const locLine = h("div", { class: "loc-line" });
+  const headerSearch = document.getElementById("q");
+  if (headerSearch) headerSearch.value = search;
+
+  const titleEl = h("h1", {});
+  const countEl = h("span", { class: "result-count" });
+  const crumbs = h("div");
+  const filtersEl = h("aside", { class: "filters", "aria-label": "Filtreler" });
+  const resultsEl = h("div");
   const mapEl = h("div", { class: "map", hidden: true });
-  const mapBtn = h("button", { class: "btn btn-secondary", style: { margin: "12px 0" }, "data-highlight": "haritada-gor", onclick: toggleMap });
+  const viewToggle = h("button", { class: "btn btn-secondary btn-inline", "data-highlight": "haritada-gor", onclick: toggleMap });
 
   root.append(
-    h("h1", {}, "Yakınımda"),
-    locLine,
-    filtersEl,
-    mapBtn,
-    mapEl,
-    listEl,
+    crumbs,
+    h("div", { class: "catalog-head" },
+      h("div", {}, titleEl, countEl),
+      viewToggle,
+    ),
+    h("div", { class: "catalog" },
+      filtersEl,
+      h("section", { "aria-label": "Ürünler" }, mapEl, resultsEl),
+    ),
   );
 
   if (!state.location?.lat) {
     const loc = await askLocation();
     if (!loc) {
-      listEl.replaceChildren(emptyState("map-pin", "Konum seçilmedi", "Size en yakın ürünleri göstermem için mahallenizi seçin.",
-        h("button", { class: "btn btn-primary", onclick: () => navigate("/yakinimda", { replace: true }) }, "Konum seç")));
+      titleEl.textContent = "Yakınımdaki ürünler";
+      resultsEl.replaceChildren(h("div", { class: "card" }, emptyState("map-pin", "Konum seçilmedi", "Size en yakın ürünleri göstermemiz için mahallenizi seçin.",
+        h("button", { class: "btn btn-primary", onclick: () => navigate("/yakinimda", { replace: true }) }, "Konum seç"))));
       return;
     }
   }
 
   const categories = await getCategories();
 
-  function renderFilters() {
-    filtersEl.replaceChildren(...[
-      categoryTiles(categories, {
-        selected: category,
-        onSelect: (c) => { category = category === c.slug ? null : c.slug; renderFilters(); load(); },
-      }),
-      h("div", { class: "btn-group", role: "group", "aria-label": "Ne kadar uzağa bakılsın?" },
-        RADIUS_LABELS.map(([key, label]) => h("button", {
-          class: "btn btn-secondary btn-choice", "aria-pressed": String(radiusKey === key),
-          onclick: () => { radiusKey = key; renderFilters(); load(); },
-        }, label)),
-      ),
-      search ? h("div", { class: "card row", style: { padding: "8px 8px 8px 16px" } },
-        h("span", { class: "row", style: { gap: "8px" } }, icon("search", 20), h("span", {}, `"${search}" için sonuçlar`)),
-        h("button", { class: "btn btn-ghost btn-inline", style: { flex: "0 0 auto" }, onclick: () => { search = ""; renderFilters(); load(); } }, "Temizle"),
-      ) : null,
-    ].filter(Boolean));
-    const l = state.location;
-    locLine.replaceChildren(
-      icon("map-pin", 18),
-      h("span", {}, [l.neighborhood, l.district].filter(Boolean).join(", ") || "Konumunuz"),
-      h("button", { class: "btn btn-ghost btn-inline", onclick: async () => { if (await pickLocation()) { renderFilters(); load(); } } }, "Değiştir"),
-    );
-    mapBtn.replaceChildren(...withIcon(showMap ? "list" : "map", showMap ? "Liste olarak gör" : "Haritada gör"));
+  function renderHead() {
+    const cat = categories.find((c) => c.slug === category);
+    titleEl.textContent = search ? `"${search}" için sonuçlar` : cat ? cat.name : "Yakınımdaki ürünler";
+    crumbs.replaceChildren(breadcrumb(["Ana sayfa", "#/"], ["Yakınımda", cat || search ? "#/yakinimda" : null], ...(cat ? [[cat.name]] : search ? [[search]] : [])));
+    viewToggle.replaceChildren(...withIcon(showMap ? "list" : "map", showMap ? "Liste" : "Haritada gör"));
   }
 
-  let rows = [];
+  function renderFilters() {
+    const l = state.location;
+    const filterBtn = (pressed, onclick, ...children) =>
+      h("button", { type: "button", "aria-pressed": String(pressed), onclick }, ...children);
+
+    filtersEl.replaceChildren(...[
+      h("div", { class: "card", style: { padding: "12px 14px" } },
+        h("div", { class: "eyebrow" }, "Konumunuz"),
+        h("div", { class: "row", style: { gap: "8px" } },
+          h("span", { class: "row", style: { gap: "6px", flex: "1" } }, icon("map-pin", 18), h("strong", {}, [l.neighborhood, l.district].filter(Boolean).join(", ") || "Seçilen konum")),
+          h("button", { class: "btn btn-ghost btn-inline", onclick: async () => { if (await pickLocation()) { renderFilters(); load(); } } }, "Değiştir"),
+        ),
+      ),
+      search ? h("div", { class: "card row", style: { padding: "8px 8px 8px 14px" } },
+        h("span", { class: "row", style: { gap: "8px", flex: "1" } }, icon("search", 18), h("span", {}, search)),
+        h("button", { class: "btn btn-ghost btn-inline", onclick: () => { search = ""; if (headerSearch) headerSearch.value = ""; renderHead(); renderFilters(); load(); } }, "Temizle"),
+      ) : null,
+      h("div", { class: "filter-group" },
+        h("h3", {}, "Kategori"),
+        h("div", { class: "filter-list" },
+          filterBtn(!category, () => { category = null; update(); }, icon("bag"), "Tümü"),
+          ...categories.map((c) => filterBtn(category === c.slug, () => { category = c.slug; update(); }, icon(categoryIconName(c.slug)), c.name)),
+        ),
+      ),
+      h("div", { class: "filter-group" },
+        h("h3", {}, "Ne kadar uzağa?"),
+        h("div", { class: "filter-list filter-list-3" },
+          ...RADIUS_LABELS.map(([key, label, km]) => filterBtn(radiusKey === key, () => { radiusKey = key; update(); },
+            h("span", { style: { flex: "1" } }, label), h("span", { class: "small muted" }, km))),
+        ),
+      ),
+    ].filter(Boolean));
+  }
+
+  function update() { renderHead(); renderFilters(); load(); }
+
   async function load() {
-    listEl.replaceChildren(loading());
+    resultsEl.replaceChildren(loading());
     const { lat, lng } = state.location;
     rows = await nearbyProducts({ lat, lng, radiusKm: RADIUS[radiusKey], category, limit: 100 }).catch(() => []);
     if (search) {
       const words = search.toLocaleLowerCase("tr-TR").split(/\s+/).filter((w) => w.length > 2);
       rows = rows.filter((r) => words.some((w) => r.title.toLocaleLowerCase("tr-TR").includes(w.slice(0, Math.max(3, w.length - 2)))));
     }
+    countEl.textContent = rows.length ? `${rows.length} ürün · en yakından uzağa` : "";
     if (!rows.length) {
       track("search_no_result", { category, radius: radiusKey, q: search || null });
-      listEl.replaceChildren(notFound());
+      resultsEl.replaceChildren(notFound());
     } else {
-      listEl.replaceChildren(...rows.map(productCard));
+      resultsEl.replaceChildren(productGrid(rows, { cols4: false }));
     }
     if (showMap) drawMap();
   }
@@ -92,21 +120,21 @@ export default async function render(root, { query }) {
       const q = input.value.trim();
       if (!q) return;
       await logSearchRequest(q, category);
-      toast("Not aldım. Mahallenizdeki üreticilere haber vereceğiz.");
+      toast("Not aldık. Mahallenizdeki üreticilere haber vereceğiz.");
     };
     return h("div", { class: "card stack" },
-      emptyState("search", "Yakında bulamadım", "Ne aradığınızı söyleyin; mahallenizdeki üreticilere haber verelim."),
+      emptyState("search", "Yakınınızda bulamadık", "Ne aradığınızı söyleyin; mahallenizdeki üreticilere haber verelim."),
       h("div", { class: "input-row" }, input, micButton({ size: "sm", onText: (t) => (input.value = t) })),
       h("button", { class: "btn btn-primary", onclick: submit }, "Haber ver"),
-      radiusKey !== "sehrim" ? h("button", { class: "btn btn-secondary", onclick: () => { radiusKey = "sehrim"; renderFilters(); load(); } }, "Daha uzağa bak") : null,
+      radiusKey !== "sehrim" ? h("button", { class: "btn btn-secondary", onclick: () => { radiusKey = "sehrim"; update(); } }, "Daha uzağa bak") : null,
     );
   }
 
-  async function toggleMap() {
+  function toggleMap() {
     showMap = !showMap;
     mapEl.hidden = !showMap;
-    listEl.hidden = showMap;
-    renderFilters();
+    resultsEl.hidden = showMap;
+    renderHead();
     if (showMap) drawMap();
   }
 
@@ -129,6 +157,7 @@ export default async function render(root, { query }) {
     setTimeout(() => map.invalidateSize(), 50);
   }
 
+  renderHead();
   renderFilters();
   await load();
   return () => map?.remove();

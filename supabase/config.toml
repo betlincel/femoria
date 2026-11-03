@@ -35,30 +35,21 @@ site_url = "http://localhost:5173"
 additional_redirect_urls = ["http://127.0.0.1:5173"]
 jwt_expiry = 3600
 enable_refresh_token_rotation = true
-# Üyelik ürün yüklemenin önüne konmaz; giriş sadece telefonla.
+# Üyelik ürün yüklemenin önüne konmaz; giriş e-posta + şifre ile.
 enable_signup = true
 enable_anonymous_sign_ins = false
+minimum_password_length = 8
 
 [auth.email]
-enable_signup = false
-
-[auth.sms]
 enable_signup = true
+# Canlıda açık tutun (e-posta onayı "Doğrulanmış" sayılmanın şartı).
+# Yerelde onay e-postaları Inbucket'a düşer: http://127.0.0.1:54324
 enable_confirmations = true
-template = "Femoria giriş kodunuz: {{ .Code }}"
+double_confirm_changes = true
 max_frequency = "60s"
 
-# Yerelde SMS sağlayıcısı olmadan test: bu numaralara kod her zaman 123456'dır.
-[auth.sms.test_otp]
-905551112233 = "123456"
-905554445566 = "123456"
-
-# Canlıda bir SMS sağlayıcısı gerekir (Twilio, MessageBird, Vonage veya Textlocal).
-# [auth.sms.twilio]
-# enabled = true
-# account_sid = "env(TWILIO_ACCOUNT_SID)"
-# message_service_sid = "env(TWILIO_MESSAGE_SERVICE_SID)"
-# auth_token = "env(TWILIO_AUTH_TOKEN)"
+[auth.sms]
+enable_signup = false
 
 [edge_runtime]
 enabled = true

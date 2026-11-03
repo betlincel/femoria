@@ -1,26 +1,27 @@
 // Femoria — uygulama girişi
 import { isConfigured } from "./supabase.js";
 import { state, initAuth, onChange, LS } from "./store.js";
-import { route, startRouter, onRoute } from "./router.js";
+import { route, startRouter, onRoute, navigate } from "./router.js";
 import { subscribeIncoming, track, getCategories } from "./api.js";
 import { initAssistant, assistantEvent } from "./assistant.js";
-import { esc } from "./ui.js";
-import { iconSVG, ayseAvatarSVG } from "./icons.js";
+import { esc, toast } from "./ui.js";
+import { iconSVG, ayseAvatarSVG, categoryIconName } from "./icons.js";
 
 route(/^\/$/, "vitrin", () => import("./views/vitrin.js"));
 route(/^\/yakinimda$/, "yakinimda", () => import("./views/yakinimda.js"));
-route(/^\/sat$/, "sat", () => import("./views/sat.js"));
-route(/^\/mesajlar$/, "mesajlar", () => import("./views/mesajlar.js"));
-route(/^\/sohbet\/([\w-]+)$/, "mesajlar", () => import("./views/sohbet.js"));
+route(/^\/sat$/, "sat", () => import("./views/sat.js"), "narrow");
+route(/^\/mesajlar$/, "mesajlar", () => import("./views/mesajlar.js"), "medium");
+route(/^\/sohbet\/([\w-]+)$/, "mesajlar", () => import("./views/sohbet.js"), "medium");
 route(/^\/urun\/([\w-]+)$/, "urun", () => import("./views/urun.js"));
 route(/^\/profil$/, "profil", () => import("./views/profil.js"));
-route(/^\/ayarlar$/, "profil", () => import("./views/ayarlar.js"));
-route(/^\/rehber$/, "rehber", () => import("./views/rehber.js"));
-route(/^\/giris$/, "giris", () => import("./views/giris.js"));
+route(/^\/ayarlar$/, "profil", () => import("./views/ayarlar.js"), "narrow");
+route(/^\/rehber$/, "rehber", () => import("./views/rehber.js"), "medium");
+route(/^\/giris$/, "giris", () => import("./views/giris.js"), "narrow");
+route(/^\/sifre-yenile$/, "giris", () => import("./views/sifre.js"), "narrow");
 
 // Alt menüde aktif sekme
 onRoute(({ screen }) => {
-  document.querySelectorAll(".bottom-nav a").forEach((a) => {
+  document.querySelectorAll(".bottom-nav a, .header-link").forEach((a) => {
     const active = a.dataset.route === screen;
     a.classList.toggle("active", active);
     if (active) a.setAttribute("aria-current", "page");
@@ -35,6 +36,7 @@ function renderAvatar() {
   if (p?.avatar_url) el.innerHTML = `<img src="${esc(p.avatar_url)}" alt="">`;
   else if (p?.full_name) el.textContent = p.full_name.trim()[0].toLocaleUpperCase("tr-TR");
   else el.innerHTML = iconSVG("user", 22);
+  document.getElementById("account-label").textContent = state.user ? (p?.full_name?.split(" ")[0] || "Hesabım") : "Giriş yap";
   document.querySelector(".fab-face").innerHTML = ayseAvatarSVG(p?.assistant_look, 40);
 }
 
@@ -43,12 +45,17 @@ let stopInbox = () => {};
 let lastUserId = null;
 onChange(() => {
   renderAvatar();
+  if (state.passwordRecovery) {
+    state.passwordRecovery = false;
+    navigate("/sifre-yenile", { replace: true });
+  }
   if (state.user?.id !== lastUserId) {
     lastUserId = state.user?.id ?? null;
     stopInbox();
     stopInbox = subscribeIncoming((msg) => {
       if (!location.hash.includes(msg.conversation_id)) {
         document.getElementById("unread-dot").hidden = false;
+        document.getElementById("unread-dot-top").hidden = false;
       }
       assistantEvent("message_received", msg);
     });
@@ -56,7 +63,12 @@ onChange(() => {
 });
 
 onRoute(({ screen }) => {
-  if (screen === "mesajlar") document.getElementById("unread-dot").hidden = true;
+  if (screen === "mesajlar") {
+    document.getElementById("unread-dot").hidden = true;
+    document.getElementById("unread-dot-top").hidden = true;
+  }
+  // Başlıktaki arama kutusu Yakınımda dışında temizlenir
+  if (screen !== "yakinimda") document.getElementById("q").value = "";
   expandFab();
 });
 
@@ -77,14 +89,35 @@ function paintShell() {
   document.querySelectorAll("[data-icon]").forEach((el) => el.insertAdjacentHTML("afterbegin", iconSVG(el.dataset.icon, 24)));
 }
 
+// Başlıktaki arama: Yakınımda'da sonuçları gösterir (bulunamazsa talep panosuna yazılır)
+document.getElementById("header-search").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const q = document.getElementById("q").value.trim();
+  navigate(q ? `/yakinimda?q=${encodeURIComponent(q)}` : "/yakinimda");
+});
+
+async function fillCategoryBar() {
+  const cats = await getCategories();
+  const bar = document.getElementById("category-bar");
+  for (const c of cats) {
+    const a = document.createElement("a");
+    a.href = `#/yakinimda?kategori=${c.slug}`;
+    a.innerHTML = iconSVG(categoryIconName(c.slug), 18);
+    a.append(c.name);
+    bar.append(a);
+  }
+}
+
 async function main() {
   paintShell();
+  fillCategoryBar();
   document.getElementById("config-banner").hidden = isConfigured;
   await initAuth();
   renderAvatar();
-  getCategories();
   initAssistant();
   startRouter();
+  if (state.authLinkError) toast("Bağlantının süresi dolmuş ya da daha önce kullanılmış. Lütfen yeni bir bağlantı isteyin.", 6000);
+  if (state.passwordRecovery) { state.passwordRecovery = false; navigate("/sifre-yenile", { replace: true }); }
 
   const lastVisit = LS.get("last_visit");
   track("app_open", { returning: !!lastVisit, days_since: lastVisit ? Math.floor((Date.now() - lastVisit) / 864e5) : null });

@@ -7,8 +7,19 @@ export const isConfigured =
 
 export const supabase = isConfigured
   ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-      auth: { persistSession: true, autoRefreshToken: true, storageKey: "femoria-auth" },
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        storageKey: "femoria-auth",
+        // PKCE: e-posta onay ve şifre yenileme bağlantıları ?code=... ile döner;
+        // hash tabanlı yönlendiriciyle (#/...) çakışmaz.
+        flowType: "pkce",
+        detectSessionInUrl: true,
+      },
     })
   : null;
 
 export const NOT_CONFIGURED = "Supabase bağlantısı ayarlanmadı (js/config.js).";
+
+/** E-posta bağlantılarının döneceği adres (hash olmadan). */
+export const authRedirectUrl = () => `${location.origin}${location.pathname}`;

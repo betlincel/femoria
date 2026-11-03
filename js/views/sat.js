@@ -1,6 +1,6 @@
 // Sat — "İlk ürünü 3 adımda satışa çıkarma" (taslak 1.3)
 //   1 Fotoğraf · 2 Anlat · 3 Fiyat
-// Üyelik ürün yüklemenin önüne konmaz: telefonla giriş yalnızca "Satışa çıkar" anında istenir.
+// Üyelik ürün yüklemenin önüne konmaz: giriş/üyelik yalnızca "Satışa çıkar" anında istenir.
 // Yarım iş her adımda otomatik saklanır (localStorage).
 import { h, toast, micButton, prepareImage, formatPrice, speak, canListen, ask, icon, withIcon, iconCircle, statusScreen } from "../ui.js";
 import { categoryIconName } from "../icons.js";

@@ -20,7 +20,10 @@ export default async function render(root) {
   if (!state.user) {
     root.append(h("h1", {}, "Profilim"),
       emptyState("user", "Henüz giriş yapmadınız", "Önce üye olmadan etrafa bakabilirsiniz. Üyelik ancak bir şey satmak ya da almak istediğinizde sorulur.",
-        h("button", { class: "btn btn-primary", onclick: () => requireAuth("/profil") }, "Telefonumla giriş yap")),
+        h("div", { class: "stack", style: { maxWidth: "320px", margin: "0 auto" } },
+          h("a", { class: "btn btn-primary", href: "#/giris?next=/profil" }, "Giriş yap"),
+          h("a", { class: "btn btn-secondary", href: "#/giris?mod=kayit&next=/profil" }, "Üye ol"),
+        )),
       linkList(),
     );
     return;
@@ -56,6 +59,7 @@ export default async function render(root) {
         h("h1", {}, p.full_name || "Adınız"),
         h("div", { class: "meta" }, icon("map-pin"), [p.neighborhood, p.district].filter(Boolean).join(", ") || "Mahalle seçilmedi"),
         h("div", { class: "meta" }, icon("calendar"), months ? `Femoria'da ${months} aydır` : "Femoria'ya yeni katıldınız"),
+        state.user.email ? h("div", { class: "meta" }, icon("message"), state.user.email, p.email_verified ? h("span", { class: "chip chip-ok" }, "Doğrulandı") : null) : null,
       ),
     ),
     badgesEl,
@@ -86,7 +90,7 @@ export default async function render(root) {
     if (tab === "sattiklarim") {
       const items = await myProducts().catch(() => []);
       tabBody.replaceChildren(...(items.length
-        ? items.map((it) => { const c = productCard(it); c.querySelector(".meta").prepend(h("span", { class: `chip ${it.status === "satista" ? "chip-ok" : ""}` }, STATUS[it.status] || it.status)); return c; })
+        ? [h("div", { class: "pgrid pgrid-4" }, items.map((it) => { const c = productCard(it); c.querySelector(".meta").prepend(h("span", { class: `chip ${it.status === "satista" ? "chip-ok" : ""}` }, STATUS[it.status] || it.status)); return c; }))]
         : [emptyState("camera", "Henüz ürün koymadınız", "İlk ürününüzü bugün çekin; gerisini birlikte hallederiz.", h("a", { class: "btn btn-primary", href: "#/sat" }, "Bir şey sat"))]));
     } else {
       const orders = await myPurchases().catch(() => []);
