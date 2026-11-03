@@ -3,6 +3,10 @@
 -- Herkese açık profil görünümüne (public_profiles) EKLENMEZ; yalnız sahibi görür.
 -- =====================================================================
 
+-- Güvenlik: aşağıdaki handle_new_user email_verified sütununa yazar. Migration 6 atlanmışsa
+-- üyelik "column email_verified does not exist" hatasıyla çökmesin diye sütunu burada da garanti et.
+alter table public.profiles add column if not exists email_verified boolean not null default false;
+
 alter table public.profiles add column if not exists gender text
   check (gender in ('kadin', 'erkek', 'belirtilmedi'));
 
