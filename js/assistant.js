@@ -1,6 +1,6 @@
 // Ayşe Abla — her ekranın sağ altında yüzen asistan.
 // Bölüm 3: persona, proaktif yardım tetikleyicileri ve "anket hissi vermeden" geri bildirim.
-import { h, $, speak, stopSpeaking, ttsOn, canSpeak, micButton, icon } from "./ui.js";
+import { h, $, speak, stopSpeaking, ttsOn, canSpeak, micButton, icon, hitap } from "./ui.js";
 import { ayseAvatar } from "./icons.js";
 import { state, LS, saveSettings } from "./store.js";
 import { navigate, currentScreen, onRoute } from "./router.js";
@@ -20,7 +20,8 @@ const KNOWN_ACTIONS = {
 };
 
 const save = () => sessionStorage.setItem("femoria:ayse", JSON.stringify(history.slice(-20)));
-const name = () => state.profile?.full_name?.split(" ")[0];
+// Hitap: "Ayşe Hanım", "Erdem Bey" ya da yalnız ad (cinsiyet belirtilmediyse)
+const name = () => hitap(state.profile?.full_name, state.profile?.gender);
 
 // ---------- Panel ----------
 function buildPanel() {
@@ -311,7 +312,7 @@ export function assistantEvent(event, payload) {
     }), 1500);
   }
   if (event === "first_sale") {
-    askFeedback("sohbet_deneyimi", `${name() ? name() + " Hanım, " : ""}müjde! İlk satışınız hayırlı olsun. Alıcıyla konuşmak nasıldı?`,
+    askFeedback("sohbet_deneyimi", `${name() ? name() + ", " : ""}müjde! İlk satışınız hayırlı olsun. Alıcıyla konuşmak nasıldı?`,
       ["Kolaydı", "İdare eder", "Zorlandım"], (a) => {
         if (a.includes("Kolay")) { say("Ne güzel! Böyle devam."); setTimeout(close, 2500); return; }
         say("Söylediğiniz için teşekkürler. En çok neresi zorladı?", ["Ne yazacağımı bilemedim", "Ses kaydı", "Fiyat konuşmak"].map((x) => ({
@@ -330,7 +331,7 @@ export function initAssistant() {
   fab().addEventListener("click", () => {
     if (panel().hidden) {
       open();
-      if (!log.children.length) say(`Merhaba${name() ? " " + name() + " Hanım" : ""}! Size nasıl yardım edebilirim?`, [
+      if (!log.children.length) say(`Merhaba${name() ? " " + name() : ""}! Size nasıl yardım edebilirim?`, [
         "Bir şey satmak istiyorum", "Alışveriş yapmak istiyorum", "Rehberi aç",
       ]);
     } else close();

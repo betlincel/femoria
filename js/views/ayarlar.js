@@ -1,6 +1,6 @@
 // Ayarlar — ana liste 5 maddeyi geçmez: yazı büyüklüğü, sesli okuma, bildirimler, konum, çıkış.
 // Güvenlik ve gizlilik ayrı grupta (gece sessizliği, kadın satıcı koruması, acil kişi, KVKK).
-import { h, toast, ask, speak, sheet, icon, withIcon, canSpeak, stopSpeaking } from "../ui.js";
+import { h, toast, ask, speak, sheet, icon, withIcon, canSpeak, stopSpeaking, GENDERS, hitap } from "../ui.js";
 import { ayseAvatar } from "../icons.js";
 import { state, saveSettings, updateProfile, signOut } from "../store.js";
 import { pickLocation, pageTitle } from "../components.js";
@@ -52,6 +52,7 @@ export default async function render(root, { query }) {
 
     h("div", { class: "group-title" }, "Genel"),
     h("div", { class: "list" },
+      loggedIn ? hitapBlock() : null,
       h("div", { class: "list-block stack" }, h("div", { class: "row", style: { gap: "14px" } }, icon("type"), h("strong", { style: { flex: 1 } }, "Yazı büyüklüğü")), fontButtons),
       canSpeak ? item("volume", "Ayşe Abla sesli okusun",
         "Kapalıyken de her mesajın yanındaki hoparlöre dokunarak dinleyebilirsiniz.",
@@ -90,7 +91,32 @@ export default async function render(root, { query }) {
   );
 
   if (query.acil) document.getElementById("guvenlik")?.scrollIntoView({ behavior: "smooth" });
+  if (query.hitap) document.getElementById("hitap")?.scrollIntoView({ behavior: "smooth", block: "center" });
   if (query.kvkk) kvkk();
+}
+
+// Hitap: "Hanım" / "Bey" / yalnız ad. Cinsiyet başkalarına gösterilmez.
+function hitapBlock() {
+  const p = state.profile || {};
+  const preview = h("div", { class: "small muted" });
+  const group = h("div", { class: "btn-group gender-group", role: "radiogroup", "aria-label": "Cinsiyet" });
+  const draw = (v) => {
+    preview.textContent = `Size böyle hitap ediyoruz: "${hitap(p.full_name, v) || "—"}"`;
+    group.replaceChildren(...GENDERS.map(([k, l]) => h("button", {
+      type: "button", class: "btn btn-secondary btn-choice", role: "radio",
+      "aria-checked": String(v === k), "aria-pressed": String(v === k),
+      onclick: async () => {
+        try { await updateProfile({ gender: k }); p.gender = k; draw(k); toast("Kaydettim."); }
+        catch { toast("Kaydedilemedi, tekrar deneyin."); }
+      },
+    }, l)));
+  };
+  draw(p.gender || null);
+  return h("div", { class: "list-block stack", id: "hitap" },
+    h("div", { class: "row", style: { gap: "14px" } }, icon("user"), h("strong", { style: { flex: 1 } }, "Cinsiyet ve hitap")),
+    group,
+    preview,
+  );
 }
 
 function emergencyBlock(loggedIn, needLogin, focus) {

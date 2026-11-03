@@ -624,3 +624,7 @@ details > summary::-webkit-details-marker { display: none; }
   .filter-list-3 button { flex-direction: column; justify-content: center; gap: 0; text-align: center; }
   .catalog-head .btn-inline { min-height: 48px; }
 }
+
+/* Cinsiyet seçimi: Kadın | Erkek yan yana, "Belirtmek istemiyorum" altta tam genişlik */
+.btn-group.gender-group { grid-auto-flow: row; grid-template-columns: 1fr 1fr; }
+.btn-group.gender-group > :nth-child(3) { grid-column: 1 / -1; min-height: 48px; }

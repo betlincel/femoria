@@ -1,7 +1,7 @@
 // Ayşe Abla — yapay zeka asistanı (Supabase Edge Function, Deno)
 //
 // POST /functions/v1/ayse-abla
-//   { mode: "chat",       messages: [{role, content}], screen?, userName? }
+//   { mode: "chat",       messages: [{role, content}], screen?, userName? (hitap: "Ayşe Hanım", "Erdem Bey" ya da yalnız ad) }
 //       -> { reply, buttons, highlight, search }
 //   { mode: "describe",   transcript }                -> { title, description, category }
 //   { mode: "transcribe", path }  (voice-messages kovası) -> { text }
