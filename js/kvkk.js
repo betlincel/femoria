@@ -1,6 +1,7 @@
 // Kişisel Verilerin Korunması Kanunu (KVKK) aydınlatma metni — tek kaynak.
-// Metinde değişiklik yaptığınızda KVKK_VERSION'ı artırın: giriş yapmış herkesten
-// yeni metin için yeniden onay istenir (bkz. js/consent.js).
+// Metinde değişiklik yaptığınızda KVKK_VERSION'ı güncelleyin: kullanıcının hangi sürümü
+// onayladığı kayıt altına alınır. Bir kez onaylayan kullanıcıya yeniden sorulmaz (bkz. js/consent.js);
+// güncel metin her zaman "Aydınlatma metni" sayfasındadır.
 //
 // ⚠️ Yayına çıkmadan önce bir hukukçuya kontrol ettirin ve iletişim adresini doldurun.
 

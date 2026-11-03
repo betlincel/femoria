@@ -50,7 +50,7 @@ Supabase
 - **Listeden konum:** Türkiye'nin 81 ili, 973 ilçesi ve ~73 bin mahalle/köyü `assets/tr/` altında (kaynaklar ve lisanslar: `assets/tr/KAYNAK.md`, üretim: `scripts/build-tr-locations.mjs`). Seçilen yerin koordinatı tarayıcıda OpenStreetMap ile bulunur; bulunamazsa ilçe, o da olmazsa il merkezi kullanılır.
 - **Kaldırılan ürünler:** `remove_product()` mesajlaşması olmayan ürünü hemen siler (fotoğrafları istemci Storage'dan siler); olanı `kaldirildi` yapar ve 30 gün saklar (`restore_product()` ile geri alınır). `purge-removed-photos` Edge Function'ı her gece (pg_cron + pg_net, `x-cron-secret` ile korunur) `storage_cleanup_candidates()` listesindeki dosyaları siler: 30 günü dolan fotoğraflar, hiçbir ürüne ait olmayan fotoğraflar (1 günden eski) ve sohbeti silinmiş sesli mesajlar. Kaldırılan ürün sohbetin iki tarafına görünmeye devam eder.
 - **Ayşe Abla görünümü:** sabittir (başı açık); kullanıcı tarafından değiştirilemez.
-- **KVKK aydınlatma metni:** Tek kaynak `js/kvkk.js` (`KVKK_VERSION`), tam metin `#/aydinlatma` sayfasında. Üye olurken onaylanan sürüm ve zaman `profiles.kvkk_version` / `kvkk_accepted_at`'e yazılır. Sürüm değişince giriş yapmış herkese kapatılamayan bir onay ekranı çıkar (`js/consent.js`). Hesap ve tüm veriler `delete_my_account()` ile tek düğmeyle silinir.
+- **KVKK aydınlatma metni:** Tek kaynak `js/kvkk.js` (`KVKK_VERSION`), tam metin `#/aydinlatma` sayfasında. Üye olurken onaylanan sürüm ve zaman `profiles.kvkk_version` / `kvkk_accepted_at`'e yazılır. Metni hiç onaylamamış (eski) hesaplara bir kez kapatılamayan onay ekranı çıkar; bir kez onaylayana sürüm değişse de yeniden sorulmaz (`js/consent.js`). Hesap ve tüm veriler `delete_my_account()` ile tek düğmeyle silinir.
 
 ## RPC fonksiyonları
 

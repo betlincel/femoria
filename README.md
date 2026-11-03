@@ -190,7 +190,7 @@ Metin `js/kvkk.js` dosyasındadır. Yayına çıkmadan önce:
 
 - `KVKK_CONTACT` alanına başvurular için bir iletişim e-posta adresi yazın.
 - Metni bir hukukçuya kontrol ettirin.
-- Metni her değiştirdiğinizde `KVKK_VERSION`'ı güncelleyin (ör. tarih); giriş yapmış kullanıcılardan yeni metin için yeniden onay istenir.
+- Metni her değiştirdiğinizde `KVKK_VERSION`'ı güncelleyin (ör. tarih); kullanıcının hangi sürümü onayladığı kaydedilir. Metni bir kez onaylayan kullanıcıya yeniden sorulmaz; yalnızca hiç onaylamamış (eski) hesaplara bir kez gösterilir.
 
 ## Yayınlama
 

@@ -1,5 +1,7 @@
-// Aydınlatma metni onay kontrolü: giriş yapmış kullanıcı güncel metni onaylamadıysa
-// (eski hesap ya da metin değişti) kapatılamayan bir onay ekranı gösterilir.
+// Aydınlatma metni onay kontrolü: giriş yapmış kullanıcı metni HİÇ onaylamadıysa
+// (ör. onay kaydı tutulmadan önce açılmış eski hesap) bir kez kapatılamayan onay ekranı gösterilir.
+// Bir kez "Okudum, anladım" diyen kullanıcıya — metin sonradan güncellense de — bir daha sorulmaz.
+// Hangi sürümün ne zaman onaylandığı profiles.kvkk_version / kvkk_accepted_at'te kayıtlı kalır.
 import { h, sheet, toast } from "./ui.js";
 import { state, updateProfile } from "./store.js";
 import { KVKK_VERSION } from "./kvkk.js";
@@ -10,7 +12,7 @@ let open = false;
 
 export function ensureKvkkConsent() {
   const p = state.profile;
-  if (!state.user || !p || p.kvkk_version === KVKK_VERSION || open) return;
+  if (!state.user || !p || p.kvkk_accepted_at || open) return;
   if (location.hash.startsWith("#/aydinlatma") || location.hash.startsWith("#/sifre-yenile")) return;
   open = true;
 
@@ -18,7 +20,7 @@ export function ensureKvkkConsent() {
   const btn = h("button", { class: "btn btn-primary btn-xl", disabled: true }, "Okudum, anladım");
   check.addEventListener("change", () => (btn.disabled = !check.checked));
 
-  const close = sheet(p.kvkk_version ? "Aydınlatma metni güncellendi" : "Aydınlatma metni", h("div", { class: "stack" },
+  const close = sheet("Aydınlatma metni", h("div", { class: "stack" },
     h("p", { class: "muted", style: { margin: 0 } }, "Devam etmeden önce kişisel verilerinizi nasıl işlediğimizi okuyun. Konum bilgisi için ayrıca izniniz istenir."),
     h("div", { class: "kvkk-scroll", tabindex: "0" }, kvkkArticle()),
     h("label", { for: "kvkk-reaccept", class: "row consent-check" }, check,
