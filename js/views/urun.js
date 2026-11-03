@@ -1,5 +1,6 @@
 // Ürün sayfası — büyük fotoğraf, fiyat, mesafe, satıcı güveni ve "Satıcıya yaz".
-import { h, formatPrice, formatDistance, monthsSince, toast, loading, emptyState, ask } from "../ui.js";
+import { h, formatPrice, formatDistance, monthsSince, toast, loading, emptyState, ask, icon, withIcon } from "../ui.js";
+import { categoryIconName } from "../icons.js";
 import { state } from "../store.js";
 import { getProduct, photoUrl, categoryOf, startConversation, setProductStatus, track, DELIVERY_LABEL } from "../api.js";
 import { pageTitle, badgeChips } from "../components.js";
@@ -18,7 +19,7 @@ export default async function render(root, { params: [id] }) {
   const p = await getProduct(id).catch(() => null);
   root.lastChild.remove();
   if (!p) {
-    root.append(emptyState("🧺", "Bu ürün bulunamadı", "Satılmış ya da kaldırılmış olabilir.", h("a", { class: "btn btn-primary", href: "#/yakinimda" }, "Yakınımdakilere bak")));
+    root.append(emptyState("bag", "Bu ürün bulunamadı", "Satılmış ya da kaldırılmış olabilir.", h("a", { class: "btn btn-primary", href: "#/yakinimda" }, "Yakınımdakilere bak")));
     return;
   }
 
@@ -26,7 +27,7 @@ export default async function render(root, { params: [id] }) {
   const photos = p.photos.map(photoUrl).filter(Boolean);
   const main = photos.length
     ? h("img", { class: "card", style: { padding: 0, width: "100%", aspectRatio: "1", objectFit: "cover" }, src: photos[0], alt: p.title })
-    : h("div", { class: "card illus", style: { fontSize: "6rem" } }, categoryOf(p.category).icon);
+    : h("div", { class: "card", style: { aspectRatio: "1.4", display: "grid", placeItems: "center", color: "var(--text-faint)", background: "var(--surface-2)" } }, icon(categoryIconName(p.category), 72));
   const distance = km(state.location, p);
   const seller = p.seller || {};
   const months = seller.created_at ? monthsSince(seller.created_at) : 0;
@@ -40,17 +41,18 @@ export default async function render(root, { params: [id] }) {
     }, h("img", { src: u, alt: "" })))) : null,
 
     h("div", { class: "stack section" },
-      h("div", { class: "price", style: { fontSize: "1.8rem" } }, formatPrice(p.price)),
-      h("div", { class: "row", style: { flexWrap: "wrap" } },
-        h("span", { class: "chip" }, `${categoryOf(p.category).icon} ${categoryOf(p.category).name}`),
-        h("span", { class: "chip" }, `🚚 ${DELIVERY_LABEL[p.delivery]}`),
-        distance != null ? h("span", { class: "chip" }, `📍 ${formatDistance(distance)}`) : p.neighborhood ? h("span", { class: "chip" }, `📍 ${p.neighborhood}`) : null,
+      h("div", { class: "price", style: { fontSize: "1.8rem", letterSpacing: "-.02em" } }, formatPrice(p.price)),
+      h("div", { class: "badges" },
+        h("span", { class: "chip chip-brand" }, icon(categoryIconName(p.category)), categoryOf(p.category).name),
+        h("span", { class: "chip" }, icon("truck"), DELIVERY_LABEL[p.delivery]),
+        distance != null || p.neighborhood ? h("span", { class: "chip" }, icon("map-pin"), distance != null ? formatDistance(distance) : p.neighborhood) : null,
       ),
-      p.status === "satildi" ? h("p", { class: "notice" }, "Bu ürün satıldı.") : null,
+      p.status === "satildi" ? h("p", { class: "notice" }, icon("alert", 20), "Bu ürün satıldı.") : null,
       p.description ? h("p", {}, p.description) : null,
     ),
 
     h("div", { class: "card stack section" },
+      h("div", { class: "eyebrow" }, "Satıcı"),
       h("div", { class: "profile-head" },
         h("span", { class: "avatar avatar-sm" }, seller.avatar_url ? h("img", { src: seller.avatar_url, alt: "" }) : (seller.full_name || "?")[0]),
         h("div", {},
@@ -76,21 +78,21 @@ function buyerActions(p) {
     } catch (e) {
       toast(e.message || "Şu an mesaj gönderilemiyor.");
     }
-  } }, h("span", { class: "ico", "aria-hidden": "true" }, "💬"), "Satıcıya yaz");
+  } }, withIcon("message", "Satıcıya yaz"));
 }
 
 function ownerActions(p) {
   return h("div", { class: "stack" },
-    h("p", { class: "notice" }, "Bu sizin ürününüz."),
+    h("p", { class: "notice" }, icon("user", 20), "Bu sizin ürününüz."),
     p.status === "satista" ? h("button", { class: "btn btn-success", onclick: async () => {
       await setProductStatus(p.id, "satildi"); toast("Satıldı olarak işaretlendi. Hayırlı olsun!"); navigate("/profil");
-    } }, "✓ Satıldı") : null,
+    } }, withIcon("check", "Satıldı olarak işaretle")) : null,
     p.status === "satildi" ? h("button", { class: "btn btn-secondary", onclick: async () => {
       await setProductStatus(p.id, "satista"); toast("Yeniden satışta."); navigate(`/urun/${p.id}`, { replace: true });
     } }, "Yeniden satışa çıkar") : null,
     h("button", { class: "btn btn-danger", onclick: async () => {
       if (!(await ask("Ürünü kaldıralım mı?", "Vitrinden kaldırılır; sohbetleriniz kalır.", "Evet, kaldır"))) return;
       await setProductStatus(p.id, "kaldirildi"); toast("Kaldırıldı."); navigate("/profil");
-    } }, "Vitrinden kaldır"),
+    } }, withIcon("trash", "Vitrinden kaldır")),
   );
 }

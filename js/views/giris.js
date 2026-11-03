@@ -1,5 +1,5 @@
 // Giriş — yalnız telefon numarası + tek seferlik kod (e-posta/şifre yok). Rehber Bölüm 1.
-import { h, toast, micButton } from "../ui.js";
+import { h, toast, micButton, icon, iconCircle } from "../ui.js";
 import { supabase, isConfigured, NOT_CONFIGURED } from "../supabase.js";
 import { state, loadProfile, updateProfile } from "../store.js";
 import { navigate } from "../router.js";
@@ -47,9 +47,9 @@ export default async function render(root, { query }) {
     };
     const btn = h("button", { class: "btn btn-primary btn-xl", type: "submit" }, "Kod gönder");
     body.replaceChildren(
-      h("p", {}, "Katılmak için sadece telefon numaranız yeter. E-posta ya da şifre gerekmez."),
+      h("p", { class: "lead" }, "Katılmak için sadece telefon numaranız yeter. E-posta ya da şifre gerekmez."),
       h("form", { class: "stack", onsubmit: submit },
-        h("label", { for: "phone" }, "📞 Telefon numaranız"),
+        h("label", { for: "phone" }, "Telefon numaranız"),
         input,
         btn,
       ),
@@ -81,7 +81,7 @@ export default async function render(root, { query }) {
     };
     input.addEventListener("input", () => input.value.replace(/\D/g, "").length === 6 && verify());
     body.replaceChildren(
-      h("div", { class: "illus", "aria-hidden": "true" }, "✉️ 1 2 3 4"),
+      iconCircle("message"),
       h("p", {}, `Telefonunuza bir mesaj gönderdim. İçindeki şifreyi yazın. Çoğu telefonda kendiliğinden yazılır.`),
       h("form", { class: "stack", onsubmit: verify },
         input,
@@ -113,9 +113,9 @@ export default async function render(root, { query }) {
       } },
         h("label", { for: "name" }, "Adınız"),
         h("div", { class: "input-row" }, input, micButton({ size: "sm", onText: (t) => (input.value = t) })),
-        h("div", { class: "card card-warm row" },
-          h("span", { style: { flex: "0 0 auto", fontSize: "2rem" }, "aria-hidden": "true" }, "🏠🛡️"),
-          h("p", { style: { margin: 0 } }, "Ev adresinizi kimse görmez; insanlar sadece hangi mahallede olduğunuzu bilir."),
+        h("div", { class: "tip" },
+          icon("lock"),
+          h("p", {}, "Ev adresinizi kimse görmez; insanlar sadece hangi mahallede olduğunuzu bilir."),
         ),
         h("button", { class: "btn btn-primary btn-xl", type: "submit" }, "Mahallemi seç ve bitir"),
       ),

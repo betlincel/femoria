@@ -1,7 +1,7 @@
 // Sohbet — WhatsApp'a benzer; üstte sabit ürün kartı (taslak 1.4).
 // Hazır mesaj baloncukları, sesli mesaj + yazıya çevirme, sipariş kartı ("Anlaştık"),
 // telefon/IBAN kalkanı, güvenli buluşma önerisi, tek dokunuşla şikayet/engelle, acil durum.
-import { h, toast, sheet, ask, micButton, clockTime, formatPrice, shieldCheck, emptyState, loading } from "../ui.js";
+import { h, toast, sheet, ask, micButton, clockTime, formatPrice, shieldCheck, emptyState, loading, icon, withIcon } from "../ui.js";
 import { state } from "../store.js";
 import {
   getConversation, sendMessage, sendVoiceMessage, voiceUrl, transcribeVoice, markRead, subscribeConversation,
@@ -24,7 +24,7 @@ export default async function render(root, { params: [id] }) {
   root.replaceChildren();
   if (!conv) {
     root.append(pageTitle("Sohbet", { back: () => navigate("/mesajlar") }),
-      emptyState("💬", "Sohbet bulunamadı", null, h("a", { class: "btn btn-primary", href: "#/mesajlar" }, "Mesajlarıma dön")));
+      emptyState("message", "Sohbet bulunamadı", null, h("a", { class: "btn btn-primary", href: "#/mesajlar" }, "Mesajlarıma dön")));
     return;
   }
 
@@ -37,23 +37,23 @@ export default async function render(root, { params: [id] }) {
 
   // ---------- Başlık + kalkan ----------
   const title = pageTitle(conv.other.full_name || "Komşu", { back: () => navigate("/mesajlar") });
-  title.append(h("button", { class: "back-btn", "aria-label": "Güvenlik: şikayet, engelle, acil durum", title: "Güvenlik", onclick: shieldMenu }, "🛡️"));
+  title.append(h("button", { class: "icon-btn", "aria-label": "Güvenlik: şikayet, engelle, acil durum", title: "Güvenlik", onclick: shieldMenu }, icon("shield")));
 
   const productCard = h("a", { class: "card card-link conv-item chat-product", href: `#/urun/${product.id}` },
-    product.photos?.[0] ? h("img", { src: photoUrl(product.photos[0]), alt: "" }) : h("div", { class: "ph" }, "🧺"),
+    product.photos?.[0] ? h("img", { src: photoUrl(product.photos[0]), alt: "" }) : h("div", { class: "ph" }, icon("bag")),
     h("div", {}, h("strong", {}, product.title), h("div", { class: "price" }, formatPrice(product.price))),
-    h("span"),
+    h("span", { style: { color: "var(--text-faint)" } }, icon("chevron-right")),
   );
 
   // ---------- Yazma alanı ----------
   const textarea = h("textarea", { class: "input", rows: 1, placeholder: "Mesaj yazın…", "aria-label": "Mesaj" });
-  const sendBtn = h("button", { class: "send-btn", "aria-label": "Gönder", onclick: () => send(textarea.value) }, "➤");
-  const recordBtn = h("button", { class: "mic-sm", "aria-label": "Sesli mesaj kaydet", title: "Sesli mesaj", onclick: toggleRecord }, "🎙️");
+  const sendBtn = h("button", { class: "send-btn", "aria-label": "Gönder", onclick: () => send(textarea.value) }, icon("send"));
+  const recordBtn = h("button", { class: "mic-sm", "aria-label": "Sesli mesaj kaydet", title: "Sesli mesaj", onclick: toggleRecord }, icon("file-audio"));
   textarea.addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(textarea.value); } });
 
   const quick = h("div", { class: "quick-replies", role: "group", "aria-label": "Hazır mesajlar" },
     QUICK[role].map((q) => h("button", { onclick: () => send(q, "hazir") }, q)),
-    h("button", { onclick: orderSheet, style: { borderColor: "var(--primary)", color: "var(--primary)" } }, "🤝 Sipariş kartı"),
+    h("button", { class: "accent", onclick: orderSheet }, withIcon("receipt", "Sipariş kartı")),
   );
 
   root.append(
@@ -90,26 +90,26 @@ export default async function render(root, { params: [id] }) {
     else wrap.append(h("button", { class: "btn btn-ghost", style: { minHeight: "44px" }, onclick: async (e) => {
       e.target.disabled = true;
       try { m.transcript = await transcribeVoice(m); draw(); } catch { toast("Şu an yazıya çeviremedim."); e.target.disabled = false; }
-    } }, "📝 Yazısını oku"));
+    } }, withIcon("file", "Yazısını oku")));
     return wrap;
   }
 
   function orderCard(o, m) {
     if (!o) return h("div", { class: "bubble system" }, "Sipariş kartı");
     const iAgreed = role === "buyer" ? o.buyer_agreed : o.seller_agreed;
-    const statusText = { teklif: "Onay bekliyor", anlasildi: "Anlaşıldı 🤝", teslim_edildi: "Teslim edildi ✓", iptal: "İptal edildi" }[o.status];
+    const statusText = { teklif: "Onay bekliyor", anlasildi: "Anlaşıldı", teslim_edildi: "Teslim edildi", iptal: "İptal edildi" }[o.status];
     const actions = h("div", { class: "stack" });
     if (o.status === "teklif") {
-      if (!iAgreed) actions.append(h("button", { class: "btn btn-success", onclick: () => act(agreeOrder, o.id, "order_agreed") }, "🤝 Anlaştık"));
+      if (!iAgreed) actions.append(h("button", { class: "btn btn-success", onclick: () => act(agreeOrder, o.id, "order_agreed") }, withIcon("check", "Anlaştık")));
       else actions.append(h("p", { class: "muted small center" }, "Karşı tarafın \"Anlaştık\" demesi bekleniyor."));
       actions.append(h("button", { class: "btn btn-ghost", onclick: async () => (await ask("Siparişi iptal edelim mi?", null, "Evet, iptal")) && act(cancelOrder, o.id) }, "İptal et"));
     } else if (o.status === "anlasildi") {
-      if (o.delivery !== "kargo") actions.append(h("p", { class: "tip small" }, "🛡️ ", SAFE_SPOTS));
+      if (o.delivery !== "kargo") actions.append(h("div", { class: "tip small" }, icon("shield-check"), h("p", {}, SAFE_SPOTS)));
       actions.append(h("button", { class: "btn btn-success", onclick: () => act(markDelivered, o.id, "order_delivered") },
-        role === "buyer" ? "📦 Teslim aldım" : "📦 Teslim ettim"));
+        withIcon("package", role === "buyer" ? "Teslim aldım" : "Teslim ettim")));
     }
     return h("div", { class: "card order-card", style: { alignSelf: "stretch" } },
-      h("strong", {}, "🧾 Sipariş kartı"),
+      h("div", { class: "order-head" }, icon("receipt"), "Sipariş kartı"),
       h("dl", {},
         h("dt", {}, "Ürün"), h("dd", {}, product.title),
         h("dt", {}, "Adet"), h("dd", {}, o.quantity),
@@ -175,7 +175,7 @@ export default async function render(root, { params: [id] }) {
       recorder.onstop = async () => {
         stream.getTracks().forEach((t) => t.stop());
         recordBtn.classList.remove("listening");
-        recordBtn.textContent = "🎙️";
+        recordBtn.replaceChildren(icon("file-audio"));
         recorder = null;
         const blob = new Blob(chunks, { type: chunks[0]?.type || "audio/webm" });
         if (blob.size < 1500) return toast("Çok kısa oldu. Basıp konuşun, bitince tekrar dokunun.");
@@ -183,7 +183,7 @@ export default async function render(root, { params: [id] }) {
       };
       recorder.start();
       recordBtn.classList.add("listening");
-      recordBtn.textContent = "⏹";
+      recordBtn.replaceChildren(icon("stop"));
       toast("Kaydediyorum… Bitince tekrar dokunun.");
     } catch { toast("Mikrofon izni verilmedi."); }
   }
@@ -198,17 +198,17 @@ export default async function render(root, { params: [id] }) {
     const qtyOut = h("output", {}, qty);
     const priceIn = h("input", { class: "input", type: "number", inputmode: "decimal", min: 0, step: "1", value: price, id: "o-price" });
     const delWrap = h("div", { class: "btn-group" });
-    const drawDel = () => delWrap.replaceChildren(...[["elden", "🤝 Elden"], ["kargo", "📦 Kargo"]].map(([v, l]) =>
-      h("button", { class: "btn btn-secondary btn-choice", "aria-pressed": String(delivery === v), onclick: () => { delivery = v; drawDel(); } }, l)));
+    const drawDel = () => delWrap.replaceChildren(...[["elden", "users", "Elden"], ["kargo", "package", "Kargo"]].map(([v, ico, l]) =>
+      h("button", { class: "btn btn-secondary btn-choice", "aria-pressed": String(delivery === v), onclick: () => { delivery = v; drawDel(); } }, withIcon(ico, l))));
     drawDel();
 
     sheet("Sipariş kartı", (close) => h("div", { class: "stack" },
       h("p", { class: "muted" }, "Adet, fiyat, teslim şekli ve tarih tek kartta birleşir. İkiniz de \"Anlaştık\" deyince kaydedilir."),
       h("label", {}, "Adet"),
       h("div", { class: "price-picker" },
-        h("button", { "aria-label": "Azalt", onclick: () => { qty = Math.max(1, qty - 1); qtyOut.textContent = qty; } }, "−"),
+        h("button", { "aria-label": "Azalt", onclick: () => { qty = Math.max(1, qty - 1); qtyOut.textContent = qty; } }, icon("minus")),
         qtyOut,
-        h("button", { "aria-label": "Artır", onclick: () => { qty += 1; qtyOut.textContent = qty; } }, "+"),
+        h("button", { "aria-label": "Artır", onclick: () => { qty += 1; qtyOut.textContent = qty; } }, icon("plus")),
       ),
       h("label", { for: "o-price" }, "Tanesi kaç lira?"), priceIn,
       h("label", {}, "Teslim"), delWrap,
@@ -233,7 +233,7 @@ export default async function render(root, { params: [id] }) {
         close();
         await reportUser({ reportedId: conv.otherId, conversationId: id, productId: product.id });
         toast("İlettiniz. Ekibimiz bakacak. Açıklama yapmak zorunda değilsiniz.");
-      } }, "😟 Rahatsız oldum"),
+      } }, withIcon("flag", "Rahatsız oldum")),
       h("button", { class: "btn btn-danger", onclick: async () => {
         close();
         if (!(await ask("Engelleyelim mi?", "Bu kişi size bir daha yazamaz.", "Evet, engelle"))) return;
@@ -241,9 +241,9 @@ export default async function render(root, { params: [id] }) {
         await reportUser({ reportedId: conv.otherId, conversationId: id, reason: "Engellendi" }).catch(() => {});
         toast("Engellendi.");
         navigate("/mesajlar");
-      } }, "🚫 Engelle"),
-      h("button", { class: "btn btn-secondary", onclick: () => { close(); emergency(); } }, "🆘 Acil durum: yakınıma konumumu gönder"),
-      h("p", { class: "tip small" }, "Ev adresinizi, banka bilgilerinizi ya da şifrelerinizi mesajda yazmayın. ", SAFE_SPOTS),
+      } }, withIcon("ban", "Engelle")),
+      h("button", { class: "btn btn-secondary", onclick: () => { close(); emergency(); } }, withIcon("sos", "Acil durum: yakınıma konumumu gönder")),
+      h("div", { class: "tip small" }, icon("shield-check"), h("p", {}, "Ev adresinizi, banka bilgilerinizi ya da şifrelerinizi mesajda yazmayın. ", SAFE_SPOTS)),
     ));
   }
 

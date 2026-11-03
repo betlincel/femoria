@@ -2,7 +2,8 @@
 //   1 Fotoğraf · 2 Anlat · 3 Fiyat
 // Üyelik ürün yüklemenin önüne konmaz: telefonla giriş yalnızca "Satışa çıkar" anında istenir.
 // Yarım iş her adımda otomatik saklanır (localStorage).
-import { h, toast, micButton, prepareImage, formatPrice, speak, canListen, ask } from "../ui.js";
+import { h, toast, micButton, prepareImage, formatPrice, speak, canListen, ask, icon, withIcon, iconCircle, statusScreen } from "../ui.js";
+import { categoryIconName } from "../icons.js";
 import { state, LS } from "../store.js";
 import { getCategories, categoryOf, priceSuggestion, publishProduct, askAssistant, track } from "../api.js";
 import { pageTitle, categoryTiles } from "../components.js";
@@ -45,7 +46,8 @@ export default async function render(root) {
       const n = i + 1;
       const cls = draft.step === n ? "active" : draft.step > n ? "done" : "";
       return h("div", { class: `step ${cls}`, "aria-current": draft.step === n ? "step" : null },
-        h("span", { class: "n" }, draft.step > n ? "✓" : n), l);
+        h("span", { class: "bar" }),
+        h("span", { class: "label" }, h("span", { class: "n" }, draft.step > n ? icon("check") : n), l));
     }));
   }
 
@@ -53,7 +55,7 @@ export default async function render(root) {
     save(); stopCamera(); toast("Sakladım. Kaldığınız yerden devam edersiniz."); navigate("/");
   } }, "Sonra devam ederim");
 
-  const backBtn = (to) => h("button", { class: "btn btn-secondary", onclick: () => go(to) }, "← Geri");
+  const backBtn = (to) => h("button", { class: "btn btn-secondary", onclick: () => go(to) }, withIcon("chevron-left", "Geri"));
 
   // ---------------- 1. Fotoğraf ----------------
   async function stepPhoto(forceCamera = false) {
@@ -63,13 +65,10 @@ export default async function render(root) {
       body.append(
         h("div", { class: "camera" }, h("img", { src: last, alt: "Çektiğiniz fotoğraf" })),
         h("p", { class: "center" }, "Işığını biraz düzelttim. Beğendiniz mi?"),
-        h("button", { class: "btn btn-success btn-xl", onclick: () => go(2) },
-          h("span", { class: "ico", "aria-hidden": "true" }, "👍"), "Güzel olmuş"),
-        h("button", { class: "btn btn-secondary", onclick: () => { draft.photos.pop(); save(); stepPhoto(true); } },
-          h("span", { class: "ico", "aria-hidden": "true" }, "🔄"), "Tekrar çek"),
+        h("button", { class: "btn btn-success btn-xl", onclick: () => go(2) }, withIcon("check", "Güzel olmuş")),
+        h("button", { class: "btn btn-secondary", onclick: () => { draft.photos.pop(); save(); stepPhoto(true); } }, withIcon("refresh", "Tekrar çek")),
         draft.photos.length < MAX_PHOTOS
-          ? h("button", { class: "btn btn-secondary", onclick: () => stepPhoto(true) },
-              h("span", { class: "ico", "aria-hidden": "true" }, "➕"), `Bir fotoğraf daha (${draft.photos.length}/${MAX_PHOTOS})`)
+          ? h("button", { class: "btn btn-secondary", onclick: () => stepPhoto(true) }, withIcon("plus", `Bir fotoğraf daha (${draft.photos.length}/${MAX_PHOTOS})`))
           : null,
         draft.photos.length > 1 ? h("div", { class: "thumbs" }, draft.photos.map((p, i) => h("img", { src: p, alt: `Fotoğraf ${i + 1}` }))) : null,
         laterBtn(),
@@ -105,17 +104,14 @@ export default async function render(root) {
           stopCamera();
           addPhoto(await prepareImage(out.toDataURL("image/jpeg", 0.92)));
         } }),
-        h("button", { class: "btn btn-secondary", onclick: () => galleryInput.click() },
-          h("span", { class: "ico", "aria-hidden": "true" }, "🖼️"), "Galeriden seç"),
+        h("button", { class: "btn btn-secondary", onclick: () => galleryInput.click() }, withIcon("image", "Galeriden seç")),
       );
     } catch {
       // Kamera izni yoksa telefonun kendi kamerası açılır.
-      cam.append(h("div", { class: "frame" }), h("div", { class: "hint" }, "Ürününüzü pencere kenarında, gün ışığında çekin"));
+      cam.append(h("div", { class: "placeholder" }, icon("camera")), h("div", { class: "frame" }), h("div", { class: "hint" }, "Ürününüzü pencere kenarında, gün ışığında çekin"));
       body.append(
-        h("button", { class: "btn btn-primary btn-xl", onclick: () => fileInput.click() },
-          h("span", { class: "ico", "aria-hidden": "true" }, "📷"), "Fotoğraf çek"),
-        h("button", { class: "btn btn-secondary", onclick: () => galleryInput.click() },
-          h("span", { class: "ico", "aria-hidden": "true" }, "🖼️"), "Galeriden seç"),
+        h("button", { class: "btn btn-primary btn-xl", onclick: () => fileInput.click() }, withIcon("camera", "Fotoğraf çek")),
+        h("button", { class: "btn btn-secondary", onclick: () => galleryInput.click() }, withIcon("image", "Galeriden seç")),
       );
     }
     if (draft.photos.length) body.append(h("button", { class: "btn btn-ghost", onclick: () => stepPhoto(false) }, "Vazgeç"));
@@ -135,15 +131,14 @@ export default async function render(root) {
       // "Şöyle yazdım: ... Doğru mu?"
       body.append(
         h("div", { class: "card" },
-          h("p", { class: "muted small" }, "Şöyle yazdım:"),
+          h("div", { class: "eyebrow" }, "Şöyle yazdım"),
           h("h2", {}, draft.title),
-          draft.description ? h("p", {}, draft.description) : null,
-          h("span", { class: "chip" }, `${categoryOf(draft.category).icon} ${categoryOf(draft.category).name}`),
+          draft.description ? h("p", { class: "muted" }, draft.description) : null,
+          h("span", { class: "chip chip-brand" }, icon(categoryIconName(draft.category)), categoryOf(draft.category).name),
         ),
-        h("button", { class: "btn btn-success btn-xl", onclick: () => go(3) },
-          h("span", { class: "ico", "aria-hidden": "true" }, "✓"), "Tamam"),
-        h("button", { class: "btn btn-secondary", onclick: () => stepDescribe(true) },
-          h("span", { class: "ico", "aria-hidden": "true" }, "✏️"), "Düzelteyim"),
+        h("p", { class: "center muted" }, "Doğru mu?"),
+        h("button", { class: "btn btn-success btn-xl", onclick: () => go(3) }, withIcon("check", "Tamam")),
+        h("button", { class: "btn btn-secondary", onclick: () => stepDescribe(true) }, withIcon("pencil", "Düzelteyim")),
         backBtn(1), laterBtn(),
       );
       speak(`Şöyle yazdım: ${draft.title}. Doğru mu?`);
@@ -172,10 +167,10 @@ export default async function render(root) {
       return;
     }
 
-    const live = h("p", { class: "card", style: { minHeight: "80px" }, "aria-live": "polite" }, draft.transcript || "…");
+    const live = h("p", { class: "card muted", style: { minHeight: "80px" }, "aria-live": "polite" }, draft.transcript || "Söyledikleriniz burada yazılacak.");
     const status = h("p", { class: "center muted" }, canListen ? "Basılı tutun ve konuşun. Bitince bırakın." : "Bu telefonda sesle yazma yok; klavyeyle yazabilirsiniz.");
     body.append(
-      h("h2", { class: "center" }, "Ürününüzü bana anlatın, ben yazayım."),
+      h("h2", { class: "center" }, "Ürününüzü anlatın, ben yazayım"),
       h("p", { class: "center muted" }, "Bir komşunuza anlatır gibi: \"Bu ev yapımı vişne reçeli, şekeri az, kavanozu 400 gram.\""),
       canListen ? micButton({
         label: "Ürününüzü anlatmak için basılı tutun",
@@ -183,8 +178,7 @@ export default async function render(root) {
         onEnd: (t) => { if (t) understand(t); },
       }) : null,
       status, live,
-      h("button", { class: "btn btn-secondary", onclick: () => typeInstead() },
-        h("span", { class: "ico", "aria-hidden": "true" }, "⌨️"), "Klavyeyle yazacağım"),
+      h("button", { class: "btn btn-secondary", onclick: () => typeInstead() }, withIcon("keyboard", "Klavyeyle yazacağım")),
       backBtn(1), laterBtn(),
     );
     speak("Ürününüzü bana anlatın, ben yazayım.");
@@ -196,7 +190,7 @@ export default async function render(root) {
       h("h2", {}, "Ürününüzü anlatın"),
       ta,
       h("button", { class: "btn btn-primary btn-xl", onclick: () => ta.value.trim() && understand(ta.value.trim()) }, "Devam"),
-      h("button", { class: "btn btn-ghost", onclick: () => stepDescribe() }, "← Sesle anlatayım"),
+      h("button", { class: "btn btn-ghost", onclick: () => stepDescribe() }, withIcon("mic", "Sesle anlatayım")),
     );
     ta.focus();
   }
@@ -204,7 +198,7 @@ export default async function render(root) {
   async function understand(transcript) {
     draft.transcript = transcript;
     save();
-    body.replaceChildren(h("div", { class: "empty" }, h("div", { class: "big" }, "✍️"), h("p", {}, "Yazıyorum…")));
+    body.replaceChildren(statusScreen("sparkles", "Yazıyorum…"));
     const ai = await askAssistant({ mode: "describe", transcript });
     const out = ai?.title ? ai : localDescribe(transcript);
     Object.assign(draft, { title: out.title, description: out.description, category: out.category });
@@ -215,7 +209,8 @@ export default async function render(root) {
   // ---------------- 3. Fiyat ve teslim ----------------
   async function stepPrice() {
     body.replaceChildren();
-    const sugBox = h("div", { class: "card card-warm", "aria-live": "polite" }, "Benzer ürünlere bakıyorum…");
+    const sugText = h("p", {}, "Benzer ürünlere bakıyorum…");
+    const sugBox = h("div", { class: "tip", "aria-live": "polite" }, icon("sparkles"), sugText);
     const out = h("output", { "aria-live": "polite" });
     const stepOf = (p) => (p >= 100 ? 10 : 5);
     const setPrice = (p) => { draft.price = Math.max(0, Math.round(p)); out.textContent = formatPrice(draft.price); save(); };
@@ -224,9 +219,9 @@ export default async function render(root) {
       sugBox,
       h("label", { class: "center" }, "Kaç lira istersiniz?"),
       h("div", { class: "price-picker" },
-        h("button", { "aria-label": "Fiyatı azalt", onclick: () => setPrice((draft.price || 0) - stepOf(draft.price || 0)) }, "−"),
+        h("button", { "aria-label": "Fiyatı azalt", onclick: () => setPrice((draft.price || 0) - stepOf(draft.price || 0)) }, icon("minus")),
         out,
-        h("button", { "aria-label": "Fiyatı artır", onclick: () => setPrice((draft.price || 0) + stepOf(draft.price || 0)) }, "+"),
+        h("button", { "aria-label": "Fiyatı artır", onclick: () => setPrice((draft.price || 0) + stepOf(draft.price || 0)) }, icon("plus")),
       ),
       h("button", { class: "btn btn-ghost", onclick: async () => {
         const v = prompt("Fiyatı yazın (TL):", draft.price ?? "");
@@ -234,31 +229,30 @@ export default async function render(root) {
       } }, "Fiyatı kendim yazayım"),
       h("h3", { class: "center" }, "Alıcıya nasıl ulaştıracaksınız?"),
       deliveryButtons(),
-      h("button", { class: "btn btn-success btn-xl", onclick: publish },
-        h("span", { class: "ico", "aria-hidden": "true" }, "🚀"), "Satışa çıkar"),
+      h("button", { class: "btn btn-success btn-xl", onclick: publish }, withIcon("arrow-right", "Satışa çıkar")),
       backBtn(2), laterBtn(),
     );
 
     const s = draft.suggestion || (await priceSuggestion(draft.category, draft.title));
     if (s) {
       draft.suggestion = s;
-      sugBox.textContent = `Benzer ürünler ${formatPrice(s.low)} ile ${formatPrice(s.high)} arası satılıyor. Karar sizin!`;
+      sugText.textContent = `Benzer ürünler ${formatPrice(s.low)} ile ${formatPrice(s.high)} arası satılıyor. Karar sizin.`;
       if (draft.price == null) setPrice(Math.round((Number(s.low) + Number(s.high)) / 2 / 10) * 10);
     } else {
-      sugBox.textContent = "Mahallenizde benzer ürün henüz yok. Emeğinize uygun bir fiyat seçin.";
+      sugText.textContent = "Mahallenizde benzer ürün henüz yok. Emeğinize uygun bir fiyat seçin.";
     }
     if (draft.price == null) setPrice(100);
     else out.textContent = formatPrice(draft.price);
-    speak(sugBox.textContent);
+    speak(sugText.textContent);
   }
 
   function deliveryButtons() {
-    const opts = [["elden", "🤝", "Elden teslim"], ["kargo", "📦", "Kargo"], ["ikisi", "🔁", "İkisi de"]];
+    const opts = [["elden", "users", "Elden teslim"], ["kargo", "package", "Kargo"], ["ikisi", "repeat", "İkisi de"]];
     const wrap = h("div", { class: "stack", role: "radiogroup", "aria-label": "Teslim şekli" });
     const draw = () => wrap.replaceChildren(...opts.map(([v, ico, label]) => h("button", {
       class: "btn btn-secondary btn-choice", role: "radio", "aria-checked": String(draft.delivery === v), "aria-pressed": String(draft.delivery === v),
       onclick: () => { draft.delivery = v; save(); draw(); },
-    }, h("span", { class: "ico", "aria-hidden": "true" }, ico), label)));
+    }, withIcon(ico, label))));
     draw();
     return wrap;
   }
@@ -277,7 +271,7 @@ export default async function render(root) {
       if (!(await pickLocation())) return;
     }
 
-    body.replaceChildren(h("div", { class: "empty" }, h("div", { class: "big" }, "⏳"), h("p", {}, "Vitrine koyuyorum…")));
+    body.replaceChildren(statusScreen("refresh", "Vitrine koyuyorum…", { spin: true }));
     try {
       const product = await publishProduct(draft);
       const seconds = Math.round((Date.now() - draft.startedAt) / 1000);
@@ -299,7 +293,7 @@ export default async function render(root) {
     LS.set("published_before", true);
     body.replaceChildren(
       h("div", { class: "celebrate" },
-        h("div", { class: "big", "aria-hidden": "true" }, "🎉"),
+        iconCircle("check", "ok"),
         h("h1", {}, first ? "Tebrikler! İlk ürününüz vitrinde." : "Tebrikler! Ürününüz vitrinde."),
         h("p", { class: "muted" }, "Mahallenizdeki komşularınız artık görebilir."),
       ),

@@ -1,11 +1,12 @@
 // Ekranlar arasında paylaşılan bileşenler.
-import { h, formatPrice, formatDistance, toast, sheet } from "./ui.js";
-import { photoUrl, categoryOf, getLocations, DELIVERY_LABEL } from "./api.js";
+import { h, formatPrice, formatDistance, toast, sheet, icon, withIcon } from "./ui.js";
+import { categoryIconName } from "./icons.js";
+import { photoUrl, getLocations, DELIVERY_LABEL } from "./api.js";
 import { state, saveLocation } from "./store.js";
 
 export function pageTitle(text, { back } = {}) {
   return h("div", { class: "page-title" },
-    back ? h("button", { class: "back-btn", "aria-label": "Geri", onclick: () => (typeof back === "function" ? back() : history.back()) }, "←") : null,
+    back ? h("button", { class: "back-btn", "aria-label": "Geri", onclick: () => (typeof back === "function" ? back() : history.back()) }, icon("chevron-left")) : null,
     h("h1", {}, text),
   );
 }
@@ -14,7 +15,7 @@ export function productPhoto(product, cls = "ph") {
   const url = photoUrl(product.photos?.[0]);
   return url
     ? h("img", { class: cls, src: url, alt: product.title, loading: "lazy" })
-    : h("div", { class: cls, "aria-hidden": "true" }, categoryOf(product.category).icon);
+    : h("div", { class: cls, "aria-hidden": "true" }, icon(categoryIconName(product.category)));
 }
 
 export function productCard(p) {
@@ -24,8 +25,9 @@ export function productCard(p) {
       h("div", { class: "title" }, p.title),
       h("div", { class: "price" }, formatPrice(p.price)),
       h("div", { class: "meta" },
-        p.distance_km != null ? `📍 ${formatDistance(p.distance_km)}` : p.neighborhood ? `📍 ${p.neighborhood}` : "",
-        p.delivery ? ` · ${DELIVERY_LABEL[p.delivery]}` : "",
+        p.distance_km != null || p.neighborhood ? icon("map-pin") : null,
+        p.distance_km != null ? formatDistance(p.distance_km) : p.neighborhood || "",
+        p.delivery ? h("span", {}, `· ${DELIVERY_LABEL[p.delivery]}`) : null,
       ),
     ),
   );
@@ -41,14 +43,14 @@ export function categoryTiles(categories, { selected = null, onSelect, hrefFor }
       if (hrefFor) props.href = hrefFor(c);
       else props.onclick = () => onSelect?.(c);
       return h(hrefFor ? "a" : "button", { ...props, type: hrefFor ? null : "button" },
-        h("span", { class: "tile-ico", "aria-hidden": "true" }, c.icon), h("span", {}, c.name));
+        h("span", { class: "tile-ico", "aria-hidden": "true" }, icon(categoryIconName(c.slug))), h("span", {}, c.name));
     }),
   );
 }
 
 export function badgeChips(badges) {
   if (!badges?.length) return null;
-  return h("div", { class: "badges" }, badges.map((b) => h("span", { class: "chip chip-ok", title: b.description }, `${b.icon} ${b.name}`)));
+  return h("div", { class: "badges" }, badges.map((b) => h("span", { class: "chip chip-ok", title: b.description }, icon("award"), b.name)));
 }
 
 // ---------- Konum: "Nerede olduğunuzu öğrenebilir miyim?" ----------
@@ -66,10 +68,10 @@ export function askLocation() {
   return new Promise((resolve) => {
     const close = sheet("Nerede olduğunuzu öğrenebilir miyim?", (closeSheet) => h("div", { class: "stack" },
       h("p", { class: "muted" }, "Size en yakın ürünleri göstermek için. Ev adresiniz kimseye görünmez; yalnızca mahalleniz görünür."),
-      h("button", { class: "btn btn-success btn-xl", onclick: () => { closeSheet(); useGps().then(resolve); } },
-        h("span", { class: "ico", "aria-hidden": "true" }, "📍"), "Evet"),
+      h("button", { class: "btn btn-primary btn-xl", onclick: () => { closeSheet(); useGps().then(resolve); } },
+        withIcon("map-pin", "Evet, konumumu kullan")),
       h("button", { class: "btn btn-secondary btn-xl", onclick: () => { closeSheet(); pickLocation().then(resolve); } },
-        h("span", { class: "ico", "aria-hidden": "true" }, "📋"), "Kendim seçeceğim"),
+        withIcon("list", "Kendim seçeceğim")),
     ));
     void close;
   });
@@ -112,7 +114,7 @@ export function pickLocation() {
       } else if (!district) {
         body.append(h("p", {}, `${city} — ilçenizi seçin:`),
           ...uniq(all.filter((l) => l.city === city).map((l) => l.district)).map((d) => h("button", { class: "btn btn-secondary", onclick: () => { district = d; step(); } }, d)),
-          h("button", { class: "btn btn-ghost", onclick: () => { city = null; step(); } }, "← Başka il"));
+          h("button", { class: "btn btn-ghost", onclick: () => { city = null; step(); } }, withIcon("chevron-left", "Başka il")));
       } else {
         body.append(h("p", {}, `${district} — mahallenizi seçin:`),
           ...all.filter((l) => l.city === city && l.district === district).map((l) => h("button", {
@@ -124,7 +126,7 @@ export function pickLocation() {
               resolve(loc);
             },
           }, l.neighborhood)),
-          h("button", { class: "btn btn-ghost", onclick: () => { district = null; step(); } }, "← Başka ilçe"));
+          h("button", { class: "btn btn-ghost", onclick: () => { district = null; step(); } }, withIcon("chevron-left", "Başka ilçe")));
       }
     };
     step();
