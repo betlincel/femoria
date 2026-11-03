@@ -5,10 +5,13 @@
 //       -> { reply, buttons, highlight, search }
 //   { mode: "describe",   transcript }                -> { title, description, category }
 //   { mode: "transcribe", path }  (voice-messages kovası) -> { text }
+//   { mode: "speak",      text }  -> MP3 ses (application/octet-stream) — Ayşe Abla'nın kadın sesi
 //
 // Gizli anahtarlar (supabase secrets set ...):
 //   OPENAI_API_KEY   — zorunlu
 //   OPENAI_MODEL     — isteğe bağlı (varsayılan: gpt-4o-mini)
+//   OPENAI_TTS_MODEL — isteğe bağlı (varsayılan: gpt-4o-mini-tts)
+//   OPENAI_TTS_VOICE — isteğe bağlı (varsayılan: coral — sıcak bir kadın sesi; alternatifler: nova, shimmer)
 //
 // OpenAI anahtarı tarayıcıya hiç gitmez; tüm çağrılar buradan geçer.
 
@@ -18,6 +21,14 @@ import { CATEGORY_SLUGS, DESCRIBE_PROMPT, HIGHLIGHTS, systemPrompt } from "../_s
 
 const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
 const OPENAI_MODEL = Deno.env.get("OPENAI_MODEL") ?? "gpt-4o-mini";
+const TTS_MODEL = Deno.env.get("OPENAI_TTS_MODEL") ?? "gpt-4o-mini-tts";
+const TTS_VOICE = Deno.env.get("OPENAI_TTS_VOICE") ?? "coral";
+const TTS_MAX_CHARS = 600; // istemci uzun metinleri cümle cümle böler
+
+// Ayşe Abla'nın ses tonu (yalnız gpt-4o-mini-tts destekler)
+const TTS_INSTRUCTIONS =
+  "Ellili yaşlarda, sıcak, sakin ve şefkatli bir Türk kadın gibi konuş. " +
+  "Yavaş ve net konuş; mahallenin sevilen ablası gibi içten ve güven veren bir tonla. Doğal Türkçe vurgular kullan.";
 const MAX_HISTORY = 12;
 
 type ChatMessage = { role: "user" | "assistant"; content: string };
@@ -99,6 +110,27 @@ async function transcribe(req: Request, body: Record<string, unknown>) {
   return json({ text: String(text ?? "") });
 }
 
+async function speak(body: Record<string, unknown>) {
+  const text = String(body.text ?? "").replace(/\s+/g, " ").trim().slice(0, TTS_MAX_CHARS);
+  if (!text) return json({ error: "text boş" }, 400);
+  const res = await fetch("https://api.openai.com/v1/audio/speech", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${OPENAI_API_KEY}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: TTS_MODEL,
+      voice: TTS_VOICE,
+      input: text,
+      response_format: "mp3",
+      ...(TTS_MODEL.startsWith("gpt-4o") ? { instructions: TTS_INSTRUCTIONS } : { speed: 0.95 }),
+    }),
+  });
+  if (!res.ok) throw new Error(`OpenAI TTS ${res.status}: ${await res.text()}`);
+  // application/octet-stream → supabase-js functions.invoke bunu Blob olarak döndürür
+  return new Response(res.body, {
+    headers: { ...corsHeaders, "Content-Type": "application/octet-stream", "Cache-Control": "private, max-age=86400" },
+  });
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return json({ error: "Yalnız POST" }, 405);
@@ -119,6 +151,8 @@ Deno.serve(async (req) => {
         return await describe(body);
       case "transcribe":
         return await transcribe(req, body);
+      case "speak":
+        return await speak(body);
       default:
         return json({ error: "Bilinmeyen mode" }, 400);
     }

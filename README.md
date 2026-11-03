@@ -110,6 +110,8 @@ supabase secrets set OPENAI_API_KEY=sk-... OPENAI_MODEL=gpt-4o-mini
 supabase functions deploy ayse-abla
 ```
 
+Ayşe Abla'nın sesli okuması da bu fonksiyonla, OpenAI'ın kadın sesiyle (`coral`) yapılır; her cihazda aynı ses duyulur. Sesi değiştirmek için `supabase secrets set OPENAI_TTS_VOICE=nova` (ya da `shimmer`). Fonksiyon güncellendiyse yeniden yayınlayın: `supabase functions deploy ayse-abla`. Sunucu sesi alınamazsa tarayıcının Türkçe sesi kullanılır (kadın sesleri tercih edilir; yalnız erkek sesi varsa ses inceltilir).
+
 Anahtar tanımlı değilse uygulama çalışmaya devam eder: Ayşe Abla kurallı cevaplara, "Sesle Vitrin" de basit anahtar kelime eşleştirmeye geçer.
 
 ### 4. Ön yüzü bağlayın
@@ -190,7 +192,7 @@ Metin `js/kvkk.js` dosyasındadır. Yayına çıkmadan önce:
 
 - `KVKK_CONTACT` alanına başvurular için bir iletişim e-posta adresi yazın.
 - Metni bir hukukçuya kontrol ettirin.
-- Metni her değiştirdiğinizde `KVKK_VERSION`'ı güncelleyin (ör. tarih); giriş yapmış kullanıcılardan yeni metin için yeniden onay istenir.
+- Metni her değiştirdiğinizde `KVKK_VERSION`'ı güncelleyin (ör. tarih); kullanıcının hangi sürümü onayladığı kaydedilir. Metni bir kez onaylayan kullanıcıya yeniden sorulmaz; yalnızca hiç onaylamamış (eski) hesaplara bir kez gösterilir.
 
 ## Yayınlama
 

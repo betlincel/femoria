@@ -21,8 +21,8 @@ export default async function render(root) {
     root.append(h("h1", {}, "Profilim"),
       emptyState("user", "Henüz giriş yapmadınız", "Önce üye olmadan etrafa bakabilirsiniz. Üyelik ancak bir şey satmak ya da almak istediğinizde sorulur.",
         h("div", { class: "stack", style: { maxWidth: "320px", margin: "0 auto" } },
-          h("a", { class: "btn btn-primary", href: "#/giris?next=/profil" }, "Giriş yap"),
-          h("a", { class: "btn btn-secondary", href: "#/giris?mod=kayit&next=/profil" }, "Üye ol"),
+          h("a", { class: "btn btn-primary", href: "#/giris" }, "Giriş yap"),
+          h("a", { class: "btn btn-secondary", href: "#/giris?mod=kayit" }, "Üye ol"),
         )),
       linkList(),
     );
@@ -57,7 +57,6 @@ export default async function render(root) {
     h("div", { class: "profile-head" }, avatar, avatarInput,
       h("div", {},
         h("h1", {}, p.full_name || "Adınız"),
-        h("div", { class: "meta" }, icon("map-pin"), [p.neighborhood, p.district].filter(Boolean).join(", ") || "Mahalle seçilmedi"),
         h("div", { class: "meta" }, icon("calendar"), months ? `Femoria'da ${months} aydır` : "Femoria'ya yeni katıldınız"),
         state.user.email ? h("div", { class: "meta" }, icon("message"), state.user.email, p.email_verified ? h("span", { class: "chip chip-ok" }, "Doğrulandı") : null) : null,
       ),

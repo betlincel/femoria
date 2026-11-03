@@ -1,22 +1,23 @@
 // Kişisel Verilerin Korunması Kanunu (KVKK) aydınlatma metni — tek kaynak.
-// Metinde değişiklik yaptığınızda KVKK_VERSION'ı artırın: giriş yapmış herkesten
-// yeni metin için yeniden onay istenir (bkz. js/consent.js).
+// Metinde değişiklik yaptığınızda KVKK_VERSION'ı güncelleyin: kullanıcının hangi sürümü
+// onayladığı kayıt altına alınır. Bir kez onaylayan kullanıcıya yeniden sorulmaz (bkz. js/consent.js);
+// güncel metin her zaman "Aydınlatma metni" sayfasındadır.
 //
 // ⚠️ Yayına çıkmadan önce bir hukukçuya kontrol ettirin ve iletişim adresini doldurun.
 
-export const KVKK_VERSION = "2026-11-08";
+export const KVKK_VERSION = "2026-11-10";
 
 // Başvuru ve sorular için iletişim adresi (yayından önce doldurun).
 export const KVKK_CONTACT = "[iletişim e-posta adresi]";
 
 /** Konum izni ekranında gösterilen kısa özet (aydınlatma metninin "Konum" bölümüyle aynı içerik). */
 export const LOCATION_SUMMARY = [
-  ["Neden?", "Size en yakın ürünleri göstermek ve ürünlerinizi mahallenizdeki alıcılara göstermek için."],
+  ["Neden?", "Alışverişte size en yakın ürünleri göstermek; satarken ürününüzü yakınındaki alıcılara göstermek için."],
   ["Nasıl?", "Konumunuz telefonunuzun ya da bilgisayarınızın konum özelliğiyle, yalnızca siz izin verince alınır."],
-  ["Ne saklanır?", "Tam konumunuz ve adresiniz saklanmaz. Konum yaklaşık 500 metre rastgele kaydırılarak saklanır; başkaları yalnızca mahallenizin adını görür."],
+  ["Ne saklanır?", "Konumunuz profilinize kaydedilmez. Alışveriş konumunuz yalnızca bu cihazda kalır. Bir ürün satarken seçtiğiniz konum o ürünle birlikte, yaklaşık 500 metre rastgele kaydırılarak saklanır; başkaları yalnızca mahallenin adını görür."],
   ["Kimle paylaşılır?", "Mahalle adını bulmak için yaklaşık (yuvarlanmış) konum OpenStreetMap'in adres servisine gönderilir. Başka kimseyle paylaşılmaz."],
   ["Paylaşmak istemezsem?", "Femoria'yı yine kullanabilirsiniz: ilinizi, ilçenizi ve mahallenizi listeden seçersiniz."],
-  ["Geri alabilir miyim?", "Evet. Ayarlar → Konum bölümünden konum izninizi istediğiniz an geri alabilirsiniz."],
+  ["Geri alabilir miyim?", "Evet. Ayarlar → Alışveriş konumu bölümünden konum izninizi istediğiniz an geri alabilirsiniz."],
 ];
 
 export const KVKK_SECTIONS = [
@@ -32,7 +33,7 @@ export const KVKK_SECTIONS = [
     list: [
       "Hesap bilgileri: adınız, e-posta adresiniz ve şifreniz. Şifreniz şifrelenmiş olarak saklanır; biz de göremeyiz.",
       "Cinsiyet: yalnızca size nasıl hitap edeceğimizi (Hanım / Bey) belirlemek için. Başkalarına gösterilmez. \"Belirtmek istemiyorum\" seçebilirsiniz.",
-      "Konum: yaklaşık konumunuz ve mahalle, ilçe, il adı (ayrıntısı aşağıda).",
+      "Konum: sattığınız ürünlerin yaklaşık konumu ve mahalle, ilçe, il adı; alışveriş konumunuz yalnızca cihazınızda (ayrıntısı aşağıda).",
       "Ürün bilgileri: ürün fotoğrafları, ad, açıklama, fiyat ve sesle anlattığınızın yazıya dökülmüş hali.",
       "Mesajlar: alıcı ve satıcıların birbirine yazdığı mesajlar, sesli mesajlar ve sipariş kartları.",
       "Güvenlik bilgileri: engellediğiniz kişiler ve şikayetler.",
@@ -43,12 +44,12 @@ export const KVKK_SECTIONS = [
     id: "konum",
     title: "Konum bilginiz",
     body: [
-      "Neden: Size en yakın ürünleri \"en yakından uzağa\" sıralamak ve ürünlerinizi mahallenizdeki alıcılara göstermek için.",
+      "Neden: Alışverişte size en yakın ürünleri \"en yakından uzağa\" sıralamak; satarken ürününüzü yakınındaki alıcılara göstermek için.",
       "Nasıl alınır: Konumunuz yalnızca siz \"Konumumu paylaş\" düğmesine bastıktan ve tarayıcınızın sorduğu izne \"İzin ver\" dedikten sonra, cihazınızın konum özelliğiyle alınır. İzin vermezseniz Femoria'yı yine kullanabilirsiniz; ilinizi, ilçenizi ve mahallenizi listeden seçersiniz.",
-      "Ne saklanır: Tam konumunuz ve ev adresiniz hiçbir zaman saklanmaz. Konum, kaydedilirken yaklaşık 500 metre rastgele kaydırılır. Ürünlerinizin konumu ayrıca bir kez daha kaydırılır. Başka kullanıcılar haritada nokta değil, mahalle büyüklüğünde bir daire ve mahallenizin adını görür.",
+      "Ne saklanır: Konumunuz profilinize kaydedilmez. Alışveriş için kullandığınız konum yalnızca cihazınızda (tarayıcınızda) kalır ve bize gönderilmez. Bir ürünü satışa çıkarırken o ürün için seçtiğiniz konum ürünle birlikte saklanır; kaydedilirken yaklaşık 500 metre rastgele kaydırılır. Tam konumunuz ve ev adresiniz hiçbir zaman saklanmaz. Başka kullanıcılar haritada nokta değil, mahalle büyüklüğünde bir daire ve mahallenin adını görür. Ürünü vitrinden kaldırdığınızda konumu da ürünle birlikte silinir.",
       "Kime gönderilir: Mahallenizin adını bulmak için konumunuz yaklaşık 100 metreye yuvarlanarak OpenStreetMap Vakfı'nın adres servisine (Nominatim) gönderilir. Listeden seçtiğinizde ise mahallenizin konumunu bulmak için yalnızca seçtiğiniz il, ilçe ve mahalle adı bu servise gönderilir. Bu servis yurt dışındadır.",
       "Hukuki sebep: Konumunuz açık rızanıza dayanarak işlenir (KVKK m. 5/1).",
-      "Rızanızı geri alma: Ayarlar → Konum → \"Konum iznimi geri al\" ile kayıtlı konumunuz silinir. Tarayıcınızın konum iznini de tarayıcı ayarlarından kapatabilirsiniz.",
+      "Rızanızı geri alma: Ayarlar → Alışveriş konumu → \"Konum iznimi geri al\" ile cihazınızdaki konum silinir. Satıştaki ürünlerinizin konumu, ürünü vitrinden kaldırdığınızda silinir. Tarayıcınızın konum iznini de tarayıcı ayarlarından kapatabilirsiniz.",
     ],
   },
   {
@@ -65,9 +66,9 @@ export const KVKK_SECTIONS = [
   {
     title: "Bilgileriniz kimlerle paylaşılır?",
     list: [
-      "Diğer kullanıcılar: adınız, mahalleniz, ürünleriniz ve doğrulama rozetleriniz. E-postanız ve cinsiyetiniz gösterilmez.",
+      "Diğer kullanıcılar: adınız, ürünleriniz ve ürünlerinizin mahallesi, doğrulama rozetleriniz. E-postanız ve cinsiyetiniz gösterilmez.",
       "Supabase (veritabanı ve dosya barındırma): bilgileriniz Avrupa Birliği'ndeki (Frankfurt) sunucularda saklanır.",
-      "OpenAI (Ayşe Abla): Ayşe Abla'ya yazdıklarınız ve sesle anlattığınız ürün tarifi cevap üretmek için gönderilir. E-posta adresiniz ve konumunuz gönderilmez.",
+      "OpenAI (Ayşe Abla): Ayşe Abla'ya yazdıklarınız ve sesle anlattığınız ürün tarifi cevap üretmek için gönderilir. Sesli okumayı kullandığınızda okunacak metin (Ayşe Abla'nın cevapları, rehber, bu metin) ses üretmek için gönderilir. E-posta adresiniz ve konumunuz gönderilmez.",
       "OpenStreetMap Vakfı (Nominatim): yalnızca yuvarlanmış konum (mahalle adını bulmak için) ya da listeden seçtiğiniz il, ilçe, mahalle adı (konumunu bulmak için).",
       "Yurt dışına aktarım: Yukarıdaki hizmet sağlayıcıların sunucuları Türkiye dışındadır; aktarım KVKK m. 9 kapsamında yapılır.",
       "Kanunen yetkili kurumlar: yalnızca yasal bir talep olduğunda.",

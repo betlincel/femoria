@@ -3,6 +3,18 @@ import { icon } from "./icons.js";
 
 export { icon };
 
+// Koşullu içerik (ör. `koşul ? öğe : null`) append / replaceChildren ile eklendiğinde
+// tarayıcı null'ı "null" yazısı olarak basıyor. Bu yöntemler artık null / undefined / false
+// değerleri atlar; böylece ekranda yanlışlıkla "null" görünmez.
+for (const proto of [Element.prototype, DocumentFragment.prototype]) {
+  for (const name of ["append", "prepend", "replaceChildren"]) {
+    const original = proto[name];
+    proto[name] = function (...nodes) {
+      return original.apply(this, nodes.filter((n) => n != null && n !== false));
+    };
+  }
+}
+
 /** h("button", { class: "btn", onclick }, "Metin") */
 export function h(tag, props = {}, ...children) {
   const el = document.createElement(tag);
@@ -150,27 +162,117 @@ export function emptyState(iconName, title, text, action) {
   );
 }
 
-// ---------- Ses: sesli okuma (TTS) ----------
+// ---------- Ses: sesli okuma (TTS) — Ayşe Abla'nın kadın sesi ----------
 // İsteğe bağlıdır ve varsayılan olarak kapalıdır. Kapalıyken yalnızca kullanıcı
 // "Dinle" düğmesine bastığında okunur ({ force: true }).
+//
+// 1) Asıl ses: ayse-abla Edge Function → OpenAI ile üretilen sabit kadın sesi (her cihazda aynı).
+// 2) Yedek: tarayıcının Türkçe sesi; bilinen kadın sesleri seçilir, erkek sesleri atlanır,
+//    yalnız erkek sesi varsa ses inceltilir.
 let ttsEnabled = false;
 export const setTTS = (on) => (ttsEnabled = !!on);
 export const ttsOn = () => ttsEnabled;
-export const canSpeak = "speechSynthesis" in window;
+const hasBrowserTTS = "speechSynthesis" in window;
+export const canSpeak = hasBrowserTTS || typeof Audio !== "undefined";
+
+const FEMALE_TR = /(emel|filiz|yelda|seda|zeynep|elif|ay[sş]e|female|kad[ıi]n|google t[uü]rk[cç]e)/i;
+const MALE_TR = /(tolga|ahmet|cem|mehmet|male\b|erkek)/i;
+
+let speakSeq = 0;          // yeni okuma eskisini iptal eder
+let currentAudio = null;
+let cloudVoiceDown = false; // sunucu sesi bu oturumda çalışmadıysa tekrar denenmez
+const audioCache = new Map(); // metin → blob URL (en fazla 30)
 
 export function stopSpeaking() {
-  if (canSpeak) window.speechSynthesis.cancel();
+  speakSeq++;
+  if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+  if (hasBrowserTTS) window.speechSynthesis.cancel();
 }
 
 export function speak(text, { force = false } = {}) {
   if ((!ttsEnabled && !force) || !canSpeak || !text) return;
-  window.speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(String(text).replace(/[\u{1F300}-\u{1FAFF}]/gu, ""));
-  u.lang = "tr-TR";
-  u.rate = 0.92;
-  const voice = window.speechSynthesis.getVoices().find((v) => v.lang?.toLowerCase().startsWith("tr"));
-  if (voice) u.voice = voice;
-  window.speechSynthesis.speak(u);
+  stopSpeaking();
+  const seq = speakSeq;
+  const clean = String(text).replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, "").replace(/\s+/g, " ").trim();
+  if (!clean) return;
+  const parts = splitForSpeech(clean);
+  playCloud(parts, seq).catch((e) => {
+    // Sunucu sesi alınamazsa tarayıcı sesiyle, kalınan yerden devam et
+    if (seq === speakSeq) browserSpeak(parts.slice(e?.from || 0).join(" "));
+  });
+}
+
+/** Uzun metni ~400 karakterlik, cümle sınırında parçalara böler. */
+export function splitForSpeech(text, max = 400) {
+  const sentences = text.match(/[^.!?…]+[.!?…]*\s*/g) || [text];
+  const parts = [];
+  let cur = "";
+  for (const s of sentences) {
+    if ((cur + s).length > max && cur) { parts.push(cur.trim()); cur = ""; }
+    if (s.length > max) { for (let i = 0; i < s.length; i += max) parts.push(s.slice(i, i + max).trim()); continue; }
+    cur += s;
+  }
+  if (cur.trim()) parts.push(cur.trim());
+  return parts.filter(Boolean);
+}
+
+async function cloudAudioUrl(part) {
+  if (audioCache.has(part)) return audioCache.get(part);
+  const { supabase, isConfigured } = await import("./supabase.js");
+  if (!isConfigured || cloudVoiceDown) throw new Error("sunucu sesi yok");
+  const { data, error } = await supabase.functions.invoke("ayse-abla", { body: { mode: "speak", text: part } });
+  if (error || !(data instanceof Blob) || !data.size) { cloudVoiceDown = true; throw new Error("sunucu sesi alınamadı"); }
+  const url = URL.createObjectURL(new Blob([data], { type: "audio/mpeg" }));
+  audioCache.set(part, url);
+  if (audioCache.size > 30) { const [k, v] = audioCache.entries().next().value; URL.revokeObjectURL(v); audioCache.delete(k); }
+  return url;
+}
+
+/** Parçaları sırayla çalar; bir sonrakini çalarken hazırlar. */
+async function playCloud(parts, seq) {
+  let next = cloudAudioUrl(parts[0]);
+  for (let i = 0; i < parts.length; i++) {
+    let url;
+    try { url = await next; } catch (e) { throw Object.assign(e, { from: i }); }
+    if (!url) throw Object.assign(new Error("parça alınamadı"), { from: i });
+    if (seq !== speakSeq) return;
+    if (i + 1 < parts.length) next = cloudAudioUrl(parts[i + 1]).catch(() => null);
+    await new Promise((resolve, reject) => {
+      const a = new Audio(url);
+      currentAudio = a;
+      a.onended = resolve;
+      a.onerror = () => reject(Object.assign(new Error("çalınamadı"), { from: i }));
+      a.play().catch((e) => reject(Object.assign(e, { from: i })));
+    });
+    if (seq !== speakSeq) return;
+  }
+}
+
+function pickBrowserVoice() {
+  const voices = window.speechSynthesis.getVoices().filter((v) => v.lang?.toLowerCase().startsWith("tr"));
+  return voices.find((v) => FEMALE_TR.test(v.name))
+    || voices.find((v) => !MALE_TR.test(v.name))
+    || voices[0] || null;
+}
+
+function browserSpeak(text) {
+  if (!hasBrowserTTS) return;
+  const run = () => {
+    const voice = pickBrowserVoice();
+    // Yalnız erkek sesi varsa sesi incelt (kadın sesine yaklaştır)
+    const onlyMale = voice && MALE_TR.test(voice.name) && !FEMALE_TR.test(voice.name);
+    for (const part of splitForSpeech(text, 220)) {
+      const u = new SpeechSynthesisUtterance(part);
+      u.lang = "tr-TR";
+      u.rate = 0.92;
+      u.pitch = onlyMale ? 1.45 : 1.1;
+      if (voice) u.voice = voice;
+      window.speechSynthesis.speak(u);
+    }
+  };
+  // Sesler bazı tarayıcılarda geç yüklenir
+  if (window.speechSynthesis.getVoices().length) run();
+  else window.speechSynthesis.addEventListener("voiceschanged", run, { once: true });
 }
 
 // ---------- Ses: konuşmayı yazıya çevirme (tarayıcı içi) ----------

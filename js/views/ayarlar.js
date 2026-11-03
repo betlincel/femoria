@@ -27,7 +27,7 @@ export default async function render(root, { query }) {
   const s = state.settings;
   const p = state.profile || {};
   const loggedIn = !!state.user;
-  const needLogin = () => { toast("Bu ayar için giriş yapmanız gerekiyor."); navigate("/giris?next=/ayarlar"); };
+  const needLogin = () => { toast("Bu ayar için giriş yapmanız gerekiyor."); navigate("/giris"); };
   const guarded = (fn) => (v) => (loggedIn ? fn(v) : needLogin());
 
   const fontButtons = h("div", { class: "btn-group", role: "group", "aria-label": "Yazı büyüklüğü" });
@@ -53,7 +53,7 @@ export default async function render(root, { query }) {
       loggedIn
         ? h("button", { class: "list-item", onclick: async () => { await signOut(); toast("Çıkış yaptınız."); navigate("/"); } },
             icon("logout"), h("div", { class: "body" }, h("strong", {}, "Çıkış yap")))
-        : h("a", { class: "list-item", href: "#/giris?next=/ayarlar" },
+        : h("a", { class: "list-item", href: "#/giris" },
             icon("user"), h("div", { class: "body" }, h("strong", {}, "Giriş yap / Üye ol")), icon("chevron-right")),
     ),
 
@@ -115,9 +115,10 @@ function locationBlock(loc) {
     h("div", { class: "row", style: { gap: "14px", alignItems: "flex-start" } },
       icon("map-pin"),
       h("div", { style: { flex: 1 } },
-        h("strong", {}, "Konum"),
+        h("strong", {}, "Alışveriş konumu"),
         h("div", { class: "small muted" }, label),
-        h("div", { class: "small muted" }, consent ? "Konum izni verdiniz. Tam konumunuz saklanmaz; ~500 m kaydırılır." : "Konum izni vermediniz."),
+        h("div", { class: "small muted" }, "Yakınınızdaki ürünleri sıralamak için kullanılır ve yalnızca bu cihazda saklanır; profilinize kaydedilmez. Sattığınız ürünlerin konumunu her ürün için ayrıca seçersiniz."),
+        consent ? h("div", { class: "small muted" }, "Konum izni verdiniz.") : null,
       ),
     ),
     h("div", { class: "btn-group" },
@@ -125,7 +126,7 @@ function locationBlock(loc) {
       h("button", { class: "btn btn-secondary", onclick: async () => { if (await pickLocation()) refresh(); } }, ...withIcon("list", "Listeden seç")),
     ),
     consent || loc ? h("button", { class: "btn btn-danger", onclick: async () => {
-      if (!(await ask("Konum izninizi geri alalım mı?", "Kayıtlı konumunuz bu cihazdan ve hesabınızdan silinir. Yakınınızdaki ürünleri görmek için yeniden izin vermeniz gerekir. Tarayıcınızın konum iznini de tarayıcı ayarlarından kapatabilirsiniz.", "Evet, geri al"))) return;
+      if (!(await ask("Konum izninizi geri alalım mı?", "Bu cihazdaki konumunuz silinir. Yakınınızdaki ürünleri görmek için yeniden izin vermeniz gerekir. Satıştaki ürünlerinizin konumu ürünle birlikte kalır; ürünü vitrinden kaldırınca silinir. Tarayıcınızın konum iznini de tarayıcı ayarlarından kapatabilirsiniz.", "Evet, geri al"))) return;
       try { await withdrawLocation(); toast("Konum izniniz geri alındı ve konumunuz silindi."); refresh(); }
       catch { toast("Silinemedi, tekrar deneyin."); }
     } }, ...withIcon("x", "Konum iznimi geri al")) : null,

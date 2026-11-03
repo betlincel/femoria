@@ -13,10 +13,10 @@ insert into public.categories (slug, name, icon, sort) values
 on conflict (slug) do update set name = excluded.name, icon = excluded.icon, sort = excluded.sort;
 
 insert into public.badges (slug, name, description, icon) values
-  ('mahallenin-eli',    'Mahallenin Eli',    'Aynı mahalleden 5 farklı alıcıya satış', '🏘️'),
+  ('mahallenin-eli',    'Mahallenin Eli',    '5 farklı alıcıya elden teslim', '🏘️'),
   ('sozunde-durur',     'Sözünde Durur',     '10 siparişin hepsi söz verilen günde teslim', '⏰'),
   ('yol-gosteren',      'Yol Gösteren',      'Bir yeni satıcının ilk satışına yardım', '🧭'),
-  ('dogrulanmis-komsu', 'Doğrulanmış Komşu', 'Telefon + kimlik doğrulaması tamamlandı', '✅'),
+  ('dogrulanmis-komsu', 'Doğrulanmış Komşu', 'E-posta + kimlik doğrulaması tamamlandı', '✅'),
   ('kooperatif-uyesi',  'Kooperatif Üyesi',  'Kayıtlı bir kadın kooperatifine bağlı satıcı', '🤝')
 on conflict (slug) do update set name = excluded.name, description = excluded.description, icon = excluded.icon;
 
