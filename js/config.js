@@ -7,5 +7,7 @@
 //   SUPABASE_URL      = "http://127.0.0.1:54321"
 //   SUPABASE_ANON_KEY = `supabase status` çıktısındaki "anon key"
 
-export const SUPABASE_URL = "https://YOUR-PROJECT-REF.supabase.co";
-export const SUPABASE_ANON_KEY = "YOUR-ANON-KEY";
+// Publishable key (sb_publishable_...) eski "anon" anahtarının yerini alır.
+// Secret key (sb_secret_...) ASLA buraya yazılmaz.
+export const SUPABASE_URL = "https://hxikkkdimeykmwzhrvjt.supabase.co";
+export const SUPABASE_ANON_KEY = "sb_publishable_KdeZVXQMZAmgrOrOIvzpKA_4aPnrdaq";
