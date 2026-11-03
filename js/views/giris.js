@@ -10,17 +10,39 @@ import { track } from "../api.js";
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 export const MIN_PASSWORD = 8;
 
-/** Supabase hata mesajlarını sade Türkçeye çevirir. */
+/** Supabase hata mesajlarını sade Türkçeye çevirir (önce hata koduna, sonra mesaja bakar). */
 export function authError(error) {
+  const code = String(error?.code || "");
   const m = String(error?.message || "").toLowerCase();
-  if (m.includes("invalid login credentials")) return "E-posta adresi ya da şifre hatalı.";
-  if (m.includes("email not confirmed")) return "E-posta adresinizi henüz onaylamadınız. Gelen kutunuzdaki bağlantıya tıklayın.";
-  if (m.includes("already registered") || m.includes("already been registered")) return "Bu e-posta ile zaten bir hesap var. \"Giriş yap\" sekmesini kullanın.";
-  if (m.includes("password") && (m.includes("at least") || m.includes("short") || m.includes("weak"))) return `Şifre en az ${MIN_PASSWORD} karakter olmalı.`;
-  if (m.includes("rate limit") || m.includes("security purposes") || m.includes("too many")) return "Çok fazla deneme oldu. Bir dakika bekleyip tekrar deneyin.";
-  if (m.includes("invalid") && m.includes("email")) return "E-posta adresi geçersiz görünüyor.";
-  if (m.includes("same") && m.includes("password")) return "Yeni şifre eskisinden farklı olmalı.";
+  if (code === "invalid_credentials" || m.includes("invalid login credentials")) return "E-posta adresi ya da şifre hatalı.";
+  if (code === "email_not_confirmed" || m.includes("email not confirmed")) return "E-posta adresinizi henüz onaylamadınız. Gelen kutunuzdaki bağlantıya tıklayın.";
+  if (["user_already_exists", "email_exists"].includes(code) || m.includes("already registered") || m.includes("already been registered")) return "Bu e-posta ile zaten bir hesap var. \"Giriş yap\" sekmesini kullanın.";
+  if (code === "weak_password" || (m.includes("password") && (m.includes("at least") || m.includes("short") || m.includes("weak") || m.includes("should contain")))) return `Şifre çok zayıf. En az ${MIN_PASSWORD} karakter olmalı; harf ve rakam karıştırın.`;
+  if (code === "same_password" || (m.includes("same") && m.includes("password"))) return "Yeni şifre eskisinden farklı olmalı.";
+  if (code === "over_email_send_rate_limit" || m.includes("email rate limit")) return "Kısa sürede çok fazla e-posta gönderildi. Lütfen bir süre bekleyip tekrar deneyin.";
+  if (code === "over_request_rate_limit" || m.includes("rate limit") || m.includes("security purposes") || m.includes("too many")) return "Çok fazla deneme oldu. Bir dakika bekleyip tekrar deneyin.";
+  // Supabase'in hazır e-posta servisi yalnızca proje ekibindeki adreslere gönderir
+  if (code === "email_address_not_authorized" || m.includes("not authorized")) return "Bu e-posta adresine şu an onay e-postası gönderilemiyor. Sitenin e-posta ayarı henüz tamamlanmamış; lütfen yöneticiye haber verin.";
+  if (m.includes("error sending") || m.includes("sending confirmation") || m.includes("sending recovery") || m.includes("smtp")) return "Onay e-postası gönderilemedi. Sitenin e-posta ayarlarında bir sorun var; lütfen yöneticiye haber verin.";
+  if (code === "signup_disabled" || m.includes("signups not allowed") || m.includes("signup is disabled")) return "Şu an yeni üyelik alınmıyor.";
+  if (code === "email_provider_disabled" || m.includes("email logins are disabled") || m.includes("provider is disabled")) return "E-posta ile giriş şu an kapalı.";
+  if (m.includes("database error")) return "Hesabınız kaydedilirken bir sorun oldu. Lütfen yöneticiye haber verin.";
+  if (code === "email_address_invalid" || (m.includes("invalid") && m.includes("email"))) return "E-posta adresi geçersiz görünüyor.";
+  if (m.includes("failed to fetch") || m.includes("network")) return "İnternet bağlantısı kurulamadı. Bağlantınızı kontrol edip tekrar deneyin.";
   return "Bir sorun oldu. Lütfen biraz sonra tekrar deneyin.";
+}
+
+/** Formun altında Türkçe açıklama + teknik ayrıntı gösterir (sorunu bulmayı kolaylaştırır). */
+function errorBox(error) {
+  console.error("Supabase Auth hatası:", error);
+  const detail = [error?.code, error?.status, error?.message].filter(Boolean).join(" · ");
+  return h("div", { class: "notice", role: "alert" },
+    icon("alert", 20),
+    h("div", {},
+      h("div", {}, authError(error)),
+      detail ? h("div", { class: "small", style: { marginTop: "4px", opacity: ".8", wordBreak: "break-word" } }, `Teknik ayrıntı: ${detail}`) : null,
+    ),
+  );
 }
 
 /** Göster/gizle düğmeli şifre alanı */
@@ -97,6 +119,7 @@ export default async function render(root, { query }) {
     const email = h("input", { class: "input", id: "email", type: "email", inputmode: "email", autocomplete: "email", required: true, value: prefillEmail, placeholder: "ornek@eposta.com" });
     const pw = passwordField("password", "Şifre");
     const btn = h("button", { class: "btn btn-primary btn-xl", type: "submit" }, "Giriş yap");
+    const errSlot = h("div");
     body.replaceChildren(
       h("form", { class: "stack", onsubmit: async (e) => {
         e.preventDefault();
@@ -104,8 +127,9 @@ export default async function render(root, { query }) {
         btn.disabled = true;
         const { error } = await supabase.auth.signInWithPassword({ email: email.value.trim(), password: pw.input.value });
         btn.disabled = false;
+        errSlot.replaceChildren();
         if (error) {
-          toast(authError(error));
+          errSlot.append(errorBox(error));
           if (String(error.message).toLowerCase().includes("not confirmed")) checkInbox(email.value.trim());
           return;
         }
@@ -115,6 +139,7 @@ export default async function render(root, { query }) {
       } },
         h("div", {}, h("label", { for: "email" }, "E-posta adresiniz"), email),
         pw.el,
+        errSlot,
         btn,
       ),
       h("button", { class: "btn btn-ghost", onclick: () => forgotForm(email.value.trim()) }, "Şifremi unuttum"),
@@ -132,6 +157,7 @@ export default async function render(root, { query }) {
     const gender = genderField();
     const kvkk = h("input", { type: "checkbox", id: "kvkk", required: true, style: { width: "22px", height: "22px", flex: "0 0 auto", marginTop: "2px" } });
     const btn = h("button", { class: "btn btn-primary btn-xl", type: "submit" }, "Üye ol");
+    const errSlot = h("div");
     body.replaceChildren(
       h("form", { class: "stack", onsubmit: async (e) => {
         e.preventDefault();
@@ -147,7 +173,8 @@ export default async function render(root, { query }) {
           options: { data: { full_name: name.value.trim(), gender: gender.value() }, emailRedirectTo: authRedirectUrl() },
         });
         btn.disabled = false;
-        if (error) return toast(authError(error));
+        errSlot.replaceChildren();
+        if (error) { errSlot.append(errorBox(error)); errSlot.scrollIntoView({ behavior: "smooth", block: "center" }); return; }
         // Supabase, var olan bir e-posta için de hata vermeden döner (identities boş gelir).
         if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
           toast("Bu e-posta ile zaten bir hesap var. Giriş yapın.");
@@ -166,6 +193,7 @@ export default async function render(root, { query }) {
           kvkk,
           h("span", { style: { flex: "1" } }, h("a", { href: "#/ayarlar?kvkk=1", target: "_blank" }, "Aydınlatma metnini"), " okudum, kabul ediyorum."),
         ),
+        errSlot,
         btn,
       ),
       h("div", { class: "tip" }, icon("lock"), h("p", {}, "Ev adresinizi kimse görmez; insanlar sadece hangi mahallede olduğunuzu bilir.")),
@@ -184,7 +212,7 @@ export default async function render(root, { query }) {
       h("button", { class: "btn btn-secondary", onclick: async () => {
         if (cooldown) return toast("Lütfen bir dakika bekleyin.");
         const { error } = await supabase.auth.resend({ type: "signup", email, options: { emailRedirectTo: authRedirectUrl() } });
-        if (error) return toast(authError(error));
+        if (error) { console.error("Supabase Auth hatası:", error); return toast(authError(error)); }
         cooldown = true; setTimeout(() => (cooldown = false), 60000);
         toast("Onay e-postasını yeniden gönderdik.");
       } }, withIcon("refresh", "Tekrar gönder")),
@@ -202,7 +230,7 @@ export default async function render(root, { query }) {
         e.preventDefault();
         if (!EMAIL_RE.test(email.value.trim())) return toast("E-posta adresini kontrol edin.");
         const { error } = await supabase.auth.resetPasswordForEmail(email.value.trim(), { redirectTo: authRedirectUrl() });
-        if (error) return toast(authError(error));
+        if (error) { console.error("Supabase Auth hatası:", error); return toast(authError(error)); }
         body.replaceChildren(
           iconCircle("check", "ok"),
           h("h2", { class: "center" }, "Bağlantı gönderildi"),
