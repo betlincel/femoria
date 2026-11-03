@@ -1,0 +1,18 @@
+{
+  "name": "femoria",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Femoria — yapay zeka destekli, konum odaklı kadın üretici pazaryeri",
+  "type": "module",
+  "scripts": {
+    "dev": "npx --yes serve@14.2.4 -l 5173 .",
+    "db:start": "supabase start",
+    "db:stop": "supabase stop",
+    "db:reset": "supabase db reset",
+    "db:push": "supabase db push",
+    "db:types": "supabase gen types typescript --local > supabase/types.ts",
+    "functions:serve": "supabase functions serve ayse-abla --env-file supabase/.env",
+    "functions:deploy": "supabase functions deploy ayse-abla",
+    "check": "node scripts/check.mjs"
+  }
+}
