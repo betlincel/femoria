@@ -57,7 +57,6 @@ export default async function render(root) {
     h("div", { class: "profile-head" }, avatar, avatarInput,
       h("div", {},
         h("h1", {}, p.full_name || "Adınız"),
-        h("div", { class: "meta" }, icon("map-pin"), [p.neighborhood, p.district].filter(Boolean).join(", ") || "Mahalle seçilmedi"),
         h("div", { class: "meta" }, icon("calendar"), months ? `Femoria'da ${months} aydır` : "Femoria'ya yeni katıldınız"),
         state.user.email ? h("div", { class: "meta" }, icon("message"), state.user.email, p.email_verified ? h("span", { class: "chip chip-ok" }, "Doğrulandı") : null) : null,
       ),

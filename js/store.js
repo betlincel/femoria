@@ -88,15 +88,6 @@ export async function loadProfile() {
     if (localConsent && !data.location_consent_at) {
       updateProfile({ location_consent_at: localConsent.at }).catch(() => {});
     }
-    // Cihazda seçilmiş konum varsa ve profilde yoksa profile taşı.
-    if (!data.neighborhood && state.location?.neighborhood) await saveLocation(state.location);
-    else if (data.neighborhood && !state.location) {
-      state.location = {
-        lat: data.approx_lat, lng: data.approx_lng, city: data.city,
-        district: data.district, neighborhood: data.neighborhood, source: "profil",
-      };
-      LS.set("location", state.location);
-    }
   }
   emit();
   return data;
@@ -111,16 +102,13 @@ export async function updateProfile(patch) {
   return data;
 }
 
+/**
+ * Alışveriş yapanın konumu ("Yakınımda" sıralaması için). Yalnız bu cihazda saklanır;
+ * profile ya da sunucuya yazılmaz. Ürünlerin konumu her ürün için ayrıca girilir.
+ */
 export async function saveLocation(loc) {
   state.location = loc;
   LS.set("location", loc);
-  if (state.user) {
-    // Sunucu bu koordinatı ~500 m rastgele kaydırarak saklar.
-    await updateProfile({
-      approx_lat: loc.lat, approx_lng: loc.lng,
-      city: loc.city, district: loc.district, neighborhood: loc.neighborhood,
-    }).catch(() => {});
-  }
   emit();
 }
 
@@ -133,17 +121,12 @@ export async function recordLocationConsent() {
   if (state.user) await updateProfile({ location_consent_at: at }).catch(() => {});
 }
 
-/** Rızayı geri al: kayıtlı konum (cihazda ve sunucuda) silinir. */
+/** Rızayı geri al: bu cihazdaki konum silinir, rıza kaydı kaldırılır. */
 export async function withdrawLocation() {
   LS.set("location_consent", null);
   LS.set("location", null);
   state.location = null;
-  if (state.user) {
-    await updateProfile({
-      location_consent_at: null, approx_lat: null, approx_lng: null,
-      city: null, district: null, neighborhood: null,
-    });
-  }
+  if (state.user) await updateProfile({ location_consent_at: null });
   emit();
 }
 

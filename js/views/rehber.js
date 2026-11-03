@@ -17,7 +17,7 @@ const GUIDE = `
   <li><strong>"Üye ol"a dokunun.</strong> Sağ üstteki <strong>"Giriş yap"</strong> düğmesinden ya da bir şey satmak veya almak istediğinizde karşınıza çıkar.</li>
   <li><strong>Adınızı, e-postanızı ve şifrenizi yazın.</strong> Şifre en az 8 karakter olmalı. <strong>"Göster"</strong>e dokunarak yazdığınızı görebilirsiniz.</li>
   <li><strong>E-postanızı onaylayın.</strong> Gelen kutunuza bir e-posta gelir. İçindeki bağlantıya tıklayın; hesabınız açılır. Gelmezse "Gereksiz" klasörüne bakın ya da <strong>"Tekrar gönder"</strong>e dokunun.</li>
-  <li><strong>Adınızı ve mahallenizi söyleyin.</strong> Adınızı yazın, sonra mahallenizi listeden seçin. Ev adresinizi kimse görmez; insanlar sadece hangi mahallede olduğunuzu bilir.</li>
+  <li><strong>Adınızı yazın.</strong> Size nasıl hitap edeceğimizi bilmek için cinsiyetinizi de seçin. Konumunuz profilinize kaydedilmez.</li>
 </ol>
 <p>İşte bu kadar! Artık hem satabilir hem alışveriş yapabilirsiniz. Ayrı bir dükkân açmanıza gerek yok.</p>
 <p>Şifrenizi unutursanız giriş ekranındaki <strong>"Şifremi unuttum"</strong>a dokunun; yenileme bağlantısı e-postanıza gelir.</p>
@@ -47,6 +47,7 @@ const GUIDE = `
   <li><strong>Kargo:</strong> Ürünü kargoyla gönderirsiniz.</li>
   <li><strong>İkisi de:</strong> Alıcı hangisini isterse.</li>
 </ul>
+<p>Sonra <strong>"Ürün nerede?"</strong> bölümünde ürünün bulunduğu yeri seçin: <strong>"Şu anki konumum"</strong>a dokunun ya da <strong>"Listeden seç"</strong> ile il, ilçe ve mahalleyi seçin. Alıcılar yalnızca mahallenin adını görür; ev adresiniz paylaşılmaz.</p>
 <p>Son olarak büyük yeşil <strong>"Satışa çıkar"</strong> düğmesine dokunun. Tebrikler, ürününüz artık vitrinde!</p>
 <div class="tip">${iconSVG("sparkles")}<p><strong>Ayşe Abla'dan ipucu:</strong> İlk ürününüzü yükledikten sonra yarım kalan bir şey olursa merak etmeyin. Femoria her adımı saklar; kaldığınız yerden devam edersiniz.</p></div>
 </section>
@@ -57,7 +58,7 @@ const GUIDE = `
 <ol>
   <li>Alttaki <strong>"Yakınımda"</strong> düğmesine dokunun.</li>
   <li>İlk seferde Femoria konumunuzu neden istediğini kısaca anlatır. Okuyup kutucuğu işaretleyin ve <strong>"Konumumu paylaş"</strong>a dokunun. Telefonunuz ya da tarayıcınız izin sorduğunda <strong>"İzin ver"</strong>i seçin; konumunuz kendiliğinden alınır ve mahallenizin adı bulunur. Tam adresiniz saklanmaz.</li>
-  <li>Konum paylaşmak istemezseniz <strong>"Mahallemi listeden seçeceğim"</strong>e dokunup ilinizi, ilçenizi ve mahallenizi seçebilirsiniz. İzninizi istediğiniz an <strong>Ayarlar → Konum</strong>dan geri alabilirsiniz.</li>
+  <li>Konum paylaşmak istemezseniz <strong>"Mahallemi listeden seçeceğim"</strong>e dokunup ilinizi, ilçenizi ve mahallenizi seçebilirsiniz. Bu konum yalnızca cihazınızda tutulur. İzninizi istediğiniz an <strong>Ayarlar → Alışveriş konumu</strong>ndan geri alabilirsiniz.</li>
   <li>Ürünler en yakından en uzağa sıralanır. Her ürünün altında ne kadar uzakta olduğu yazar: "800 metre", "2 kilometre" gibi.</li>
   <li>Ne aradığınızı daraltmak isterseniz üstteki resimli kutulardan birine dokunun: <strong>Yemek, Örgü, Takı, Ev süsü…</strong></li>
   <li>Ne kadar uzağa bakmak istediğinizi seçin: <strong>"Mahallem"</strong>, <strong>"İlçem"</strong> ya da <strong>"Şehrim"</strong>.</li>

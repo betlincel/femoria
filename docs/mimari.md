@@ -26,10 +26,10 @@ Supabase
 
 | Tablo | Amaç |
 |---|---|
-| `profiles` | Tek hesap (alıcı + satıcı). Ayarlar, cinsiyet (hitap), yaklaşık konum, onay kayıtları. Yalnız sahibi okur. |
+| `profiles` | Tek hesap (alıcı + satıcı). Ayarlar, cinsiyet (hitap), onay kayıtları. Konum tutulmaz. Yalnız sahibi okur. |
 | `public_profiles` (görünüm) | Başkalarının görebileceği güvenli alanlar (ad, mahalle, doğrulama durumu). |
 | `categories`, `locations`, `badges` | Sözlükler. `locations`: il/ilçe/mahalle + mahalle merkezi. |
-| `products` | Ürünler. Konum satıcıdan devralınır ve kaydırılır. |
+| `products` | Ürünler. Konum her ürün için satıcı tarafından girilir (cihazdan ya da listeden), kaydedilirken ~500 m kaydırılır. |
 | `conversations`, `messages` | Ürün başına alıcı–satıcı sohbeti. Mesaj türleri: metin, hazır, ses, sipariş, sistem. |
 | `orders` | Sipariş kartı: adet, fiyat, teslim, tarih, iki tarafın "Anlaştık" onayı. |
 | `blocks`, `reports` | Engelleme ve tek dokunuşla şikayet. |
@@ -46,6 +46,7 @@ Supabase
 - **Gece sessizliği:** `quiet_hours_enabled` açıksa 22:00–08:00 (İstanbul) arası gelen ilk mesaja otomatik "sabah dönecek" sistem notu düşer.
 - **Engelleme:** Engellenen kişi sohbet başlatamaz ve mesaj gönderemez (RLS + RPC).
 - **Doğrulama alanları** (`email_verified`, `phone_verified`, `identity_verified`, `cooperative_name`) kullanıcı tarafından değiştirilemez; e-posta doğrulaması Auth'tan otomatik gelir.
+- **Konum ürün bazında:** Profilde konum yoktur. Satıcı her ürünü satışa çıkarırken "Ürün nerede?" bölümünde konum seçer; `products_fill_location` koordinatı ~500 m kaydırır, konumsuz ürün reddedilir. Alışveriş yapanın konumu ("Yakınımda" sıralaması) yalnız cihazda (localStorage) tutulur, sunucuya gönderilmez.
 - **Konum (açık rıza):** Konum yalnızca cihazdan, tarayıcı izniyle alınır. İlk seferde kısa aydınlatma + "açık rıza veriyorum" onayı istenir (`profiles.location_consent_at`). Koordinat istemcide ~100 m'ye yuvarlanır; mahalle adı için yalnız bu yuvarlanmış değer OpenStreetMap Nominatim'e gönderilir, sunucu da kaydederken ~500 m kaydırır. İzin reddedilirse nasıl açılacağı anlatılır; listeden mahalle seçimi yedektir. Ayarlar → Konum → "Konum iznimi geri al" konumu cihazdan ve hesaptan siler.
 - **Listeden konum:** Türkiye'nin 81 ili, 973 ilçesi ve ~73 bin mahalle/köyü `assets/tr/` altında (kaynaklar ve lisanslar: `assets/tr/KAYNAK.md`, üretim: `scripts/build-tr-locations.mjs`). Seçilen yerin koordinatı tarayıcıda OpenStreetMap ile bulunur; bulunamazsa ilçe, o da olmazsa il merkezi kullanılır.
 - **Kaldırılan ürünler:** `remove_product()` mesajlaşması olmayan ürünü hemen siler (fotoğrafları istemci Storage'dan siler); olanı `kaldirildi` yapar ve 30 gün saklar (`restore_product()` ile geri alınır). `purge-removed-photos` Edge Function'ı her gece (pg_cron + pg_net, `x-cron-secret` ile korunur) `storage_cleanup_candidates()` listesindeki dosyaları siler: 30 günü dolan fotoğraflar, hiçbir ürüne ait olmayan fotoğraflar (1 günden eski) ve sohbeti silinmiş sesli mesajlar. Kaldırılan ürün sohbetin iki tarafına görünmeye devam eder.

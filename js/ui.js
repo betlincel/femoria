@@ -3,6 +3,18 @@ import { icon } from "./icons.js";
 
 export { icon };
 
+// Koşullu içerik (ör. `koşul ? öğe : null`) append / replaceChildren ile eklendiğinde
+// tarayıcı null'ı "null" yazısı olarak basıyor. Bu yöntemler artık null / undefined / false
+// değerleri atlar; böylece ekranda yanlışlıkla "null" görünmez.
+for (const proto of [Element.prototype, DocumentFragment.prototype]) {
+  for (const name of ["append", "prepend", "replaceChildren"]) {
+    const original = proto[name];
+    proto[name] = function (...nodes) {
+      return original.apply(this, nodes.filter((n) => n != null && n !== false));
+    };
+  }
+}
+
 /** h("button", { class: "btn", onclick }, "Metin") */
 export function h(tag, props = {}, ...children) {
   const el = document.createElement(tag);

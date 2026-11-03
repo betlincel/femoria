@@ -152,6 +152,12 @@ export async function publishProduct(draft) {
     photos: paths,
     voice_transcript: draft.transcript || null,
     status: "satista",
+    // Ürünün konumu (satıcı bu ürün için girdi). Sunucu kaydederken ~500 m kaydırır.
+    approx_lat: draft.location.lat,
+    approx_lng: draft.location.lng,
+    city: draft.location.city || null,
+    district: draft.location.district || null,
+    neighborhood: draft.location.neighborhood || null,
   }).select().single().then(ok);
 }
 
@@ -256,7 +262,7 @@ export async function myConversations() {
     .order("last_message_at", { ascending: false }).then(ok);
   const otherIds = [...new Set(convs.map((c) => (c.buyer_id === uid ? c.seller_id : c.buyer_id)))];
   const people = otherIds.length
-    ? await supabase.from("public_profiles").select("id,full_name,avatar_url,neighborhood").in("id", otherIds).then(ok)
+    ? await supabase.from("public_profiles").select("id,full_name,avatar_url").in("id", otherIds).then(ok)
     : [];
   const byId = Object.fromEntries(people.map((p) => [p.id, p]));
   return convs.map((c) => {

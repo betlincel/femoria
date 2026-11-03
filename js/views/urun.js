@@ -71,7 +71,7 @@ export default async function render(root, { params: [id] }) {
             h("span", { class: "avatar avatar-sm" }, seller.avatar_url ? h("img", { src: seller.avatar_url, alt: "" }) : (seller.full_name || "?")[0].toLocaleUpperCase("tr-TR")),
             h("div", {},
               h("strong", {}, seller.full_name || "Komşu"),
-              h("div", { class: "meta" }, [seller.neighborhood, months ? `Femoria'da ${months} aydır` : "Femoria'ya yeni katıldı"].filter(Boolean).join(" · ")),
+              h("div", { class: "meta" }, months ? `Femoria'da ${months} aydır` : "Femoria'ya yeni katıldı"),
             ),
           ),
           verified ? h("div", { class: "badges" }, h("span", { class: "chip chip-ok" }, icon("check"), "E-postası doğrulanmış")) : null,

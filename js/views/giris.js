@@ -4,7 +4,6 @@ import { h, toast, icon, withIcon, iconCircle, GENDERS } from "../ui.js";
 import { supabase, isConfigured, NOT_CONFIGURED, authRedirectUrl } from "../supabase.js";
 import { state, syncSession, updateProfile } from "../store.js";
 import { navigate } from "../router.js";
-import { askLocation } from "../components.js";
 import { track } from "../api.js";
 import { KVKK_VERSION } from "../kvkk.js";
 
@@ -204,7 +203,7 @@ export default async function render(root, { query }) {
         errSlot,
         btn,
       ),
-      h("div", { class: "tip" }, icon("lock"), h("p", {}, "Ev adresinizi kimse görmez; insanlar sadece hangi mahallede olduğunuzu bilir.")),
+      h("div", { class: "tip" }, icon("lock"), h("p", {}, "Konumunuz profilinizde tutulmaz. Ürün satarken yalnızca o ürünün mahallesi görünür; ev adresinizi kimse görmez.")),
     );
     name.focus();
   }
@@ -266,24 +265,18 @@ export default async function render(root, { query }) {
         if (name.value.trim().length < 2) return toast("Adınızı yazın.");
         if (!gender.value()) return toast("Cinsiyetinizi seçin. İsterseniz \"Belirtmek istemiyorum\"u seçebilirsiniz.");
         await updateProfile({ full_name: name.value.trim(), gender: gender.value() });
-        if (!state.location?.lat) await askLocation();
-        else await updateProfile({
-          approx_lat: state.location.lat, approx_lng: state.location.lng, city: state.location.city,
-          district: state.location.district, neighborhood: state.location.neighborhood,
-        }).catch(() => {});
         finish();
       } },
         h("div", {}, h("label", { for: "name" }, "Adınız"), name),
         gender.el,
-        h("div", { class: "tip" }, icon("lock"), h("p", {}, "Ev adresinizi kimse görmez; insanlar sadece hangi mahallede olduğunuzu bilir.")),
-        h("button", { class: "btn btn-primary btn-xl", type: "submit" }, state.location?.lat ? "Kaydet ve devam et" : "Konumumu paylaş ve bitir"),
+        h("button", { class: "btn btn-primary btn-xl", type: "submit" }, "Kaydet ve devam et"),
       ),
     );
   }
 
   function finish() {
     const p = state.profile;
-    if (!p?.full_name || !p?.gender || (p?.approx_lat == null && !state.location?.lat)) return stepProfile();
+    if (!p?.full_name || !p?.gender) return stepProfile();
     toast("Hoş geldiniz! Artık hem satabilir hem alışveriş yapabilirsiniz.");
     navigate(afterLogin(next), { replace: true });
   }

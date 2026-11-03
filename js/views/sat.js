@@ -6,7 +6,7 @@ import { h, toast, micButton, prepareImage, formatPrice, speak, canListen, ask, 
 import { categoryIconName } from "../icons.js";
 import { state, LS } from "../store.js";
 import { getCategories, categoryOf, priceSuggestion, publishProduct, askAssistant, track } from "../api.js";
-import { pageTitle, categoryTiles } from "../components.js";
+import { pageTitle, categoryTiles, askLocation, pickLocation } from "../components.js";
 import { navigate, requireAuth } from "../router.js";
 import { assistantEvent } from "../assistant.js";
 
@@ -14,7 +14,7 @@ const MAX_PHOTOS = 4;
 
 const newDraft = () => ({
   step: 1, photos: [], transcript: "", title: "", description: "", category: null,
-  price: null, delivery: null, suggestion: null, startedAt: Date.now(), updatedAt: Date.now(),
+  price: null, delivery: null, suggestion: null, location: null, startedAt: Date.now(), updatedAt: Date.now(),
 });
 
 export default async function render(root) {
@@ -229,6 +229,7 @@ export default async function render(root) {
       } }, "Fiyatı kendim yazayım"),
       h("h3", { class: "center" }, "Alıcıya nasıl ulaştıracaksınız?"),
       deliveryButtons(),
+      locationSection(),
       h("button", { class: "btn btn-success btn-xl", onclick: publish }, withIcon("arrow-right", "Satışa çıkar")),
       backBtn(2), laterBtn(),
     );
@@ -257,19 +258,46 @@ export default async function render(root) {
     return wrap;
   }
 
+  // ---------- Ürün nerede? (konum ürün bazında; profilde tutulmaz) ----------
+  function locationSection() {
+    // Bu cihazda alışveriş için seçilmiş bir konum varsa öneri olarak doldur (değiştirilebilir)
+    if (!draft.location && state.location?.lat) { draft.location = { ...state.location, suggested: true }; save(); }
+    const wrap = h("section", { class: "card stack", id: "urun-konum" });
+    const set = (loc) => { if (loc) { draft.location = { ...loc, suggested: false }; save(); draw(); } };
+    const draw = () => {
+      const l = draft.location;
+      const label = l ? [l.neighborhood, l.district, l.city].filter(Boolean).join(", ") || "Konum alındı" : null;
+      wrap.replaceChildren(...[
+        h("h3", { style: { margin: 0 } }, "Ürün nerede?"),
+        h("p", { class: "small muted", style: { margin: 0 } }, "Ürününüz bu konuma yakın alıcılara gösterilir. Alıcılar yalnızca mahallenin adını görür; tam adresiniz paylaşılmaz."),
+        l ? h("div", { class: "row", style: { gap: "8px", justifyContent: "flex-start" } },
+              icon("map-pin", 20), h("strong", { style: { flex: "0 1 auto" } }, label),
+              l.suggested ? h("span", { class: "chip" }, "önerilen") : null)
+          : h("p", { class: "notice", style: { margin: 0 } }, icon("alert", 20), "Henüz seçilmedi."),
+        l?.precision === "il" ? h("p", { class: "small muted", style: { margin: 0 } }, `Mahalle bulunamadı; ${l.city} merkezi kullanılacak.`) : null,
+        h("div", { class: "btn-group" },
+          h("button", { class: "btn btn-secondary", onclick: async () => set(await askLocation({ save: false })) }, ...withIcon("map-pin", "Şu anki konumum")),
+          h("button", { class: "btn btn-secondary", onclick: async () => set(await pickLocation({ save: false, title: "Ürün nerede?" })) }, ...withIcon("list", "Listeden seç")),
+        ),
+      ].filter(Boolean));
+    };
+    draw();
+    return wrap;
+  }
+
   async function publish() {
     if (!draft.photos.length) return go(1);
     if (!draft.title || !draft.category) return go(2);
     if (!draft.delivery) return toast("Teslim şeklini seçin.");
+    if (!draft.location?.lat) {
+      toast("Ürünün nerede olduğunu seçin.");
+      document.getElementById("urun-konum")?.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
     if (!draft.price && !(await ask("Ücretsiz mi vereceksiniz?", "Fiyatı 0 TL seçtiniz.", "Evet, ücretsiz", "Fiyat seçeyim"))) return;
     draft.publishAfterLogin = Date.now();
     save();
     if (!requireAuth("/sat")) return; // giriş sonrası buraya dönülür ve otomatik yayınlanır
-    if (!state.location?.lat && state.profile?.approx_lat == null) {
-      toast("Ürününüzü mahallenizdekilere göstermek için konumunuzu alalım.");
-      const { askLocation } = await import("../components.js");
-      if (!(await askLocation())) return;
-    }
 
     body.replaceChildren(statusScreen("refresh", "Vitrine koyuyorum…", { spin: true }));
     try {

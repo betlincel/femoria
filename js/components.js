@@ -120,17 +120,22 @@ function getPosition() {
  * Konumu cihazdan alır (gerekirse önce aydınlatma + rıza ekranı). Promise<location|null>
  * Kullanım: Yakınımda, Ayarlar → Konum, ilk giriş, ürün yayınlama.
  */
-export async function askLocation() {
+/**
+ * opts.save (varsayılan true): alınan konum alışveriş konumu olarak bu cihaza kaydedilsin mi.
+ *   Ürün konumu seçilirken false verilir; konum yalnızca o ürüne yazılır.
+ * opts.title: liste ekranının başlığı.
+ */
+export async function askLocation(opts = {}) {
   if (!hasLocationConsent()) {
-    const choice = await consentSheet();
+    const choice = await consentSheet(opts);
     if (!choice) return null;          // vazgeçti
     if (choice !== "gps") return choice; // listeden mahalle seçti (konum nesnesi)
   }
-  return captureLocation();
+  return captureLocation(opts);
 }
 
 /** Kısa aydınlatma + açık rıza onayı. Promise<"gps" | location (listeden) | null> */
-function consentSheet() {
+function consentSheet(opts = {}) {
   return new Promise((resolve) => {
     let done = false;
     const finish = (v) => { if (!done) { done = true; resolve(v); } };
@@ -156,7 +161,7 @@ function consentSheet() {
         h("button", { class: "btn btn-ghost", onclick: () => {
           done = true; // sayfa kapanınca "vazgeçti" sayılmasın
           closeSheet();
-          pickLocation().then((l) => resolve(l || null));
+          pickLocation(opts).then((l) => resolve(l || null));
         } },
           "Konum paylaşmadan, mahallemi listeden seçeceğim"),
       );
@@ -169,7 +174,7 @@ function consentSheet() {
 }
 
 /** Tarayıcıdan konumu alır; başarısızsa nedenini anlatır. */
-async function captureLocation() {
+async function captureLocation(opts = {}) {
   const wait = sheet(null, h("div", { class: "status-screen" },
     h("div", { class: "icon-circle", "aria-hidden": "true" }, icon("map-pin")),
     h("p", {}, "Konumunuz alınıyor…"),
@@ -180,7 +185,7 @@ async function captureLocation() {
     pos = await getPosition();
   } catch (err) {
     wait();
-    return locationError(err);
+    return locationError(err, opts);
   }
   const lat = round3(pos.coords.latitude);
   const lng = round3(pos.coords.longitude);
@@ -190,14 +195,14 @@ async function captureLocation() {
     || {};
   wait();
   const loc = { lat, lng, city: names.city ?? null, district: names.district ?? null, neighborhood: names.neighborhood ?? null, source: "gps" };
-  await saveLocation(loc);
+  if (opts.save !== false) await saveLocation(loc);
   const label = [loc.neighborhood, loc.district].filter(Boolean).join(", ");
   toast(label ? `Konumunuz alındı: ${label}` : "Konumunuz alındı.");
   return loc;
 }
 
 /** Konum alınamadığında: izin reddi / kapalı konum / zaman aşımı için yol gösterir. */
-function locationError(err) {
+function locationError(err, opts = {}) {
   const denied = err?.code === 1;
   const unsupported = err?.code === "unsupported" || !window.isSecureContext;
   return new Promise((resolve) => {
@@ -214,8 +219,8 @@ function locationError(err) {
         : unsupported
           ? h("p", {}, "Bu tarayıcı konum paylaşmayı desteklemiyor ya da site güvenli bağlantıyla (https) açılmamış.")
           : h("p", {}, "Cihazınızın konum özelliği kapalı olabilir ya da sinyal zayıf. Konumu açıp tekrar deneyin."),
-      h("button", { class: "btn btn-primary", onclick: () => { close(); captureLocation().then(resolve); } }, ...withIcon("refresh", "Tekrar dene")),
-      h("button", { class: "btn btn-secondary", onclick: () => { close(); pickLocation().then(resolve); } }, ...withIcon("list", "Mahallemi listeden seçeceğim")),
+      h("button", { class: "btn btn-primary", onclick: () => { close(); captureLocation(opts).then(resolve); } }, ...withIcon("refresh", "Tekrar dene")),
+      h("button", { class: "btn btn-secondary", onclick: () => { close(); pickLocation(opts).then(resolve); } }, ...withIcon("list", "Mahallemi listeden seçeceğim")),
     ));
   });
 }
@@ -224,12 +229,12 @@ function locationError(err) {
  * İl → ilçe → mahalle listesinden seçim (konum izni vermeyenler için).
  * Türkiye'nin 81 ili, 973 ilçesi ve tüm mahalle/köyleri; her adımda arama kutusu.
  */
-export function pickLocation() {
+export function pickLocation(opts = {}) {
   return new Promise((resolve) => {
     let province = null, district = null, settled = false;
     const body = h("div", { class: "stack pick" });
     const done = (v) => { if (!settled) { settled = true; resolve(v); } };
-    const closeFn = sheet("Konumunuzu seçin", body);
+    const closeFn = sheet(opts.title || "Konumunuzu seçin", body);
     // Kapatılırsa (dışarı dokunma / Esc) vazgeçti say
     const obs = new MutationObserver(() => { if (!body.isConnected) { obs.disconnect(); done(null); } });
     obs.observe(document.getElementById("sheet-root"), { childList: true });
@@ -299,7 +304,7 @@ export function pickLocation() {
         neighborhood: neighborhood ? neighborhood.replace(/\s*\(.*\)$/, "") : null,
         precision: pos.precision, source: "liste",
       };
-      await saveLocation(loc);
+      if (opts.save !== false) await saveLocation(loc);
       settled = true;
       obs.disconnect();
       closeFn();
