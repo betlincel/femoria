@@ -110,6 +110,8 @@ supabase secrets set OPENAI_API_KEY=sk-... OPENAI_MODEL=gpt-4o-mini
 supabase functions deploy ayse-abla
 ```
 
+Ayşe Abla'nın sesli okuması da bu fonksiyonla, OpenAI'ın kadın sesiyle (`coral`) yapılır; her cihazda aynı ses duyulur. Sesi değiştirmek için `supabase secrets set OPENAI_TTS_VOICE=nova` (ya da `shimmer`). Fonksiyon güncellendiyse yeniden yayınlayın: `supabase functions deploy ayse-abla`. Sunucu sesi alınamazsa tarayıcının Türkçe sesi kullanılır (kadın sesleri tercih edilir; yalnız erkek sesi varsa ses inceltilir).
+
 Anahtar tanımlı değilse uygulama çalışmaya devam eder: Ayşe Abla kurallı cevaplara, "Sesle Vitrin" de basit anahtar kelime eşleştirmeye geçer.
 
 ### 4. Ön yüzü bağlayın

@@ -5,7 +5,7 @@
 //
 // ⚠️ Yayına çıkmadan önce bir hukukçuya kontrol ettirin ve iletişim adresini doldurun.
 
-export const KVKK_VERSION = "2026-11-08";
+export const KVKK_VERSION = "2026-11-09";
 
 // Başvuru ve sorular için iletişim adresi (yayından önce doldurun).
 export const KVKK_CONTACT = "[iletişim e-posta adresi]";
@@ -68,7 +68,7 @@ export const KVKK_SECTIONS = [
     list: [
       "Diğer kullanıcılar: adınız, mahalleniz, ürünleriniz ve doğrulama rozetleriniz. E-postanız ve cinsiyetiniz gösterilmez.",
       "Supabase (veritabanı ve dosya barındırma): bilgileriniz Avrupa Birliği'ndeki (Frankfurt) sunucularda saklanır.",
-      "OpenAI (Ayşe Abla): Ayşe Abla'ya yazdıklarınız ve sesle anlattığınız ürün tarifi cevap üretmek için gönderilir. E-posta adresiniz ve konumunuz gönderilmez.",
+      "OpenAI (Ayşe Abla): Ayşe Abla'ya yazdıklarınız ve sesle anlattığınız ürün tarifi cevap üretmek için gönderilir. Sesli okumayı kullandığınızda okunacak metin (Ayşe Abla'nın cevapları, rehber, bu metin) ses üretmek için gönderilir. E-posta adresiniz ve konumunuz gönderilmez.",
       "OpenStreetMap Vakfı (Nominatim): yalnızca yuvarlanmış konum (mahalle adını bulmak için) ya da listeden seçtiğiniz il, ilçe, mahalle adı (konumunu bulmak için).",
       "Yurt dışına aktarım: Yukarıdaki hizmet sağlayıcıların sunucuları Türkiye dışındadır; aktarım KVKK m. 9 kapsamında yapılır.",
       "Kanunen yetkili kurumlar: yalnızca yasal bir talep olduğunda.",

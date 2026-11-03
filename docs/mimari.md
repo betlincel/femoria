@@ -68,7 +68,7 @@ Supabase
 ## Ayşe Abla
 
 - **Persona** (`supabase/functions/_shared/persona.ts`): kısa cümle (≤ 12 kelime), "siz" hitabı, teknik kelime yok, her cevapta tek sonraki adım, hukuk/vergi/sağlıkta uzmana yönlendirme, ödeme/şifre istemez.
-- **Sesli okuma isteğe bağlıdır ve varsayılan olarak kapalıdır** (taslakta "varsayılan açık" yazıyordu; kullanıcı geri bildirimiyle değiştirildi). Asistan panelindeki hoparlör düğmesinden ya da Ayarlar'dan açılır; kapalıyken her mesajın yanındaki "Dinle" düğmesiyle tek mesaj dinlenebilir.
+- **Sesli okuma isteğe bağlıdır ve varsayılan olarak kapalıdır** (taslakta "varsayılan açık" yazıyordu; kullanıcı geri bildirimiyle değiştirildi). Asistan panelindeki hoparlör düğmesinden ya da Ayarlar'dan açılır; kapalıyken her mesajın yanındaki "Dinle" düğmesiyle tek mesaj dinlenebilir. Ses, `ayse-abla` fonksiyonunun `speak` modunda OpenAI ile üretilen sabit bir kadın sesidir (`OPENAI_TTS_VOICE`, varsayılan `coral`, "ellili yaşlarda sıcak bir abla" ton tarifiyle); uzun metinler cümle sınırında parçalanıp sırayla çalınır. Sunucu sesi yoksa tarayıcı sesine düşülür (bilinen Türkçe kadın sesleri seçilir, yalnız erkek sesi varsa perde yükseltilir).
 - **Ekran haritası** sistem talimatına eklenir; asistan `highlight` alanıyla ekrandaki düğmeyi parlatabilir ("burayı göster").
 - **Proaktif tetikleyiciler** (`js/assistant.js`): ilk giriş, aynı ekranda 30 sn hareketsizlik, aynı düğmeye 2 sn içinde 3 dokunuş, yarım kalan ürün, ilk gelen mesaj. "Sonra" denirse o oturumda kendiliğinden çıkmaz.
 - **Geri bildirim:** tek soru, tek dokunuş, haftada en fazla 2 soru; "Sonra" denirse o hafta sorulmaz. Sorular: ilk ürün sonrası, 5 dk gezinti, ilk satış, rehber okuma, 2 hafta sonra dönüş.
