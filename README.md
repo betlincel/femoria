@@ -123,6 +123,8 @@ npm run dev
 
 Tarayıcıda `http://localhost:5173` açılır. Telefonda denemek için kamera ve mikrofon HTTPS ister; yayın ortamında (Vercel/Netlify) bu kendiliğinden sağlanır.
 
+**Değişiklikler görünmüyorsa:** önce kodun güncel olduğundan emin olun (`git checkout main` ve `git pull`), sunucuyu durdurup yeniden başlatın, sonra tarayıcıda sayfayı önbelleği atlayarak yenileyin (Windows/Linux: `Ctrl + Shift + R`, Mac: `Cmd + Shift + R`). `serve.json` dosyası tarayıcıya her açılışta güncel dosyayı kontrol etmesini söyler; yayında aynı işi `vercel.json` (Vercel) ve `_headers` (Netlify / Cloudflare Pages) yapar.
+
 ### Yerel Supabase ile (isteğe bağlı, Docker gerekir)
 
 ```bash

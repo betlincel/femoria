@@ -1,0 +1,7 @@
+# Netlify / Cloudflare Pages: tarayıcı her açılışta güncel dosyayı kontrol etsin
+/*.html
+  Cache-Control: public, max-age=0, must-revalidate
+/*.js
+  Cache-Control: public, max-age=0, must-revalidate
+/*.css
+  Cache-Control: public, max-age=0, must-revalidate
