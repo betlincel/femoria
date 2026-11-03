@@ -90,6 +90,16 @@ Dashboard → **Authentication → URL Configuration**:
 
 **E-posta gönderimi:** Supabase'in hazır e-posta servisi yalnızca deneme içindir ve saatte birkaç e-postayla sınırlıdır. Yayına çıkmadan önce **Authentication → Emails → SMTP Settings** bölümüne kendi SMTP sağlayıcınızı (ör. Resend, Brevo, Amazon SES) girin. Aynı sayfadaki şablonlardan onay ve şifre yenileme e-postalarını Türkçeleştirebilirsiniz.
 
+**Üye olurken hata alırsanız:** formun altındaki kutuda "Teknik ayrıntı" yazar. Daha fazla ayrıntı için Dashboard → **Logs → Auth** bölümüne bakın.
+
+| Teknik ayrıntı | Neden | Çözüm |
+|---|---|---|
+| `email_address_not_authorized` | Supabase'in hazır e-posta servisi yalnızca proje ekibindeki adreslere gönderir | Kendi SMTP sağlayıcınızı girin (**Authentication → Emails → SMTP Settings**). Yalnızca denemek için **Confirm email**'i geçici olarak kapatabilirsiniz |
+| `over_email_send_rate_limit` | Hazır servis saatte yalnızca birkaç e-posta gönderir | Bekleyin ya da kendi SMTP sağlayıcınızı girin |
+| `Error sending confirmation email` | SMTP bilgileri hatalı | SMTP ayarlarını (sunucu, port, kullanıcı, şifre, gönderen adresi) kontrol edin |
+| `Database error saving new user` | Yeni kullanıcı profili oluşturulamadı | Tüm migration'ların sırayla uygulandığını kontrol edin (`supabase db push`) |
+| `signup_disabled` | Yeni üyelik kapalı | **Authentication → Sign In / Providers**'da "Allow new users to sign up"ı açın |
+
 ### 3. Ayşe Abla'yı (yapay zeka) yayınlayın
 
 ```bash
