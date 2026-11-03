@@ -87,15 +87,16 @@ export function toast(msg, ms = 3200) {
 }
 
 /** Alt sayfa açar. content: Node | (close) => Node. Döndürür: close() */
-export function sheet(title, content) {
+export function sheet(title, content, { dismissible = true } = {}) {
   const root = $("#sheet-root");
   const close = () => {
     backdrop.remove();
     document.removeEventListener("keydown", onKey);
   };
-  const onKey = (e) => e.key === "Escape" && close();
+  // dismissible: false → arka plana dokunmak, Esc ve sayfa değiştirmek kapatmaz (zorunlu onaylar için)
+  const onKey = (e) => dismissible && e.key === "Escape" && close();
   const body = typeof content === "function" ? content(close) : content;
-  const backdrop = h("div", { class: "sheet-backdrop", onclick: (e) => e.target === backdrop && close() },
+  const backdrop = h("div", { class: "sheet-backdrop", "data-persistent": dismissible ? null : "1", onclick: (e) => dismissible && e.target === backdrop && close() },
     h("div", { class: "sheet", role: "dialog", "aria-modal": "true", "aria-label": title },
       title ? h("h2", {}, title) : null,
       body,
@@ -103,7 +104,9 @@ export function sheet(title, content) {
   );
   root.append(backdrop);
   document.addEventListener("keydown", onKey);
-  backdrop.querySelector("button, input, textarea, select")?.focus();
+  // Metnin başından başlasın: odak kaydırma yapmasın
+  backdrop.querySelector("button, input, textarea, select")?.focus({ preventScroll: true });
+  backdrop.querySelector(".sheet").scrollTop = 0;
   return close;
 }
 

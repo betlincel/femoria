@@ -265,10 +265,10 @@ export default async function render(root) {
     draft.publishAfterLogin = Date.now();
     save();
     if (!requireAuth("/sat")) return; // giriş sonrası buraya dönülür ve otomatik yayınlanır
-    if (!state.location?.neighborhood && !state.profile?.neighborhood) {
-      toast("Önce mahallenizi seçelim.");
-      const { pickLocation } = await import("../components.js");
-      if (!(await pickLocation())) return;
+    if (!state.location?.lat && state.profile?.approx_lat == null) {
+      toast("Ürününüzü mahallenizdekilere göstermek için konumunuzu alalım.");
+      const { askLocation } = await import("../components.js");
+      if (!(await askLocation())) return;
     }
 
     body.replaceChildren(statusScreen("refresh", "Vitrine koyuyorum…", { spin: true }));

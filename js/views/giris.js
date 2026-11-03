@@ -4,8 +4,9 @@ import { h, toast, icon, withIcon, iconCircle, GENDERS } from "../ui.js";
 import { supabase, isConfigured, NOT_CONFIGURED, authRedirectUrl } from "../supabase.js";
 import { state, loadProfile, updateProfile } from "../store.js";
 import { navigate } from "../router.js";
-import { pickLocation } from "../components.js";
+import { askLocation } from "../components.js";
 import { track } from "../api.js";
+import { KVKK_VERSION } from "../kvkk.js";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 export const MIN_PASSWORD = 8;
@@ -170,7 +171,7 @@ export default async function render(root, { query }) {
         const { data, error } = await supabase.auth.signUp({
           email: email.value.trim(),
           password: pw.input.value,
-          options: { data: { full_name: name.value.trim(), gender: gender.value() }, emailRedirectTo: authRedirectUrl() },
+          options: { data: { full_name: name.value.trim(), gender: gender.value(), kvkk_version: KVKK_VERSION }, emailRedirectTo: authRedirectUrl() },
         });
         btn.disabled = false;
         errSlot.replaceChildren();
@@ -191,7 +192,7 @@ export default async function render(root, { query }) {
         pw.el,
         h("label", { for: "kvkk", class: "row", style: { alignItems: "flex-start", gap: "10px", fontWeight: "400", cursor: "pointer" } },
           kvkk,
-          h("span", { style: { flex: "1" } }, h("a", { href: "#/ayarlar?kvkk=1", target: "_blank" }, "Aydınlatma metnini"), " okudum, kabul ediyorum."),
+          h("span", { style: { flex: "1" } }, h("a", { href: "#/aydinlatma", target: "_blank", rel: "noopener" }, "Aydınlatma metnini"), " okudum ve anladım."),
         ),
         errSlot,
         btn,
@@ -258,7 +259,7 @@ export default async function render(root, { query }) {
         if (name.value.trim().length < 2) return toast("Adınızı yazın.");
         if (!gender.value()) return toast("Cinsiyetinizi seçin. İsterseniz \"Belirtmek istemiyorum\"u seçebilirsiniz.");
         await updateProfile({ full_name: name.value.trim(), gender: gender.value() });
-        if (!state.location?.neighborhood) await pickLocation();
+        if (!state.location?.lat) await askLocation();
         else await updateProfile({
           approx_lat: state.location.lat, approx_lng: state.location.lng, city: state.location.city,
           district: state.location.district, neighborhood: state.location.neighborhood,
@@ -268,14 +269,14 @@ export default async function render(root, { query }) {
         h("div", {}, h("label", { for: "name" }, "Adınız"), name),
         gender.el,
         h("div", { class: "tip" }, icon("lock"), h("p", {}, "Ev adresinizi kimse görmez; insanlar sadece hangi mahallede olduğunuzu bilir.")),
-        h("button", { class: "btn btn-primary btn-xl", type: "submit" }, state.location?.neighborhood ? "Kaydet ve devam et" : "Mahallemi seç ve bitir"),
+        h("button", { class: "btn btn-primary btn-xl", type: "submit" }, state.location?.lat ? "Kaydet ve devam et" : "Konumumu paylaş ve bitir"),
       ),
     );
   }
 
   function finish() {
     const p = state.profile;
-    if (!p?.full_name || !p?.gender || (!p?.neighborhood && !state.location?.neighborhood)) return stepProfile();
+    if (!p?.full_name || !p?.gender || (p?.approx_lat == null && !state.location?.lat)) return stepProfile();
     toast("Hoş geldiniz! Artık hem satabilir hem alışveriş yapabilirsiniz.");
     navigate(next, { replace: true });
   }

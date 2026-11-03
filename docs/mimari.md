@@ -46,7 +46,8 @@ Supabase
 - **Gece sessizliği:** `quiet_hours_enabled` açıksa 22:00–08:00 (İstanbul) arası gelen ilk mesaja otomatik "sabah dönecek" sistem notu düşer.
 - **Engelleme:** Engellenen kişi sohbet başlatamaz ve mesaj gönderemez (RLS + RPC).
 - **Doğrulama alanları** (`email_verified`, `phone_verified`, `identity_verified`, `cooperative_name`) kullanıcı tarafından değiştirilemez; e-posta doğrulaması Auth'tan otomatik gelir.
-- **KVKK:** Aydınlatma metni sade dilde ve sesli okunabilir; `delete_my_account()` hesabı ve bağlı tüm verileri tek düğmeyle siler.
+- **Konum (açık rıza):** Konum yalnızca cihazdan, tarayıcı izniyle alınır. İlk seferde kısa aydınlatma + "açık rıza veriyorum" onayı istenir (`profiles.location_consent_at`). Koordinat istemcide ~100 m'ye yuvarlanır; mahalle adı için yalnız bu yuvarlanmış değer OpenStreetMap Nominatim'e gönderilir, sunucu da kaydederken ~500 m kaydırır. İzin reddedilirse nasıl açılacağı anlatılır; listeden mahalle seçimi yedektir. Ayarlar → Konum → "Konum iznimi geri al" konumu cihazdan ve hesaptan siler.
+- **KVKK aydınlatma metni:** Tek kaynak `js/kvkk.js` (`KVKK_VERSION`), tam metin `#/aydinlatma` sayfasında. Üye olurken onaylanan sürüm ve zaman `profiles.kvkk_version` / `kvkk_accepted_at`'e yazılır. Sürüm değişince giriş yapmış herkese kapatılamayan bir onay ekranı çıkar (`js/consent.js`). Hesap ve tüm veriler `delete_my_account()` ile tek düğmeyle silinir.
 
 ## RPC fonksiyonları
 
