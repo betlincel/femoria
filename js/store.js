@@ -21,7 +21,7 @@ export const state = {
   profile: null,
   location: LS.get("location"), // { lat, lng, city, district, neighborhood, source }
   categories: [],
-  settings: { font_scale: 1, tts_enabled: true, notifications_enabled: true, ...LS.get("settings", {}) },
+  settings: { font_scale: 1, tts_enabled: false, notifications_enabled: true, ...LS.get("settings", {}) },
   sessionId: sessionStorage.getItem("femoria:sid") || crypto.randomUUID(),
 };
 sessionStorage.setItem("femoria:sid", state.sessionId);
@@ -110,7 +110,7 @@ export async function saveSettings(patch) {
 
 export function applySettings() {
   document.documentElement.style.setProperty("--font-scale", state.settings.font_scale || 1);
-  setTTS(state.settings.tts_enabled !== false);
+  setTTS(state.settings.tts_enabled === true); // sesli okuma isteğe bağlı, varsayılan kapalı
 }
 
 export async function signOut() {

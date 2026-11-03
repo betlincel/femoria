@@ -1,5 +1,5 @@
 // Mesajlar — sohbet listesi
-import { h, loading, emptyState, timeAgo } from "../ui.js";
+import { h, loading, emptyState, timeAgo, icon } from "../ui.js";
 import { state } from "../store.js";
 import { myConversations, photoUrl, subscribeIncoming } from "../api.js";
 import { requireAuth } from "../router.js";
@@ -7,7 +7,7 @@ import { requireAuth } from "../router.js";
 export default async function render(root) {
   root.append(h("h1", {}, "Mesajlar"));
   if (!state.user) {
-    root.append(emptyState("✉️", "Mesajlarınız burada görünür", "Mesajlaşmak için telefon numaranızla giriş yapın.",
+    root.append(emptyState("message", "Mesajlarınız burada görünür", "Mesajlaşmak için telefon numaranızla giriş yapın.",
       h("button", { class: "btn btn-primary", onclick: () => requireAuth("/mesajlar") }, "Giriş yap")));
     return;
   }
@@ -17,14 +17,14 @@ export default async function render(root) {
   async function load() {
     const convs = await myConversations().catch(() => []);
     if (!convs.length) {
-      list.replaceChildren(emptyState("💬", "Henüz mesajınız yok", "Beğendiğiniz bir ürünün sayfasında \"Satıcıya yaz\"a dokunun.",
+      list.replaceChildren(emptyState("message", "Henüz mesajınız yok", "Beğendiğiniz bir ürünün sayfasında \"Satıcıya yaz\"a dokunun.",
         h("a", { class: "btn btn-primary", href: "#/yakinimda" }, "Yakınımdakilere bak")));
       return;
     }
     list.replaceChildren(...convs.map((c) => {
       const img = photoUrl(c.products?.photos?.[0]);
       return h("a", { class: "card card-link conv-item", href: `#/sohbet/${c.id}` },
-        img ? h("img", { src: img, alt: "" }) : h("div", { class: "ph", "aria-hidden": "true" }, "🧺"),
+        img ? h("img", { src: img, alt: "" }) : h("div", { class: "ph", "aria-hidden": "true" }, icon("bag")),
         h("div", {},
           h("strong", {}, c.other.full_name || "Komşu"),
           h("div", { class: "meta" }, c.products?.title || "Ürün"),

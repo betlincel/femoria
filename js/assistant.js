@@ -1,7 +1,8 @@
 // Ayşe Abla — her ekranın sağ altında yüzen asistan.
 // Bölüm 3: persona, proaktif yardım tetikleyicileri ve "anket hissi vermeden" geri bildirim.
-import { h, $, speak, micButton } from "./ui.js";
-import { state, LS } from "./store.js";
+import { h, $, speak, stopSpeaking, ttsOn, canSpeak, micButton, icon } from "./ui.js";
+import { ayseAvatar } from "./icons.js";
+import { state, LS, saveSettings } from "./store.js";
 import { navigate, currentScreen, onRoute } from "./router.js";
 import { askAssistant, track, saveFeedback, logSearchRequest } from "./api.js";
 
@@ -29,27 +30,47 @@ function buildPanel() {
   const send = () => { const t = input.value.trim(); if (t) { input.value = ""; userSays(t); } };
   input.addEventListener("keydown", (e) => e.key === "Enter" && send());
 
+  // Sesli okuma isteğe bağlı: başlıktaki hoparlör düğmesi açar/kapatır.
+  const ttsBtn = h("button", { class: "icon-btn", type: "button" });
+  const drawTts = () => {
+    const on = ttsOn();
+    ttsBtn.replaceChildren(icon(on ? "volume" : "volume-x", 22));
+    ttsBtn.setAttribute("aria-pressed", String(on));
+    ttsBtn.setAttribute("aria-label", on ? "Sesli okumayı kapat" : "Sesli okumayı aç");
+    ttsBtn.title = on ? "Sesli okuma açık" : "Sesli okuma kapalı";
+  };
+  ttsBtn.addEventListener("click", async () => {
+    const on = !ttsOn();
+    await saveSettings({ tts_enabled: on });
+    if (!on) stopSpeaking();
+    drawTts();
+  });
+  drawTts();
+
   panel().replaceChildren(
     h("div", { class: "assistant-head" },
-      h("div", { class: "assistant-face", "aria-hidden": "true" }, lookEmoji()),
+      ayseAvatar(state.profile?.assistant_look, 48),
       h("div", { class: "who" }, h("strong", {}, "Ayşe Abla"), h("div", { class: "small muted" }, "Takıldığınız her an buradayım")),
-      h("button", { class: "close-btn", "aria-label": "Kapat", onclick: close }, "✕"),
+      canSpeak ? ttsBtn : null,
+      h("button", { class: "icon-btn", "aria-label": "Kapat", onclick: close }, icon("x", 22)),
     ),
     log,
     choices,
     h("div", { class: "assistant-input" },
       input,
       micButton({ size: "sm", label: "Konuşarak sorun", onText: (t) => (input.value = t), onEnd: (t) => t && (input.value = "", userSays(t)) }),
-      h("button", { class: "send-btn", "aria-label": "Gönder", onclick: send }, "➤"),
+      h("button", { class: "send-btn", "aria-label": "Gönder", onclick: send }, icon("send")),
     ),
   );
   for (const m of history) addBubble(m.role === "user" ? "me" : "them", m.content, false);
 }
 
-const lookEmoji = () => (state.profile?.assistant_look === "basi_acik" ? "👩🏻" : "🧕🏻");
-
 function addBubble(who, text, scroll = true) {
-  log.append(h("div", { class: `bubble ${who}` }, text));
+  // Ayşe Abla'nın her mesajında isteğe bağlı "Dinle" düğmesi (otomatik okuma kapalı olsa da)
+  const listen = who === "them" && canSpeak
+    ? h("button", { class: "listen-btn", "aria-label": "Bu mesajı sesli dinle", title: "Dinle", onclick: () => speak(text, { force: true }) }, icon("volume"))
+    : null;
+  log.append(h("div", { class: `bubble ${who}` }, h("span", { class: "text" }, text), listen));
   if (scroll) log.scrollTop = log.scrollHeight;
 }
 
@@ -62,7 +83,7 @@ export function open() {
 
 export function close() {
   panel().hidden = true;
-  window.speechSynthesis?.cancel();
+  stopSpeaking();
 }
 
 /** Ayşe Abla konuşur: balon + sesli okuma + seçenek düğmeleri. */
@@ -163,14 +184,14 @@ function nudge(text, buttons) {
 function snooze() {
   snoozed = true;
   sessionStorage.setItem("femoria:ayse-snooze", "1");
-  say("Tabii, acele yok. Ben buradayım; ihtiyacınız olursa çiçeğe dokunmanız yeterli.", [], { open: true });
+  say("Tabii, acele yok. Ben buradayım; ihtiyacınız olursa sağ alttaki Ayşe Abla düğmesine dokunmanız yeterli.", [], { open: true });
   setTimeout(close, 3500);
 }
 
 const later = { label: "Sonra", action: snooze };
 
 function firstVisit() {
-  say(`Hoş geldiniz! Ben Ayşe Abla. Burada size yardım edeceğim. 🌸`);
+  say("Hoş geldiniz! Ben Ayşe Abla. Burada size yardım edeceğim.");
   setTimeout(() => say("Bugün ne yapmak istersiniz?", [
     { label: "Bir şey satmak istiyorum", primary: true, action: () => {
       say("Ne güzel! Hadi ilkini birlikte satışa çıkaralım. 3 dakika sürer.", [
@@ -243,7 +264,7 @@ export function askFeedback(key, question, answers, onAnswer) {
     ...answers.map((a) => ({ label: a, action: async () => {
       await saveFeedback(key, a);
       if (onAnswer) onAnswer(a);
-      else { say("Söylediğiniz için teşekkürler. Bunu ekibe ilettim. 🌸"); setTimeout(close, 3000); }
+      else { say("Söylediğiniz için teşekkürler. Bunu ekibe ilettim."); setTimeout(close, 3000); }
     } })),
     { label: "Sonra", action: () => {
       LS.set("feedback_snooze_until", Date.now() + 7 * 864e5); // o hafta tekrar sorulmaz
@@ -262,7 +283,7 @@ function scheduleBrowseFeedback() {
         say("Söyleyin, ben bakayım. Ne arıyordunuz?", []);
         waitForSearch = true;
       } else {
-        say("Çok sevindim! İyi alışverişler. 🌸"); setTimeout(close, 2500);
+        say("Çok sevindim! İyi alışverişler."); setTimeout(close, 2500);
       }
     });
   }, 5 * 60e3);
@@ -279,25 +300,25 @@ export function assistantEvent(event, payload) {
     ]);
   }
   if (event === "product_published") {
-    setTimeout(() => askFeedback("urun_koyma", "Ürün koymak nasıldı?", ["😊 Kolaydı", "😐 İdare eder", "😟 Zorlandım"], (a) => {
+    setTimeout(() => askFeedback("urun_koyma", "Ürün koymak nasıldı?", ["Kolaydı", "İdare eder", "Zorlandım"], (a) => {
       if (a.includes("Zorlandım") || a.includes("İdare")) {
         say("Söylediğiniz için teşekkürler. En çok neresi zorladı?", ["Fotoğraf", "Anlatmak", "Fiyat", "Kendim söyleyeyim"].map((x) => ({
-          label: x, action: () => { saveFeedback("urun_koyma_zorluk", x); say("Bunu ekibe ilettim. Bir dahakine daha kolay olacak. 🌸"); setTimeout(close, 3000); },
+          label: x, action: () => { saveFeedback("urun_koyma_zorluk", x); say("Bunu ekibe ilettim. Bir dahakine daha kolay olacak."); setTimeout(close, 3000); },
         })));
-      } else { say("Çok sevindim! İlk satışınız hayırlı olsun. 🌸"); setTimeout(close, 3000); }
+      } else { say("Çok sevindim! İlk satışınız hayırlı olsun."); setTimeout(close, 3000); }
     }), 1500);
   }
   if (event === "first_sale") {
-    askFeedback("sohbet_deneyimi", `${name() ? name() + " Hanım, " : ""}müjde! İlk satışınız hayırlı olsun. 🎉 Alıcıyla konuşmak nasıldı?`,
-      ["😊 Kolaydı", "😐 İdare eder", "😟 Zorlandım"], (a) => {
-        if (a.includes("Kolay")) { say("Ne güzel! Böyle devam. 🌸"); setTimeout(close, 2500); return; }
+    askFeedback("sohbet_deneyimi", `${name() ? name() + " Hanım, " : ""}müjde! İlk satışınız hayırlı olsun. Alıcıyla konuşmak nasıldı?`,
+      ["Kolaydı", "İdare eder", "Zorlandım"], (a) => {
+        if (a.includes("Kolay")) { say("Ne güzel! Böyle devam."); setTimeout(close, 2500); return; }
         say("Söylediğiniz için teşekkürler. En çok neresi zorladı?", ["Ne yazacağımı bilemedim", "Ses kaydı", "Fiyat konuşmak"].map((x) => ({
-          label: x, action: () => { saveFeedback("sohbet_zorluk", x); say("Bunu ekibe ilettim. Sohbette hazır cevaplar size yardım eder. 🌸"); setTimeout(close, 3000); },
+          label: x, action: () => { saveFeedback("sohbet_zorluk", x); say("Bunu ekibe ilettim. Sohbette hazır cevaplar size yardım eder."); setTimeout(close, 3000); },
         })));
       });
   }
   if (event === "guide_read") {
-    setTimeout(() => askFeedback("rehber_etkisi", "Anlattıklarım işinize yaradı mı?", ["😊 Evet", "😐 Biraz", "😟 Hayır"]), 500);
+    setTimeout(() => askFeedback("rehber_etkisi", "Anlattıklarım işinize yaradı mı?", ["Evet", "Biraz", "Hayır"]), 500);
   }
 }
 

@@ -1,9 +1,10 @@
 // Yakınımda — varsayılan liste ("En yakından uzağa"); harita isteğe bağlı.
-import { h, loading, emptyState, micButton, toast } from "../ui.js";
+import { h, loading, emptyState, micButton, toast, icon, withIcon } from "../ui.js";
 import { state } from "../store.js";
-import { getCategories, nearbyProducts, RADIUS, logSearchRequest, track, photoUrl, categoryOf } from "../api.js";
+import { getCategories, nearbyProducts, RADIUS, logSearchRequest, track, photoUrl } from "../api.js";
 import { productCard, categoryTiles, askLocation, pickLocation } from "../components.js";
 import { navigate } from "../router.js";
+import { iconSVG, categoryIconName } from "../icons.js";
 
 const RADIUS_LABELS = [["mahallem", "Mahallem"], ["ilcem", "İlçem"], ["sehrim", "Şehrim"]];
 
@@ -16,9 +17,9 @@ export default async function render(root, { query }) {
 
   const listEl = h("div", { class: "stack" });
   const filtersEl = h("div", { class: "stack" });
-  const locLine = h("p", { class: "muted" });
+  const locLine = h("div", { class: "loc-line" });
   const mapEl = h("div", { class: "map", hidden: true });
-  const mapBtn = h("button", { class: "btn btn-secondary", "data-highlight": "haritada-gor", onclick: toggleMap });
+  const mapBtn = h("button", { class: "btn btn-secondary", style: { margin: "12px 0" }, "data-highlight": "haritada-gor", onclick: toggleMap });
 
   root.append(
     h("h1", {}, "Yakınımda"),
@@ -32,7 +33,7 @@ export default async function render(root, { query }) {
   if (!state.location?.lat) {
     const loc = await askLocation();
     if (!loc) {
-      listEl.replaceChildren(emptyState("📍", "Konum seçilmedi", "Size en yakın ürünleri göstermem için mahallenizi seçin.",
+      listEl.replaceChildren(emptyState("map-pin", "Konum seçilmedi", "Size en yakın ürünleri göstermem için mahallenizi seçin.",
         h("button", { class: "btn btn-primary", onclick: () => navigate("/yakinimda", { replace: true }) }, "Konum seç")));
       return;
     }
@@ -41,7 +42,7 @@ export default async function render(root, { query }) {
   const categories = await getCategories();
 
   function renderFilters() {
-    filtersEl.replaceChildren(
+    filtersEl.replaceChildren(...[
       categoryTiles(categories, {
         selected: category,
         onSelect: (c) => { category = category === c.slug ? null : c.slug; renderFilters(); load(); },
@@ -52,17 +53,18 @@ export default async function render(root, { query }) {
           onclick: () => { radiusKey = key; renderFilters(); load(); },
         }, label)),
       ),
-      search ? h("div", { class: "notice row" },
-        h("span", {}, `"${search}" için sonuçlar`),
-        h("button", { class: "btn btn-ghost", style: { flex: "0 0 auto", width: "auto" }, onclick: () => { search = ""; renderFilters(); load(); } }, "Temizle"),
+      search ? h("div", { class: "card row", style: { padding: "8px 8px 8px 16px" } },
+        h("span", { class: "row", style: { gap: "8px" } }, icon("search", 20), h("span", {}, `"${search}" için sonuçlar`)),
+        h("button", { class: "btn btn-ghost btn-inline", style: { flex: "0 0 auto" }, onclick: () => { search = ""; renderFilters(); load(); } }, "Temizle"),
       ) : null,
-    );
+    ].filter(Boolean));
     const l = state.location;
     locLine.replaceChildren(
-      `📍 ${[l.neighborhood, l.district].filter(Boolean).join(", ") || "Konumunuz"} `,
-      h("button", { class: "btn btn-ghost", style: { display: "inline-flex", width: "auto", minHeight: "44px", padding: "4px 8px" }, onclick: async () => { if (await pickLocation()) { renderFilters(); load(); } } }, "Değiştir"),
+      icon("map-pin", 18),
+      h("span", {}, [l.neighborhood, l.district].filter(Boolean).join(", ") || "Konumunuz"),
+      h("button", { class: "btn btn-ghost btn-inline", onclick: async () => { if (await pickLocation()) { renderFilters(); load(); } } }, "Değiştir"),
     );
-    mapBtn.replaceChildren(h("span", { class: "ico", "aria-hidden": "true" }, showMap ? "📋" : "🗺️"), showMap ? "Liste olarak gör" : "Haritada gör");
+    mapBtn.replaceChildren(...withIcon(showMap ? "list" : "map", showMap ? "Liste olarak gör" : "Haritada gör"));
   }
 
   let rows = [];
@@ -90,10 +92,10 @@ export default async function render(root, { query }) {
       const q = input.value.trim();
       if (!q) return;
       await logSearchRequest(q, category);
-      toast("Not aldım! Mahallenizdeki üreticilere haber vereceğiz. 🌸");
+      toast("Not aldım. Mahallenizdeki üreticilere haber vereceğiz.");
     };
     return h("div", { class: "card stack" },
-      emptyState("🧺", "Yakında bulamadım", "Ne aradığınızı söyleyin; mahallenizdeki üreticilere haber verelim."),
+      emptyState("search", "Yakında bulamadım", "Ne aradığınızı söyleyin; mahallenizdeki üreticilere haber verelim."),
       h("div", { class: "input-row" }, input, micButton({ size: "sm", onText: (t) => (input.value = t) })),
       h("button", { class: "btn btn-primary", onclick: submit }, "Haber ver"),
       radiusKey !== "sehrim" ? h("button", { class: "btn btn-secondary", onclick: () => { radiusKey = "sehrim"; renderFilters(); load(); } }, "Daha uzağa bak") : null,
@@ -118,10 +120,10 @@ export default async function render(root, { query }) {
     map.eachLayer((layer) => layer instanceof L.Circle && map.removeLayer(layer));
     // Gizlilik: tam nokta yok — mahalle büyüklüğünde (~500 m) yumuşak daire.
     for (const r of rows) {
-      const c = L.circle([r.approx_lat, r.approx_lng], { radius: 500, color: "#C2410C", weight: 1, fillColor: "#F59E0B", fillOpacity: 0.25 }).addTo(map);
+      const c = L.circle([r.approx_lat, r.approx_lng], { radius: 500, color: "#A8401C", weight: 1, fillColor: "#A8401C", fillOpacity: 0.15 }).addTo(map);
       const img = photoUrl(r.photos?.[0]);
       c.bindPopup(`<a href="#/urun/${r.id}" style="display:block;text-align:center;font:inherit">
-        ${img ? `<img src="${img}" alt="" style="width:120px;height:90px;object-fit:cover;border-radius:8px">` : `<div style="font-size:2rem">${categoryOf(r.category).icon}</div>`}
+        ${img ? `<img src="${img}" alt="" style="width:120px;height:90px;object-fit:cover;border-radius:8px">` : iconSVG(categoryIconName(r.category), 32)}
         <strong>${r.title.replace(/</g, "&lt;")}</strong><br>${Number(r.price).toLocaleString("tr-TR")} TL</a>`);
     }
     setTimeout(() => map.invalidateSize(), 50);

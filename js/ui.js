@@ -1,4 +1,7 @@
 // Küçük arayüz yardımcıları: DOM oluşturma, bildirim, alt sayfa, ses, görsel.
+import { icon } from "./icons.js";
+
+export { icon };
 
 /** h("button", { class: "btn", onclick }, "Metin") */
 export function h(tag, props = {}, ...children) {
@@ -112,9 +115,22 @@ export function loading(text = "Yükleniyor…") {
   );
 }
 
-export function emptyState(icon, title, text, action) {
+/** İkonlu, metinli düğme içeriği: [ikon, "Metin"] */
+export const withIcon = (name, label) => [icon(name), label];
+
+export function iconCircle(name, cls = "") {
+  return h("div", { class: `icon-circle ${cls}`, "aria-hidden": "true" }, icon(name));
+}
+
+export function statusScreen(name, text, { spin = false } = {}) {
+  const c = iconCircle(name);
+  if (spin) c.firstChild.classList.add("spin");
+  return h("div", { class: "status-screen" }, c, h("p", {}, text));
+}
+
+export function emptyState(iconName, title, text, action) {
   return h("div", { class: "empty" },
-    h("div", { class: "big", "aria-hidden": "true" }, icon),
+    iconCircle(iconName),
     h("h3", {}, title),
     text ? h("p", {}, text) : null,
     action || null,
@@ -122,11 +138,19 @@ export function emptyState(icon, title, text, action) {
 }
 
 // ---------- Ses: sesli okuma (TTS) ----------
-let ttsEnabled = true;
+// İsteğe bağlıdır ve varsayılan olarak kapalıdır. Kapalıyken yalnızca kullanıcı
+// "Dinle" düğmesine bastığında okunur ({ force: true }).
+let ttsEnabled = false;
 export const setTTS = (on) => (ttsEnabled = !!on);
+export const ttsOn = () => ttsEnabled;
+export const canSpeak = "speechSynthesis" in window;
 
-export function speak(text) {
-  if (!ttsEnabled || !("speechSynthesis" in window) || !text) return;
+export function stopSpeaking() {
+  if (canSpeak) window.speechSynthesis.cancel();
+}
+
+export function speak(text, { force = false } = {}) {
+  if ((!ttsEnabled && !force) || !canSpeak || !text) return;
   window.speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(String(text).replace(/[\u{1F300}-\u{1FAFF}]/gu, ""));
   u.lang = "tr-TR";
@@ -181,7 +205,7 @@ export function micButton({ onText, onEnd, size = "lg", label = "Konuşmak için
     class: size === "lg" ? "mic-btn" : "mic-sm",
     "aria-label": label,
     title: label,
-  }, "🎤");
+  }, icon("mic"));
 
   const start = () => {
     if (stop) return;
