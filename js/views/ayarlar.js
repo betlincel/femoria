@@ -3,19 +3,10 @@
 import { h, toast, ask, speak, sheet, icon, withIcon, canSpeak, stopSpeaking, GENDERS, hitap } from "../ui.js";
 import { ayseAvatar } from "../icons.js";
 import { state, saveSettings, updateProfile, signOut } from "../store.js";
-import { pickLocation, pageTitle } from "../components.js";
+import { askLocation, pickLocation, pageTitle } from "../components.js";
+import { withdrawLocation, hasLocationConsent } from "../store.js";
 import { deleteMyAccount } from "../api.js";
 import { navigate } from "../router.js";
-
-const KVKK_TEXT = [
-  "Femoria olarak bilgilerinizi korumak bizim sözümüzdür.",
-  "Sizden yalnızca e-posta adresinizi, adınızı ve mahallenizi alırız. Şifreniz şifrelenmiş olarak saklanır; biz de göremeyiz.",
-  "Ev adresiniz hiçbir zaman alınmaz ve kimseye gösterilmez. Konumunuz mahalle düzeyinde, kaydırılarak saklanır.",
-  "Mesajlarınızı yalnızca siz ve konuştuğunuz kişi görebilir. Şikayet edilen sohbetleri güvenliğiniz için ekibimiz inceleyebilir.",
-  "Uygulamayı geliştirmek için hangi ekranların kullanıldığını isimsiz olarak sayarız.",
-  "Ayşe Abla'ya yazdıklarınız cevap üretmek için yapay zeka hizmetine gönderilir; e-posta adresiniz gönderilmez.",
-  "Hesabınızı ve tüm bilgilerinizi istediğiniz an, bu sayfadaki tek düğmeyle silebilirsiniz.",
-];
 
 /** Liste satırı: ikon + başlık/açıklama + sağda anahtar ya da düğme */
 function item(ico, title, help, trailing, { danger = false } = {}) {
@@ -59,8 +50,7 @@ export default async function render(root, { query }) {
         toggle("Sesli okuma", s.tts_enabled === true, (v) => { saveSettings({ tts_enabled: v }); if (v) speak("Sesli okuma açık.", { force: true }); else stopSpeaking(); })) : null,
       item("bell", "Bildirimler", "Yeni mesaj gelince haber veririz.",
         toggle("Bildirimler", s.notifications_enabled !== false, (v) => saveSettings({ notifications_enabled: v }))),
-      item("map-pin", "Konum", loc?.neighborhood ? `${loc.neighborhood}, ${loc.district}` : "Seçilmedi",
-        h("button", { class: "btn btn-secondary btn-inline", onclick: async () => { if (await pickLocation()) navigate("/ayarlar", { replace: true }); } }, "Değiştir")),
+      locationBlock(loc),
       loggedIn
         ? h("button", { class: "list-item", onclick: async () => { await signOut(); toast("Çıkış yaptınız."); navigate("/"); } },
             icon("logout"), h("div", { class: "body" }, h("strong", {}, "Çıkış yap")))
@@ -75,7 +65,8 @@ export default async function render(root, { query }) {
       item("user-check", "Yalnız güvenilir alıcılar", "Sadece e-postası doğrulanmış ve daha önce alışveriş yapmış kişiler size yazabilir.",
         toggle("Yalnız güvenilir alıcılar", !!p.only_trusted_messages, guarded((v) => updateProfile({ only_trusted_messages: v })))),
       emergencyBlock(loggedIn, needLogin, !!query.acil),
-      h("button", { class: "list-item", onclick: kvkk }, icon("file"), h("div", { class: "body" }, h("strong", {}, "Aydınlatma metni (KVKK)")), icon("chevron-right")),
+      h("a", { class: "list-item", href: "#/aydinlatma" }, icon("file"), h("div", { class: "body" }, h("strong", {}, "Aydınlatma metni (KVKK)"),
+        state.profile?.kvkk_accepted_at ? h("div", { class: "small" }, `${new Date(state.profile.kvkk_accepted_at).toLocaleDateString("tr-TR")} tarihinde onayladınız`) : null), icon("chevron-right")),
     ),
 
     h("div", { class: "group-title" }, "Ayşe Abla"),
@@ -92,7 +83,8 @@ export default async function render(root, { query }) {
 
   if (query.acil) document.getElementById("guvenlik")?.scrollIntoView({ behavior: "smooth" });
   if (query.hitap) document.getElementById("hitap")?.scrollIntoView({ behavior: "smooth", block: "center" });
-  if (query.kvkk) kvkk();
+  if (query.kvkk) navigate("/aydinlatma", { replace: true });
+  if (query.konum) document.getElementById("konum")?.scrollIntoView({ behavior: "smooth", block: "center" });
 }
 
 // Hitap: "Hanım" / "Bey" / yalnız ad. Cinsiyet başkalarına gösterilmez.
@@ -116,6 +108,32 @@ function hitapBlock() {
     h("div", { class: "row", style: { gap: "14px" } }, icon("user"), h("strong", { style: { flex: 1 } }, "Cinsiyet ve hitap")),
     group,
     preview,
+  );
+}
+
+// Konum: cihazdan al / yenile, listeden seç, rızayı geri al (KVKK)
+function locationBlock(loc) {
+  const label = loc?.neighborhood || loc?.district ? [loc.neighborhood, loc.district].filter(Boolean).join(", ") : loc?.lat ? "Konumunuz alındı" : "Henüz paylaşılmadı";
+  const consent = hasLocationConsent();
+  const refresh = () => navigate("/ayarlar", { replace: true });
+  return h("div", { class: "list-block stack", id: "konum" },
+    h("div", { class: "row", style: { gap: "14px", alignItems: "flex-start" } },
+      icon("map-pin"),
+      h("div", { style: { flex: 1 } },
+        h("strong", {}, "Konum"),
+        h("div", { class: "small muted" }, label),
+        h("div", { class: "small muted" }, consent ? "Konum izni verdiniz. Tam konumunuz saklanmaz; ~500 m kaydırılır." : "Konum izni vermediniz."),
+      ),
+    ),
+    h("div", { class: "btn-group" },
+      h("button", { class: "btn btn-secondary", onclick: async () => { if (await askLocation()) refresh(); } }, ...withIcon("map-pin", loc?.lat ? "Konumu yenile" : "Konumumu paylaş")),
+      h("button", { class: "btn btn-secondary", onclick: async () => { if (await pickLocation()) refresh(); } }, ...withIcon("list", "Listeden seç")),
+    ),
+    consent || loc ? h("button", { class: "btn btn-danger", onclick: async () => {
+      if (!(await ask("Konum izninizi geri alalım mı?", "Kayıtlı konumunuz bu cihazdan ve hesabınızdan silinir. Yakınınızdaki ürünleri görmek için yeniden izin vermeniz gerekir. Tarayıcınızın konum iznini de tarayıcı ayarlarından kapatabilirsiniz.", "Evet, geri al"))) return;
+      try { await withdrawLocation(); toast("Konum izniniz geri alındı ve konumunuz silindi."); refresh(); }
+      catch { toast("Silinemedi, tekrar deneyin."); }
+    } }, ...withIcon("x", "Konum iznimi geri al")) : null,
   );
 }
 
@@ -155,9 +173,3 @@ function lookBlock(loggedIn, needLogin) {
   return h("div", { class: "list-block stack" }, h("strong", {}, "Görünüm"), wrap);
 }
 
-function kvkk() {
-  sheet("Aydınlatma metni", h("div", { class: "stack" },
-    ...KVKK_TEXT.map((t) => h("p", {}, t)),
-    canSpeak ? h("button", { class: "btn btn-secondary", onclick: () => speak(KVKK_TEXT.join(" "), { force: true }) }, withIcon("volume", "Sesli dinle")) : null,
-  ));
-}

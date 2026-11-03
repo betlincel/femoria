@@ -143,6 +143,14 @@ npm run db:start
 
 Çıktıdaki `API URL` ve `anon key` değerlerini `js/config.js`'e yazın. Yerelde gönderilen onay ve şifre yenileme e-postaları gerçek adrese gitmez; `http://127.0.0.1:54324` adresindeki test gelen kutusunda (Inbucket) görünür. Yapay zekayı yerelde denemek için `supabase/.env.example` dosyasını `supabase/.env` olarak kopyalayıp `npm run functions:serve` çalıştırın.
 
+## Aydınlatma metni (KVKK)
+
+Metin `js/kvkk.js` dosyasındadır. Yayına çıkmadan önce:
+
+- `KVKK_CONTACT` alanına başvurular için bir iletişim e-posta adresi yazın.
+- Metni bir hukukçuya kontrol ettirin.
+- Metni her değiştirdiğinizde `KVKK_VERSION`'ı güncelleyin (ör. tarih); giriş yapmış kullanıcılardan yeni metin için yeniden onay istenir.
+
 ## Yayınlama
 
 Ön yüz tamamen statik dosyalardan oluşur; PHP sunucusu gerekmez. Depoyu **Vercel**, **Netlify**, **Cloudflare Pages** veya **GitHub Pages**'e bağlamanız yeterli (derleme komutu yok, çıktı klasörü: kök dizin).

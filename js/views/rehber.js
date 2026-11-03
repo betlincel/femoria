@@ -56,7 +56,8 @@ const GUIDE = `
 <p>Mahallenizdeki el emeği ürünler bir dokunuş uzağınızda.</p>
 <ol>
   <li>Alttaki <strong>"Yakınımda"</strong> düğmesine dokunun.</li>
-  <li>Femoria size "Nerede olduğunuzu öğrenebilir miyim?" diye sorar. <strong>"Evet"</strong> derseniz size en yakın ürünler sıralanır. İstemezseniz <strong>"Kendim seçeceğim"</strong> deyip ilçenizi listeden seçin.</li>
+  <li>İlk seferde Femoria konumunuzu neden istediğini kısaca anlatır. Okuyup kutucuğu işaretleyin ve <strong>"Konumumu paylaş"</strong>a dokunun. Telefonunuz ya da tarayıcınız izin sorduğunda <strong>"İzin ver"</strong>i seçin; konumunuz kendiliğinden alınır ve mahallenizin adı bulunur. Tam adresiniz saklanmaz.</li>
+  <li>Konum paylaşmak istemezseniz <strong>"Mahallemi listeden seçeceğim"</strong>e dokunup ilinizi, ilçenizi ve mahallenizi seçebilirsiniz. İzninizi istediğiniz an <strong>Ayarlar → Konum</strong>dan geri alabilirsiniz.</li>
   <li>Ürünler en yakından en uzağa sıralanır. Her ürünün altında ne kadar uzakta olduğu yazar: "800 metre", "2 kilometre" gibi.</li>
   <li>Ne aradığınızı daraltmak isterseniz üstteki resimli kutulardan birine dokunun: <strong>Yemek, Örgü, Takı, Ev süsü…</strong></li>
   <li>Ne kadar uzağa bakmak istediğinizi seçin: <strong>"Mahallem"</strong>, <strong>"İlçem"</strong> ya da <strong>"Şehrim"</strong>.</li>

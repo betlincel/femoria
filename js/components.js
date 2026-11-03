@@ -2,7 +2,8 @@
 import { h, formatPrice, formatDistance, toast, sheet, icon, withIcon } from "./ui.js";
 import { categoryIconName } from "./icons.js";
 import { photoUrl, getLocations } from "./api.js";
-import { state, saveLocation } from "./store.js";
+import { state, saveLocation, hasLocationConsent, recordLocationConsent } from "./store.js";
+import { LOCATION_SUMMARY } from "./kvkk.js";
 
 export function pageTitle(text, { back } = {}) {
   return h("div", { class: "page-title" },
@@ -69,43 +70,150 @@ export function badgeChips(badges) {
   return h("div", { class: "badges" }, badges.map((b) => h("span", { class: "chip chip-ok", title: b.description }, icon("award"), b.name)));
 }
 
-// ---------- Konum: "Nerede olduğunuzu öğrenebilir miyim?" ----------
+// ---------- Konum: cihazdan, izinle ----------
+// Akış: (ilk kez) kısa aydınlatma + açık rıza onayı → tarayıcının konum izni → konum alınır →
+// mahalle adı bulunur → kaydedilir. İzin verilmezse nasıl açılacağı anlatılır; listeden seçim yedektir.
+
 function nearest(locations, lat, lng) {
   let best = null, bestD = Infinity;
   for (const l of locations) {
     const d = (l.lat - lat) ** 2 + ((l.lng - lng) * Math.cos((lat * Math.PI) / 180)) ** 2;
     if (d < bestD) { bestD = d; best = l; }
   }
-  return best;
+  // ~3 km'den uzaksa bu mahalle listesi kullanıcının bölgesini kapsamıyor demektir
+  return best && Math.sqrt(bestD) * 111 < 3 ? best : null;
 }
 
-/** Konum sorar; Promise<location|null> */
-export function askLocation() {
+const round3 = (x) => Math.round(x * 1000) / 1000; // ≈ 100 m
+
+/** Yuvarlanmış konumdan mahalle / ilçe / il adı (OpenStreetMap Nominatim). Olmazsa null. */
+async function reverseGeocode(lat, lng) {
+  try {
+    const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=16&addressdetails=1&accept-language=tr&lat=${round3(lat)}&lon=${round3(lng)}`;
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 8000);
+    const res = await fetch(url, { headers: { Accept: "application/json" }, signal: ctrl.signal });
+    clearTimeout(t);
+    if (!res.ok) return null;
+    const a = (await res.json()).address || {};
+    const clean = (v) => (v ? String(v).replace(/\s+(Mahallesi|Mah\.?)$/i, "").trim() : null);
+    const out = {
+      city: a.province || a.state || a.city || null,
+      district: a.town || a.county || a.city_district || a.district || a.municipality || null,
+      neighborhood: clean(a.suburb || a.quarter || a.neighbourhood || a.village || a.hamlet),
+    };
+    return out.city || out.district || out.neighborhood ? out : null;
+  } catch {
+    return null;
+  }
+}
+
+function getPosition() {
+  return new Promise((resolve, reject) => {
+    if (!("geolocation" in navigator)) return reject({ code: "unsupported" });
+    navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: false, timeout: 15000, maximumAge: 300000 });
+  });
+}
+
+/**
+ * Konumu cihazdan alır (gerekirse önce aydınlatma + rıza ekranı). Promise<location|null>
+ * Kullanım: Yakınımda, Ayarlar → Konum, ilk giriş, ürün yayınlama.
+ */
+export async function askLocation() {
+  if (!hasLocationConsent()) {
+    const choice = await consentSheet();
+    if (!choice) return null;          // vazgeçti
+    if (choice !== "gps") return choice; // listeden mahalle seçti (konum nesnesi)
+  }
+  return captureLocation();
+}
+
+/** Kısa aydınlatma + açık rıza onayı. Promise<"gps" | location (listeden) | null> */
+function consentSheet() {
   return new Promise((resolve) => {
-    const close = sheet("Nerede olduğunuzu öğrenebilir miyim?", (closeSheet) => h("div", { class: "stack" },
-      h("p", { class: "muted" }, "Size en yakın ürünleri göstermek için. Ev adresiniz kimseye görünmez; yalnızca mahalleniz görünür."),
-      h("button", { class: "btn btn-primary btn-xl", onclick: () => { closeSheet(); useGps().then(resolve); } },
-        withIcon("map-pin", "Evet, konumumu kullan")),
-      h("button", { class: "btn btn-secondary btn-xl", onclick: () => { closeSheet(); pickLocation().then(resolve); } },
-        withIcon("list", "Kendim seçeceğim")),
-    ));
+    let done = false;
+    const finish = (v) => { if (!done) { done = true; resolve(v); } };
+    const check = h("input", { type: "checkbox", id: "loc-consent", style: { width: "22px", height: "22px", flex: "0 0 auto", marginTop: "2px" } });
+    const go = h("button", { class: "btn btn-primary btn-xl", disabled: true }, ...withIcon("map-pin", "Konumumu paylaş"));
+    check.addEventListener("change", () => (go.disabled = !check.checked));
+    const close = sheet("Konumunuzu paylaşır mısınız?", (closeSheet) => {
+      go.addEventListener("click", async () => {
+        await recordLocationConsent();
+        closeSheet(); finish("gps");
+      });
+      return h("div", { class: "stack" },
+        h("p", { class: "muted", style: { margin: 0 } }, "Size en yakın ürünleri gösterebilmemiz için konumunuza ihtiyacımız var. Paylaşmadan önce lütfen okuyun:"),
+        h("dl", { class: "consent-list" },
+          ...LOCATION_SUMMARY.flatMap(([q, a]) => [h("dt", {}, q), h("dd", {}, a)])),
+        h("a", { href: "#/aydinlatma#konum", target: "_blank", rel: "noopener" }, "Aydınlatma metninin tamamını okuyun"),
+        h("label", { for: "loc-consent", class: "row consent-check" },
+          check,
+          h("span", { style: { flex: "1" } }, "Aydınlatma metnini okudum. Konumumun yukarıdaki amaçlarla işlenmesine açık rıza veriyorum."),
+        ),
+        go,
+        h("p", { class: "small muted center", style: { margin: 0 } }, "Düğmeye bastıktan sonra tarayıcınız da izin isteyecek; \"İzin ver\"i seçin."),
+        h("button", { class: "btn btn-ghost", onclick: () => {
+          done = true; // sayfa kapanınca "vazgeçti" sayılmasın
+          closeSheet();
+          pickLocation().then((l) => resolve(l || null));
+        } },
+          "Konum paylaşmadan, mahallemi listeden seçeceğim"),
+      );
+    });
+    // Arka plana dokunup kapatırsa
+    const obs = new MutationObserver(() => { if (!document.querySelector(".sheet")) { obs.disconnect(); finish(null); } });
+    obs.observe(document.getElementById("sheet-root"), { childList: true });
     void close;
   });
 }
 
-async function useGps() {
-  if (!("geolocation" in navigator)) return pickLocation();
-  const pos = await new Promise((res) => navigator.geolocation.getCurrentPosition(res, () => res(null), { enableHighAccuracy: false, timeout: 12000, maximumAge: 600000 }));
-  if (!pos) {
-    toast("Konumunuzu alamadım. Listeden seçebilirsiniz.");
-    return pickLocation();
+/** Tarayıcıdan konumu alır; başarısızsa nedenini anlatır. */
+async function captureLocation() {
+  const wait = sheet(null, h("div", { class: "status-screen" },
+    h("div", { class: "icon-circle", "aria-hidden": "true" }, icon("map-pin")),
+    h("p", {}, "Konumunuz alınıyor…"),
+    h("p", { class: "small muted" }, "Tarayıcınız izin isterse \"İzin ver\"i seçin."),
+  ));
+  let pos;
+  try {
+    pos = await getPosition();
+  } catch (err) {
+    wait();
+    return locationError(err);
   }
-  const { latitude: lat, longitude: lng } = pos.coords;
-  const locations = await getLocations().catch(() => []);
-  const n = nearest(locations, lat, lng);
-  const loc = { lat, lng, city: n?.city ?? null, district: n?.district ?? null, neighborhood: n?.neighborhood ?? null, source: "gps" };
+  const lat = round3(pos.coords.latitude);
+  const lng = round3(pos.coords.longitude);
+  const names = (await reverseGeocode(lat, lng)) || nearest(await getLocations().catch(() => []), lat, lng) || {};
+  wait();
+  const loc = { lat, lng, city: names.city ?? null, district: names.district ?? null, neighborhood: names.neighborhood ?? null, source: "gps" };
   await saveLocation(loc);
+  const label = [loc.neighborhood, loc.district].filter(Boolean).join(", ");
+  toast(label ? `Konumunuz alındı: ${label}` : "Konumunuz alındı.");
   return loc;
+}
+
+/** Konum alınamadığında: izin reddi / kapalı konum / zaman aşımı için yol gösterir. */
+function locationError(err) {
+  const denied = err?.code === 1;
+  const unsupported = err?.code === "unsupported" || !window.isSecureContext;
+  return new Promise((resolve) => {
+    sheet(denied ? "Konum izni verilmedi" : "Konumunuz alınamadı", (close) => h("div", { class: "stack" },
+      denied
+        ? h("div", { class: "stack", style: { gap: "6px" } },
+            h("p", { style: { margin: 0 } }, "Tarayıcınız konum iznini engellemiş. Açmak için:"),
+            h("ol", { style: { margin: 0, paddingLeft: "1.2rem" } },
+              h("li", {}, "Adres çubuğunun solundaki kilit (veya ayar) simgesine dokunun."),
+              h("li", {}, "\"Konum\" iznini \"İzin ver\" yapın."),
+              h("li", {}, "Sayfayı yenileyip tekrar deneyin."),
+            ),
+            h("p", { class: "small muted", style: { margin: 0 } }, "Telefonda cihazın konum (GPS) özelliğinin de açık olması gerekir."))
+        : unsupported
+          ? h("p", {}, "Bu tarayıcı konum paylaşmayı desteklemiyor ya da site güvenli bağlantıyla (https) açılmamış.")
+          : h("p", {}, "Cihazınızın konum özelliği kapalı olabilir ya da sinyal zayıf. Konumu açıp tekrar deneyin."),
+      h("button", { class: "btn btn-primary", onclick: () => { close(); captureLocation().then(resolve); } }, ...withIcon("refresh", "Tekrar dene")),
+      h("button", { class: "btn btn-secondary", onclick: () => { close(); pickLocation().then(resolve); } }, ...withIcon("list", "Mahallemi listeden seçeceğim")),
+    ));
+  });
 }
 
 /** İl → ilçe → mahalle listesinden seçim (konum izni vermeyenler için). */

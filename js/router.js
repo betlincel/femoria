@@ -47,7 +47,8 @@ export async function render() {
   root.replaceChildren();
   root.className = `app app-${match.r.layout}`;
   document.body.dataset.screen = match.r.screen;
-  document.getElementById("sheet-root")?.replaceChildren(); // önceki sayfanın açık alt sayfaları kapanır
+  // önceki sayfanın açık alt sayfaları kapanır (zorunlu onay ekranları hariç)
+  document.querySelectorAll("#sheet-root > :not([data-persistent])").forEach((el) => el.remove());
   window.scrollTo(0, 0);
   try {
     const mod = await match.r.load();

@@ -76,6 +76,11 @@ export async function loadProfile() {
     };
     LS.set("settings", state.settings);
     applySettings();
+    // Giriş yapmadan verilen konum rızasını profile taşı
+    const localConsent = LS.get("location_consent");
+    if (localConsent && !data.location_consent_at) {
+      updateProfile({ location_consent_at: localConsent.at }).catch(() => {});
+    }
     // Cihazda seçilmiş konum varsa ve profilde yoksa profile taşı.
     if (!data.neighborhood && state.location?.neighborhood) await saveLocation(state.location);
     else if (data.neighborhood && !state.location) {
@@ -108,6 +113,29 @@ export async function saveLocation(loc) {
       approx_lat: loc.lat, approx_lng: loc.lng,
       city: loc.city, district: loc.district, neighborhood: loc.neighborhood,
     }).catch(() => {});
+  }
+  emit();
+}
+
+// ---------- Konum rızası (KVKK açık rıza) ----------
+export const hasLocationConsent = () => !!(state.profile?.location_consent_at || LS.get("location_consent"));
+
+export async function recordLocationConsent() {
+  const at = new Date().toISOString();
+  LS.set("location_consent", { at });
+  if (state.user) await updateProfile({ location_consent_at: at }).catch(() => {});
+}
+
+/** Rızayı geri al: kayıtlı konum (cihazda ve sunucuda) silinir. */
+export async function withdrawLocation() {
+  LS.set("location_consent", null);
+  LS.set("location", null);
+  state.location = null;
+  if (state.user) {
+    await updateProfile({
+      location_consent_at: null, approx_lat: null, approx_lng: null,
+      city: null, district: null, neighborhood: null,
+    });
   }
   emit();
 }

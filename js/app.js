@@ -6,6 +6,7 @@ import { subscribeIncoming, track, getCategories } from "./api.js";
 import { initAssistant, assistantEvent } from "./assistant.js";
 import { esc, toast } from "./ui.js";
 import { iconSVG, ayseAvatarSVG, categoryIconName } from "./icons.js";
+import { ensureKvkkConsent } from "./consent.js";
 
 route(/^\/$/, "vitrin", () => import("./views/vitrin.js"));
 route(/^\/yakinimda$/, "yakinimda", () => import("./views/yakinimda.js"));
@@ -18,6 +19,7 @@ route(/^\/ayarlar$/, "profil", () => import("./views/ayarlar.js"), "narrow");
 route(/^\/rehber$/, "rehber", () => import("./views/rehber.js"), "medium");
 route(/^\/giris$/, "giris", () => import("./views/giris.js"), "narrow");
 route(/^\/sifre-yenile$/, "giris", () => import("./views/sifre.js"), "narrow");
+route(/^\/aydinlatma$/, "aydinlatma", () => import("./views/aydinlatma.js"), "medium");
 
 // Alt menüde aktif sekme
 onRoute(({ screen }) => {
@@ -45,6 +47,7 @@ let stopInbox = () => {};
 let lastUserId = null;
 onChange(() => {
   renderAvatar();
+  ensureKvkkConsent();
   if (state.passwordRecovery) {
     state.passwordRecovery = false;
     navigate("/sifre-yenile", { replace: true });
@@ -67,6 +70,7 @@ onRoute(({ screen }) => {
     document.getElementById("unread-dot").hidden = true;
     document.getElementById("unread-dot-top").hidden = true;
   }
+  setTimeout(ensureKvkkConsent, 0); // aydınlatma sayfasından çıkınca onay iste
   // Başlıktaki arama kutusu Yakınımda dışında temizlenir
   if (screen !== "yakinimda") document.getElementById("q").value = "";
   expandFab();
