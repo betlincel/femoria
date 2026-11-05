@@ -14,7 +14,8 @@ function featureCard({ ico, title, text, href, warm = false, children = [] }) {
   );
 }
 
-// Afişin sağındaki görsel: büyük tek fotoğraf + altta ince şerit kolaj
+// Afişin sağındaki görsel: büyük tek fotoğraf + altta ince şerit kolaj.
+// Ürün yoksa el emeği etiketli editorial bir kolaj gösterilir.
 function heroArt(items) {
   const photos = items.map((p) => photoUrl(p.photos?.[0])).filter(Boolean).slice(0, 4);
   if (photos.length >= 1) {
@@ -27,10 +28,18 @@ function heroArt(items) {
       ),
     );
   }
+  // Boş durum: büyük marka panosu (etiket + ikon) + alta 3 kategori kiremidi
   return h("div", { class: "hero-art", "aria-hidden": "true" },
-    h("div", { class: "hero-feature hero-feature-empty" },
-      h("div", { class: "hero-empty-mark" }, icon("cat-kavanoz", 72)),
-      h("span", { class: "hero-empty-label" }, "Komşunuzun eli"),
+    h("div", { class: "hero-feature" },
+      h("div", { class: "hero-feature-mark" },
+        h("span", { class: "hero-mark-stamp" }, "№ 001"),
+        h("div", { class: "hero-mark-title" }, h("em", {}, "Mahallenin"), h("span", {}, "el emeği")),
+        h("div", { class: "hero-mark-rule" }),
+        h("span", { class: "hero-mark-foot" }, "Komşunuzdan sofranıza"),
+      ),
+      h("div", { class: "hero-strip" },
+        ["cat-kavanoz", "cat-seramik", "cat-orgu"].map((n) => h("div", { class: "hero-strip-tile" }, icon(n, 42))),
+      ),
     ),
   );
 }
