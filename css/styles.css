@@ -604,6 +604,113 @@ details > summary::-webkit-details-marker { display: none; }
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
 
+/* ---------- Hover efektleri (sadece dokunmatik olmayan cihazlar) ---------- */
+@media (hover: hover) {
+  /* Ürün kartı */
+  .pcard { transition: transform .3s ease; }
+  .pcard:hover { opacity: 1; transform: translateY(-3px); }
+  .pcard:hover .pcard-title { color: var(--primary); }
+  .pcard:hover .pcard-img { border-color: var(--primary); }
+  .pcard-title { transition: color .2s ease; }
+  .pcard-img { transition: border-color .2s ease; }
+
+  /* Küçük ürün satırı */
+  .product-card { transition: background-color .15s ease; }
+  .product-card:hover { background: var(--surface-2); }
+
+  /* Düğmeler — ince kalkış */
+  .btn-primary, .btn-success { transition: background-color .15s ease, box-shadow .15s ease, transform .1s ease; }
+  .btn-primary:hover, .btn-success:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(185, 69, 90, .22); }
+  .btn-secondary:hover { border-color: var(--primary); }
+  .btn-ghost { transition: background-color .15s ease; }
+
+  /* Bağlantılar — alttan ince çizgi */
+  .section-title a { position: relative; }
+  .section-title a::after {
+    content: ""; position: absolute; left: 0; right: 0; bottom: -4px; height: 1px;
+    background: currentColor; transform: scaleX(0); transform-origin: left;
+    transition: transform .25s ease;
+  }
+  .section-title a:hover::after { transform: scaleX(1); }
+
+  /* Üst menü ve kategori bağlantıları */
+  .header-link { transition: background-color .15s ease, color .15s ease; }
+  .header-link:hover { color: var(--primary); }
+  .category-inner a { position: relative; }
+  .category-inner a::after {
+    content: ""; position: absolute; left: 14px; right: 14px; bottom: -1px; height: 2px;
+    background: var(--primary); transform: scaleX(0); transform-origin: left;
+    transition: transform .25s ease;
+  }
+  .category-inner a:hover { border-bottom-color: transparent; }
+  .category-inner a:hover::after { transform: scaleX(1); }
+
+  /* Ayar listesi */
+  .list-item { transition: background-color .15s ease; }
+  .list-item:hover { background: var(--surface-2); }
+
+  /* Mesaj listesi */
+  .conv-item { transition: background-color .15s ease; }
+  .conv-item:hover { background: var(--surface-2); }
+
+  /* Footer bağlantıları */
+  .footer-col a { transition: color .15s ease, padding-left .2s ease; }
+  .footer-col a:hover { padding-left: 6px; }
+
+  /* Kategori kutucukları — zaten renk değişimi var, ince vurgu ekle */
+  .tile { transition: background-color .2s ease, color .2s ease; }
+
+  /* Hızlı cevap düğmeleri */
+  .quick-replies button { transition: background-color .15s ease, border-color .15s ease; }
+  .quick-replies button:hover { background: var(--surface-2); border-color: var(--primary); }
+
+  /* İkon düğmeleri */
+  .icon-btn, .back-btn { transition: background-color .15s ease, border-color .15s ease; }
+  .icon-btn:hover, .back-btn:hover { background: var(--surface-2); border-color: var(--primary); }
+}
+
+/* ---------- Küçük telefon (iPhone SE vb.) ---------- */
+@media (max-width: 400px) {
+  .app { padding: 16px 12px 120px; }
+  .hero { padding: 24px 18px; }
+  .hero h1 { font-size: 1.7rem; }
+  .hero p { font-size: .95rem; margin-bottom: 16px; }
+  .pgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 10px; }
+  .pcard-title { font-size: .95rem; }
+  .pcard .price { font-size: 1.05rem; }
+  .tiles { grid-template-columns: repeat(2, 1fr); }
+  .tile { min-height: 96px; font-size: .88rem; }
+  .product-card { grid-template-columns: 96px 1fr; gap: 12px; }
+  .product-card .ph { width: 96px; height: 96px; }
+  .product-layout .product-info h1 { font-size: 1.7rem; }
+  h1 { font-size: 1.7rem; }
+  h2 { font-size: 1.2rem; }
+  .section { margin: 28px 0 10px; }
+  .btn { padding: 12px 16px; font-size: .95rem; }
+  .footer-inner { grid-template-columns: 1fr; gap: 20px; padding: 28px 16px 20px; }
+  .footer-brand { grid-column: auto; }
+}
+
+/* ---------- Tablet (geçiş aralığı) ---------- */
+@media (min-width: 640px) and (max-width: 899px) {
+  .app { padding: 32px 24px 120px; }
+  .pgrid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px 18px; }
+  .hero { padding: 40px 32px; }
+  .hero h1 { font-size: 2.4rem; }
+  .product-layout { grid-template-columns: 1fr 1fr; gap: 32px; }
+  .product-layout .buy-box { position: static; }
+  .footer-inner { grid-template-columns: 1.3fr 1fr 1fr 1fr; gap: 24px; }
+  .footer-brand { grid-column: auto; }
+}
+
+/* ---------- Geniş masaüstü ---------- */
+@media (min-width: 1200px) {
+  .app { padding: 32px 24px 64px; }
+  .header-inner { padding: 14px 32px; }
+  .footer-inner { padding: 48px 32px 28px; }
+  .pgrid.pgrid-4 { gap: 32px 24px; }
+}
+
 /* Vitrin afişi */
 .hero-actions { display: flex; flex-direction: column; gap: 10px; }
 .hero h1 + h1 { margin-top: -6px; }
