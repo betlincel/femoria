@@ -14,13 +14,25 @@ function featureCard({ ico, title, text, href, warm = false, children = [] }) {
   );
 }
 
-// Afişin sağındaki görsel: son ürün fotoğraflarından kolaj, yoksa kategori ikonları
+// Afişin sağındaki görsel: büyük tek fotoğraf + altta ince şerit kolaj
 function heroArt(items) {
   const photos = items.map((p) => photoUrl(p.photos?.[0])).filter(Boolean).slice(0, 4);
-  const cells = photos.length >= 3
-    ? photos.map((u) => h("img", { src: u, alt: "" }))
-    : ["cat-yemek", "cat-seramik", "cat-orgu", "cat-kavanoz"].map((n) => h("div", { class: "art-tile" }, icon(n, 44)));
-  return h("div", { class: "hero-art", "aria-hidden": "true" }, h("div", { class: "art-grid" }, cells));
+  if (photos.length >= 1) {
+    return h("div", { class: "hero-art", "aria-hidden": "true" },
+      h("div", { class: "hero-feature" },
+        h("img", { class: "hero-feature-img", src: photos[0], alt: "" }),
+        photos.length >= 3
+          ? h("div", { class: "hero-strip" }, photos.slice(1, 4).map((u) => h("img", { src: u, alt: "" })))
+          : null,
+      ),
+    );
+  }
+  return h("div", { class: "hero-art", "aria-hidden": "true" },
+    h("div", { class: "hero-feature hero-feature-empty" },
+      h("div", { class: "hero-empty-mark" }, icon("cat-kavanoz", 72)),
+      h("span", { class: "hero-empty-label" }, "Komşunuzun eli"),
+    ),
+  );
 }
 
 export default async function render(root) {
@@ -64,13 +76,17 @@ export default async function render(root) {
     ),
 
     h("section", { class: "section" },
-      h("div", { class: "section-title" }, h("h2", {}, "Nasıl çalışır?")),
+      h("div", { class: "section-title" }, h("h2", {}, "Nasıl çalışır")),
       h("div", { class: "how" },
         ...[
           ["Fotoğrafını çekin", "Ürününüzü pencere kenarında çekin; ışığını biz düzeltelim."],
           ["Sesle anlatın", "Konuşun, Ayşe Abla yazsın. Benzer ürünlerin fiyatını da söyler."],
           ["Komşunuz bulsun", "Mahallenizdeki alıcılar size yazar; anlaşınca sipariş kartı oluşur."],
-        ].map(([t, d], i) => h("div", { class: "card step-card" }, h("span", { class: "num" }, i + 1), h("div", {}, h("h3", {}, t), h("p", { class: "muted", style: { margin: 0 } }, d)))),
+        ].map(([t, d], i) => h("div", { class: "how-step" },
+          h("span", { class: "how-num" }, String(i + 1).padStart(2, "0")),
+          h("h3", {}, t),
+          h("p", { class: "muted" }, d),
+        )),
       ),
     ),
 
