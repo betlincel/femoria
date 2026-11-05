@@ -98,9 +98,12 @@ export default async function render(root, { query }) {
   const tabs = h("div", { class: "tabs", role: "tablist", style: { marginTop: "0" } });
 
   root.append(
-    h("div", { class: "auth-card card" },
-      h("h1", { class: "center", style: { marginBottom: "4px" } }, "Femoria'ya hoş geldiniz"),
-      h("p", { class: "center muted" }, "Satmak, mesajlaşmak ve alışveriş yapmak için hesabınıza girin."),
+    h("div", { class: "auth-card" },
+      h("div", { class: "auth-head" },
+        h("div", { class: "eyebrow" }, "Femoria"),
+        h("h1", { class: "auth-title" }, "Mahallenin pazarına hoş geldiniz"),
+        h("p", { class: "muted auth-sub" }, "Komşunuzun elinden sofranıza. Hesabınıza girin ya da aramıza katılın."),
+      ),
       tabs,
       body,
     ),

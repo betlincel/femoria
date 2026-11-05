@@ -159,7 +159,11 @@ p { margin: 0 0 .75rem; }
 .breadcrumb a { color: var(--text-soft); text-decoration: none; }
 .breadcrumb a:hover { color: var(--primary); text-decoration: underline; }
 .breadcrumb .icon { width: 14px; height: 14px; }
-.auth-card { padding: 28px 20px; box-shadow: var(--shadow); }
+.auth-card { max-width: 440px; margin: 20px auto; padding: 36px 28px; background: var(--surface); border: 1px solid var(--line); border-top: 2px solid var(--primary); }
+.auth-head { text-align: left; margin-bottom: 24px; }
+.auth-title { font-family: var(--font-serif); font-weight: 500; font-style: italic; font-size: 1.9rem; letter-spacing: -.015em; margin: 4px 0 10px; line-height: 1.15; }
+.auth-sub { margin: 0; max-width: 40ch; }
+@media (max-width: 400px) { .auth-card { padding: 28px 20px; margin: 10px auto; } .auth-title { font-size: 1.6rem; } }
 
 /* ---------- Alt bilgi ---------- */
 .site-footer { background: #1F1B18; color: #D6D0C9; margin-top: 48px; }
