@@ -1,5 +1,5 @@
 // Vitrin (Ana sayfa) — e-ticaret düzeni: afiş, kategoriler, yeni ürünler, nasıl çalışır, güven.
-import { h, greeting, loading, emptyState, icon, withIcon } from "../ui.js";
+import { h, greeting, loading, loadingGrid, emptyState, icon, withIcon } from "../ui.js";
 import { state } from "../store.js";
 import { getCategories, latestProducts, nearbyProducts, announcements, districtDemand, RADIUS, photoUrl } from "../api.js";
 import { productGrid, categoryTiles } from "../components.js";
@@ -48,7 +48,7 @@ export default async function render(root) {
   const name = state.profile?.full_name;
   const gender = state.profile?.gender;
   const loc = state.location;
-  const newArrivals = h("div", {}, loading());
+  const newArrivals = h("div", {}, loadingGrid(4));
   const extras = h("div", { class: "stack" });
   const heroArtSlot = h("div");
 

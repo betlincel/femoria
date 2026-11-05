@@ -1,6 +1,6 @@
 // Yakınımda — katalog düzeni: solda filtreler (konum, kategori, mesafe), sağda ürün ızgarası.
 // Varsayılan görünüm liste ("en yakından uzağa"); harita isteğe bağlı.
-import { h, loading, emptyState, micButton, toast, icon, withIcon } from "../ui.js";
+import { h, loading, loadingGrid, emptyState, micButton, toast, icon, withIcon } from "../ui.js";
 import { state } from "../store.js";
 import { getCategories, nearbyProducts, RADIUS, logSearchRequest, track, photoUrl } from "../api.js";
 import { productGrid, askLocation, pickLocation, breadcrumb } from "../components.js";
@@ -97,7 +97,7 @@ export default async function render(root, { query }) {
   function update() { renderHead(); renderFilters(); load(); }
 
   async function load() {
-    resultsEl.replaceChildren(loading());
+    resultsEl.replaceChildren(loadingGrid(9));
     const { lat, lng } = state.location;
     rows = await nearbyProducts({ lat, lng, radiusKm: RADIUS[radiusKey], category, limit: 100 }).catch(() => []);
     if (search) {

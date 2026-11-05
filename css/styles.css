@@ -501,8 +501,11 @@ textarea.input { min-height: 110px; resize: vertical; }
 .order-card dt { color: var(--text-soft); }
 .order-card dd { margin: 0; font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
 
-.conv-item { display: grid; grid-template-columns: 60px 1fr auto; gap: 12px; align-items: center; }
+.conv-item { display: grid; grid-template-columns: 64px 1fr auto; gap: 14px; align-items: center; padding: 14px 16px; }
 .conv-item img, .conv-item .ph { width: 64px; height: 64px; border-radius: 0; object-fit: cover; background: var(--surface-2); display: grid; place-items: center; color: var(--text-faint); }
+.conv-item strong { font-family: var(--font-serif); font-weight: 500; font-size: 1.05rem; letter-spacing: -.005em; display: block; margin-bottom: 2px; }
+.conv-item .meta { font-size: .85rem; }
+.conv-item .dot { background: var(--primary); border: 0; width: 8px; height: 8px; }
 
 /* ---------- Profil ---------- */
 .profile-head { display: flex; gap: 16px; align-items: center; }
@@ -637,6 +640,11 @@ textarea.input { min-height: 110px; resize: vertical; }
 .empty p { max-width: 42ch; margin: 8px auto 0; }
 .empty .btn { max-width: 320px; margin: 20px auto 0; }
 .skeleton { background: linear-gradient(90deg, #F2EDE9 25%, #F8F4F1 50%, #F2EDE9 75%); background-size: 200% 100%; animation: shimmer 1.2s infinite; border-radius: 0; min-height: 124px; }
+/* Ürün ızgarası iskeleti: gerçek kartın oranında kutular */
+.skeleton-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 14px; }
+.skeleton-grid .skeleton { aspect-ratio: 4 / 5; min-height: 0; }
+@media (min-width: 640px) { .skeleton-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px 20px; } }
+@media (min-width: 900px) { .skeleton-grid.cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 @keyframes shimmer { to { background-position: -200% 0; } }
 
 details > summary { list-style: none; }

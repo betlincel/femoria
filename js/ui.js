@@ -140,6 +140,13 @@ export function loading(text = "Yükleniyor…") {
   );
 }
 
+/** Ürün ızgarası yüklenirken gerçek kart oranında iskelet. */
+export function loadingGrid(count = 6, { cols4 = true } = {}) {
+  return h("div", { class: `skeleton-grid ${cols4 ? "cols-4" : ""}`, "aria-busy": "true" },
+    ...Array.from({ length: count }, () => h("div", { class: "skeleton" })),
+  );
+}
+
 /** İkonlu, metinli düğme içeriği: [ikon, "Metin"] */
 export const withIcon = (name, label) => [icon(name), label];
 
