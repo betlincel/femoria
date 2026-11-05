@@ -1,6 +1,10 @@
 // Ayşe Abla persona kartı — taslak Bölüm 3.1'den sistem talimatına çevrildi.
 
-export const CATEGORY_SLUGS = ["yemek", "orgu", "taki", "ev-susu", "kurutmalik", "diger"] as const;
+export const CATEGORY_SLUGS = [
+  "yemek", "kavanoz", "kurutmalik", "dondurulmus",
+  "orgu", "seramik", "ahsap", "bez-canta",
+  "taki", "kisiye-ozel", "ev-susu", "diger",
+] as const;
 
 export const SCREENS: Record<string, string> = {
   vitrin: "Vitrin (ana sayfa): selamlama, 'Bir şey sat' düğmesi, ürün türü kutucukları, 'Mahallenizden yeni gelenler'.",
@@ -45,4 +49,16 @@ export const DESCRIBE_PROMPT = `Kullanıcı el emeği ürününü sesle anlattı
 Yalnızca JSON döndür: {"title": "...", "description": "...", "category": "..."}
 - title: en fazla 6 kelime, her kelimenin baş harfi büyük, miktar varsa sona ekle (ör. "Köy Yumurtalı Ev Eriştesi – 500 g").
 - description: 1-3 kısa, sıcak cümle; kullanıcının söylediklerine sadık kal, bilgi uydurma.
-- category: şunlardan biri: ${CATEGORY_SLUGS.join(", ")} (yemek: reçel, salça, mantı, erişte, tarhana, turşu vb.; orgu: patik, atkı, bere, yelek; taki: kolye, bileklik, küpe; ev-susu: dantel, vazo, örtü, süs; kurutmalik: kurutulmuş sebze/meyve, biber, domates, nane).`;
+- category: şunlardan biri: ${CATEGORY_SLUGS.join(", ")}
+  - yemek: taze ev yemeği, erişte, tarhana, börek
+  - kavanoz: reçel, salça, turşu, sos, kahvaltılık
+  - kurutmalik: kurutulmuş sebze/meyve, biber, patlıcan, domates, nane
+  - dondurulmus: mantı, börek, mantar, dondurulmuş ürünler
+  - orgu: patik, atkı, bere, yelek
+  - seramik: bardak, kupa, tabak, vazo, el yapımı seramik
+  - ahsap: tahta tabak, kaşık, oyma, mutfak eşyası
+  - bez-canta: el dikimi çanta, cüzdan, bez torba
+  - taki: kolye, bileklik, küpe
+  - kisiye-ozel: isim/tarih işlemeli, kişiye özel sipariş
+  - ev-susu: dantel, örtü, biblo
+  - diger: yukarıdakilere girmeyen her şey`;

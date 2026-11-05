@@ -19,7 +19,7 @@ function heroArt(items) {
   const photos = items.map((p) => photoUrl(p.photos?.[0])).filter(Boolean).slice(0, 4);
   const cells = photos.length >= 3
     ? photos.map((u) => h("img", { src: u, alt: "" }))
-    : ["cat-yemek", "cat-orgu", "cat-taki", "cat-ev-susu"].map((n) => h("div", { class: "art-tile" }, icon(n, 44)));
+    : ["cat-yemek", "cat-seramik", "cat-orgu", "cat-kavanoz"].map((n) => h("div", { class: "art-tile" }, icon(n, 44)));
   return h("div", { class: "hero-art", "aria-hidden": "true" }, h("div", { class: "art-grid" }, cells));
 }
 

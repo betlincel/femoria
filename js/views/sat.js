@@ -353,11 +353,17 @@ export default async function render(root) {
 
 // ---------- Yapay zeka yokken: basit anlama ----------
 const KEYWORDS = {
-  yemek: ["reçel", "salça", "mantı", "erişte", "tarhana", "turşu", "börek", "pekmez", "bal", "yufka", "kek", "kurabiye", "sos", "yemek", "baklava", "sarma", "yaprak"],
+  kavanoz: ["reçel", "salça", "turşu", "sos", "kahvaltılık", "marmelat", "bal", "pekmez", "kavanoz"],
+  kurutmalik: ["kuru", "kurutulmuş", "kurutmalık", "biber", "patlıcan", "nane", "kekik", "pestil", "kuşburnu", "domates"],
+  dondurulmus: ["mantı", "börek", "yufka", "poğaça", "dondurulmuş", "donmuş"],
+  yemek: ["erişte", "tarhana", "ev yemeği", "yemek", "kurabiye", "kek", "baklava", "sarma", "yaprak"],
   orgu: ["örgü", "patik", "atkı", "bere", "yelek", "kazak", "yün", "şal", "hırka", "bebek"],
+  seramik: ["seramik", "çini", "porselen", "fincan", "kupa", "tabak", "vazo", "kil"],
+  ahsap: ["ahşap", "tahta", "oyma", "kaşık", "kesme tahtası", "kütük", "mdf"],
+  "bez-canta": ["bez çanta", "cüzdan", "torba", "kumaş çanta", "çanta"],
   taki: ["kolye", "bileklik", "küpe", "yüzük", "takı", "boncuk", "tesbih"],
-  "ev-susu": ["dantel", "vazo", "örtü", "süs", "yastık", "seramik", "mum", "tablo", "sepet", "çeyiz"],
-  kurutmalik: ["kuru", "kurutulmuş", "kurutmalık", "biber", "patlıcan", "nane", "kekik", "pestil", "kuşburnu"],
+  "kisiye-ozel": ["isim", "işleme", "kişiye özel", "kişiselleştir", "özel tasarım", "sipariş"],
+  "ev-susu": ["dantel", "örtü", "biblo", "süs", "yastık", "mum"],
 };
 
 export function localDescribe(text) {

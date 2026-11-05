@@ -8,10 +8,16 @@ const ok = ({ data, error }) => { if (error) throw error; return data; };
 
 export const FALLBACK_CATEGORIES = [
   { slug: "yemek", name: "Yemek", icon: "🍲" },
-  { slug: "orgu", name: "Örgü", icon: "🧶" },
-  { slug: "taki", name: "Takı", icon: "📿" },
-  { slug: "ev-susu", name: "Ev süsü", icon: "🏺" },
+  { slug: "kavanoz", name: "Kavanoz ürünler", icon: "🍯" },
   { slug: "kurutmalik", name: "Kurutmalık", icon: "🌶️" },
+  { slug: "dondurulmus", name: "Dondurulmuş", icon: "❄️" },
+  { slug: "orgu", name: "Örgü", icon: "🧶" },
+  { slug: "seramik", name: "Seramik", icon: "🏺" },
+  { slug: "ahsap", name: "Ahşap", icon: "🪵" },
+  { slug: "bez-canta", name: "Bez çanta", icon: "🛍️" },
+  { slug: "taki", name: "Takı", icon: "📿" },
+  { slug: "kisiye-ozel", name: "Kişiye özel", icon: "✨" },
+  { slug: "ev-susu", name: "Ev süsü", icon: "🎀" },
   { slug: "diger", name: "Diğer", icon: "🎁" },
 ];
 
