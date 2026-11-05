@@ -149,7 +149,7 @@ export default async function render(root, { query }) {
     map.eachLayer((layer) => layer instanceof L.Circle && map.removeLayer(layer));
     // Gizlilik: tam nokta yok — mahalle büyüklüğünde (~500 m) yumuşak daire.
     for (const r of rows) {
-      const c = L.circle([r.approx_lat, r.approx_lng], { radius: 500, color: "#A8401C", weight: 1, fillColor: "#A8401C", fillOpacity: 0.15 }).addTo(map);
+      const c = L.circle([r.approx_lat, r.approx_lng], { radius: 500, color: "#B9455A", weight: 1, fillColor: "#B9455A", fillOpacity: 0.15 }).addTo(map);
       const img = photoUrl(r.photos?.[0]);
       c.bindPopup(`<a href="#/urun/${r.id}" style="display:block;text-align:center;font:inherit">
         ${img ? `<img src="${img}" alt="" style="width:120px;height:90px;object-fit:cover;border-radius:8px">` : iconSVG(categoryIconName(r.category), 32)}
