@@ -214,9 +214,8 @@ export async function deleteMyAccount() {
 }
 
 // ---------- Arama talepleri ----------
-export async function logSearchRequest(query, category = null) {
+export async function logSearchRequest(query, category = null, loc = {}) {
   if (!isConfigured || !query?.trim()) return;
-  const loc = state.location || {};
   await supabase.from("search_requests").insert({
     query: query.trim().slice(0, 200), category, user_id: state.user?.id ?? null,
     city: loc.city ?? null, district: loc.district ?? null, neighborhood: loc.neighborhood ?? null,

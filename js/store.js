@@ -19,12 +19,14 @@ export const state = {
   session: null,
   user: null,
   profile: null,
-  location: LS.get("location"), // { lat, lng, city, district, neighborhood, source }
   categories: [],
   settings: { font_scale: 1, tts_enabled: false, notifications_enabled: true, ...LS.get("settings", {}) },
   sessionId: sessionStorage.getItem("femoria:sid") || crypto.randomUUID(),
 };
 sessionStorage.setItem("femoria:sid", state.sessionId);
+
+// Konum artık cihazda da tutulmuyor (yalnız ürünlerde); eski sürümlerden kalan kaydı temizle
+LS.set("location", null);
 
 const listeners = new Set();
 export const onChange = (fn) => (listeners.add(fn), () => listeners.delete(fn));
@@ -102,16 +104,6 @@ export async function updateProfile(patch) {
   return data;
 }
 
-/**
- * En son kullanılan konum: bir sonraki ürünü satarken öneri olarak gelir. Yalnız bu cihazda
- * saklanır; profile ya da sunucuya yazılmaz. Ürünlerin konumu her ürün için ayrıca kaydedilir.
- */
-export async function saveLocation(loc) {
-  state.location = loc;
-  LS.set("location", loc);
-  emit();
-}
-
 // ---------- Konum rızası (KVKK açık rıza) ----------
 export const hasLocationConsent = () => !!(state.profile?.location_consent_at || LS.get("location_consent"));
 
@@ -121,14 +113,6 @@ export async function recordLocationConsent() {
   if (state.user) await updateProfile({ location_consent_at: at }).catch(() => {});
 }
 
-/** Rızayı geri al: bu cihazdaki konum silinir, rıza kaydı kaldırılır. */
-export async function withdrawLocation() {
-  LS.set("location_consent", null);
-  LS.set("location", null);
-  state.location = null;
-  if (state.user) await updateProfile({ location_consent_at: null });
-  emit();
-}
 
 export async function saveSettings(patch) {
   state.settings = { ...state.settings, ...patch };

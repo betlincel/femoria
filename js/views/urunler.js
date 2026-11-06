@@ -173,7 +173,7 @@ export default async function render(root, { query }) {
       h("button", { class: "btn btn-primary", onclick: async () => {
         const q = input.value.trim();
         if (!q) return;
-        await logSearchRequest(q, f.category);
+        await logSearchRequest(q, f.category, { city: f.city, district: f.district, neighborhood: f.neighborhood });
         toast("Not aldık, teşekkürler. Hangi ürünlerin arandığını görmemize yardımcı oluyor.");
       } }, "Gönder"),
     );
