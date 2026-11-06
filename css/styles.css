@@ -805,3 +805,82 @@ select.place-select:disabled { cursor: not-allowed; background-color: var(--bg);
 .use-current:hover { border-color: var(--primary); background: var(--primary-soft); }
 .use-current .icon { flex: none; }
 .loc-clear { justify-self: start; border: 0; background: none; padding: 2px 0; color: var(--text-soft); font-size: .88rem; text-decoration: underline; cursor: pointer; }
+
+/* ---------- Sat: tek sayfalık ürün formu ---------- */
+.sell-form { display: grid; gap: 16px; }
+.sell-card { padding: 20px; }
+.sell-photo-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 4px; }
+.sell-photo-head h3 { margin: 0; font-size: 1rem; }
+.sell-photo-head h3 .muted { font-weight: 500; font-size: .9rem; }
+.sell-photo-head .chip { border: 0; cursor: pointer; }
+.req { color: var(--danger, #B42318); }
+.photo-grid { display: grid; grid-template-columns: 1.6fr 1fr 1fr; grid-template-rows: repeat(2, minmax(96px, auto)); gap: 10px; }
+.photo-upload {
+  grid-row: span 2; display: grid; place-content: center; justify-items: center; gap: 10px; padding: 16px; text-align: center;
+  border: 1.5px dashed var(--primary); border-radius: var(--radius-sm); background: var(--primary-soft);
+}
+.photo-upload.is-full { border-color: var(--line-strong); background: var(--surface-2); }
+.photo-upload p { margin: 0; }
+.photo-slot {
+  position: relative; display: grid; place-items: center; aspect-ratio: 1; min-height: 96px; padding: 0; overflow: hidden;
+  border: 1.5px dashed var(--line-strong); border-radius: var(--radius-sm); background: var(--surface); color: var(--text-faint); cursor: pointer;
+}
+.photo-slot:not(.filled):hover { border-color: var(--primary); color: var(--primary); }
+.photo-slot:disabled { cursor: default; opacity: .5; }
+.photo-slot.filled { border-style: solid; border-color: var(--line); cursor: default; }
+.photo-slot img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.photo-slot .cover { position: absolute; left: 6px; bottom: 6px; padding: 2px 8px; border-radius: 999px; background: rgba(28, 25, 23, .72); color: #fff; font-size: .72rem; font-weight: 700; }
+.photo-del { position: absolute; top: 6px; right: 6px; width: 28px; height: 28px; display: grid; place-items: center; border: 0; border-radius: 50%; background: rgba(255, 255, 255, .92); color: var(--text); cursor: pointer; box-shadow: 0 1px 4px rgba(0, 0, 0, .2); }
+.ai-banner { display: flex; align-items: center; gap: 12px; margin-top: 16px; padding: 12px 14px; border-radius: var(--radius-sm); background: #EAF1FB; color: #1E3A5F; }
+.ai-banner > .icon { flex: none; color: #2F5E9E; }
+.ai-banner p { margin: 0; flex: 1; font-size: .9rem; }
+.ai-banner .mic-sm { flex: none; }
+.sell-section { margin-top: 22px; display: grid; gap: 14px; }
+.sell-section h2 { font-size: 1.05rem; margin: 0; padding-top: 18px; border-top: 1px solid var(--line); }
+.field { display: grid; gap: 4px; }
+.field-label { font-weight: 600; font-size: .95rem; margin-bottom: 4px; }
+.field-help { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; font-size: .8rem; color: var(--text-faint); }
+.field-help .counter { margin-left: auto; font-variant-numeric: tabular-nums; }
+.field-error { color: var(--danger, #B42318); font-size: .85rem; font-weight: 600; }
+.field.has-error .input, .field.has-error .loc-field, .field.has-error .seg, .field.has-error .photo-upload { border-color: var(--danger, #B42318); }
+.ffield { position: relative; }
+.ffield .input { padding-top: 24px; padding-bottom: 8px; min-height: 56px; }
+.ffield textarea.input { padding-top: 28px; min-height: 120px; }
+.ffield label {
+  position: absolute; left: 15px; top: 17px; margin: 0; font-weight: 500; color: var(--text-faint); pointer-events: none;
+  transition: top .15s ease, font-size .15s ease;
+}
+.ffield .input:focus + label, .ffield .input:not(:placeholder-shown) + label { top: 7px; font-size: .75rem; font-weight: 600; color: var(--text-soft); }
+.seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; border-radius: var(--radius-sm); }
+.seg button {
+  display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 52px; padding: 8px; cursor: pointer;
+  border: 1px solid var(--line-strong); border-radius: var(--radius-sm); background: var(--surface); color: var(--text); font-weight: 600; font-size: .92rem;
+}
+.seg button .icon { flex: none; color: var(--text-faint); }
+.seg button[aria-checked="true"] { border-color: var(--primary); background: var(--primary-soft); color: var(--primary-hover); box-shadow: inset 0 0 0 1px var(--primary); }
+.seg button[aria-checked="true"] .icon { color: var(--primary); }
+.loc-field {
+  width: 100%; min-height: 56px; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 14px; cursor: pointer; text-align: left;
+  border: 1px solid var(--line-strong); border-radius: var(--radius); background: var(--surface); color: var(--text);
+}
+.loc-field:hover { border-color: var(--primary); }
+.loc-field-text { display: grid; gap: 2px; min-width: 0; }
+.loc-field-label { color: var(--text-faint); font-weight: 500; font-size: 1rem; }
+.loc-field.has-value .loc-field-label { font-size: .75rem; font-weight: 600; color: var(--text-soft); }
+.loc-field-text b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.loc-field > .icon { flex: none; color: var(--text-faint); }
+.link-btn { display: inline-flex; align-items: center; gap: 4px; padding: 0; border: 0; background: none; color: var(--primary); font-weight: 700; font-size: .85rem; cursor: pointer; }
+.link-btn .icon { width: 16px; height: 16px; }
+.tips-list { margin: 0; padding-left: 20px; display: grid; gap: 8px; }
+.sell-actions { display: grid; gap: 8px; }
+.sell-actions .small { justify-self: center; font-size: .85rem; }
+@media (max-width: 560px) {
+  .sell-card { padding: 16px; }
+  .photo-grid { grid-template-columns: repeat(4, 1fr); grid-template-rows: auto; gap: 8px; }
+  .photo-slot { min-height: 0; }
+  .photo-del { width: 24px; height: 24px; top: 4px; right: 4px; }
+  .photo-slot .cover { left: 4px; bottom: 4px; padding: 1px 6px; font-size: .66rem; }
+  .photo-upload { grid-column: 1 / -1; grid-row: auto; min-height: 120px; }
+  .seg { grid-template-columns: 1fr; }
+  .seg button { justify-content: flex-start; padding: 8px 14px; }
+}

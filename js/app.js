@@ -18,7 +18,7 @@ route(/^\/yakinimda$/, "urunler", async () => ({
     navigate(`/urunler${qs ? "?" + qs : ""}`, { replace: true });
   },
 }));
-route(/^\/sat$/, "sat", () => import("./views/sat.js"), "narrow");
+route(/^\/sat$/, "sat", () => import("./views/sat.js"), "medium");
 route(/^\/mesajlar$/, "mesajlar", () => import("./views/mesajlar.js"), "medium");
 route(/^\/sohbet\/([\w-]+)$/, "mesajlar", () => import("./views/sohbet.js"), "medium");
 route(/^\/urun\/([\w-]+)$/, "urun", () => import("./views/urun.js"));
