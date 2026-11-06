@@ -38,8 +38,3 @@ insert into public.locations (city, district, neighborhood, lat, lng) values
   ('Trabzon', 'Sürmene',   'Merkez',          40.9100, 40.1150)
 on conflict (city, district, neighborhood) do nothing;
 
-insert into public.announcements (title, body, city, district)
-select 'Telefonla Satış Atölyesi',
-       'Ayın son cumartesi, Kalkınma Muhtarlığı''nda saat 14:00. 1 saatte herkes ilk ürününü birlikte yüklüyor. Çayımız hazır!',
-       'Trabzon', 'Ortahisar'
-where not exists (select 1 from public.announcements where title = 'Telefonla Satış Atölyesi');

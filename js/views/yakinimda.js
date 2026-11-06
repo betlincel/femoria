@@ -121,12 +121,12 @@ export default async function render(root, { query }) {
       const q = input.value.trim();
       if (!q) return;
       await logSearchRequest(q, category);
-      toast("Not aldık. Mahallenizdeki üreticilere haber vereceğiz.");
+      toast("Not aldık, teşekkürler. Hangi ürünlerin arandığını görmemize yardımcı oluyor.");
     };
     return h("div", { class: "card stack" },
-      emptyState("search", "Yakınınızda bulamadık", "Ne aradığınızı söyleyin; mahallenizdeki üreticilere haber verelim."),
+      emptyState("search", "Yakınınızda bulamadık", "Daha uzağa bakabilir ya da ne aradığınızı bize yazabilirsiniz."),
       h("div", { class: "input-row" }, input, micButton({ size: "sm", onText: (t) => (input.value = t) })),
-      h("button", { class: "btn btn-primary", onclick: submit }, "Haber ver"),
+      h("button", { class: "btn btn-primary", onclick: submit }, "Gönder"),
       radiusKey !== "sehrim" ? h("button", { class: "btn btn-secondary", onclick: () => { radiusKey = "sehrim"; update(); } }, "Daha uzağa bak") : null,
     );
   }
