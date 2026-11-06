@@ -260,7 +260,7 @@ export default async function render(root) {
 
   // ---------- Ürün nerede? (konum ürün bazında; profilde tutulmaz) ----------
   function locationSection() {
-    // Bu cihazda alışveriş için seçilmiş bir konum varsa öneri olarak doldur (değiştirilebilir)
+    // Bu cihazda en son kullanılan konum varsa öneri olarak doldur (değiştirilebilir)
     if (!draft.location && state.location?.lat) { draft.location = { ...state.location, suggested: true }; save(); }
     const wrap = h("section", { class: "card stack", id: "urun-konum" });
     const set = (loc) => { if (loc) { draft.location = { ...loc, suggested: false }; save(); draw(); } };
@@ -276,8 +276,8 @@ export default async function render(root) {
           : h("p", { class: "notice", style: { margin: 0 } }, icon("alert", 20), "Henüz seçilmedi."),
         l?.precision === "il" ? h("p", { class: "small muted", style: { margin: 0 } }, `Mahalle bulunamadı; ${l.city} merkezi kullanılacak.`) : null,
         h("div", { class: "btn-group" },
-          h("button", { class: "btn btn-secondary", onclick: async () => set(await askLocation({ save: false })) }, ...withIcon("map-pin", "Şu anki konumum")),
-          h("button", { class: "btn btn-secondary", onclick: async () => set(await pickLocation({ save: false, title: "Ürün nerede?" })) }, ...withIcon("list", "Listeden seç")),
+          h("button", { class: "btn btn-secondary", onclick: async () => set(await askLocation()) }, ...withIcon("map-pin", "Şu anki konumum")),
+          h("button", { class: "btn btn-secondary", onclick: async () => set(await pickLocation({ title: "Ürün nerede?" })) }, ...withIcon("list", "Listeden seç")),
         ),
       ].filter(Boolean));
     };

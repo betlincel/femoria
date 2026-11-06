@@ -648,3 +648,16 @@ details > summary::-webkit-details-marker { display: none; }
 .pick-list { display: grid; grid-template-columns: 1fr; gap: 8px; max-height: 50vh; overflow-y: auto; padding: 2px; }
 .pick-list .btn { justify-content: flex-start; text-align: left; min-height: 52px; font-weight: 500; }
 @media (min-width: 640px) { .pick-list { grid-template-columns: 1fr 1fr; } }
+
+/* Ürünler: filtre paneli — masaüstünde yanda açık, telefonda "Filtrele" ile katlanır */
+.filters-box > summary { list-style: none; }
+.filters-box > summary::-webkit-details-marker { display: none; }
+.filters-box[open] > summary { margin-bottom: 12px; }
+.filters-summary { justify-content: flex-start; }
+.filters-summary span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (min-width: 900px) {
+  .filters-box > summary { display: none; }
+  .filters-box:not([open]) > .filters { display: flex; } /* masaüstünde her zaman görünür */
+  .catalog > aside { position: sticky; top: 150px; align-self: start; }
+  .catalog > aside .filters { position: static; }
+}

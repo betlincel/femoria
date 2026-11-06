@@ -53,18 +53,16 @@ const GUIDE = `
 </section>
 
 <section id="bulmak">
-<div class="section-head"><div class="feature-ico">${iconSVG("map-pin")}</div><h2>Bölüm 3: Yakınımdaki ürünleri nasıl bulurum?</h2></div>
-<p>Mahallenizdeki el emeği ürünler bir dokunuş uzağınızda.</p>
+<div class="section-head"><div class="feature-ico">${iconSVG("bag")}</div><h2>Bölüm 3: Ürünleri nasıl bulurum?</h2></div>
+<p>El emeği ürünler bir dokunuş uzağınızda.</p>
 <ol>
-  <li>Alttaki <strong>"Yakınımda"</strong> düğmesine dokunun.</li>
-  <li>İlk seferde Femoria konumunuzu neden istediğini kısaca anlatır. Okuyup kutucuğu işaretleyin ve <strong>"Konumumu paylaş"</strong>a dokunun. Telefonunuz ya da tarayıcınız izin sorduğunda <strong>"İzin ver"</strong>i seçin; konumunuz kendiliğinden alınır ve mahallenizin adı bulunur. Tam adresiniz saklanmaz.</li>
-  <li>Konum paylaşmak istemezseniz <strong>"Mahallemi listeden seçeceğim"</strong>e dokunup ilinizi, ilçenizi ve mahallenizi seçebilirsiniz. Bu konum yalnızca cihazınızda tutulur. İzninizi istediğiniz an <strong>Ayarlar → Alışveriş konumu</strong>ndan geri alabilirsiniz.</li>
-  <li>Ürünler en yakından en uzağa sıralanır. Her ürünün altında ne kadar uzakta olduğu yazar: "800 metre", "2 kilometre" gibi.</li>
-  <li>Ne aradığınızı daraltmak isterseniz üstteki resimli kutulardan birine dokunun: <strong>Yemek, Örgü, Takı, Ev süsü…</strong></li>
-  <li>Ne kadar uzağa bakmak istediğinizi seçin: <strong>"Mahallem"</strong>, <strong>"İlçem"</strong> ya da <strong>"Şehrim"</strong>.</li>
+  <li>Alttaki ya da üstteki <strong>"Ürünler"</strong> düğmesine dokunun. Bütün ürünler en yeniden eskiye sıralanır; konum sorulmaz.</li>
+  <li>Belirli bir yere bakmak isterseniz yandaki <strong>Konum</strong> bölümünden önce <strong>ilinizi</strong>, sonra <strong>ilçenizi</strong>, isterseniz <strong>mahallenizi</strong> seçin. Yalnızca oradaki ürünler kalır. <strong>"Konumu temizle"</strong> ile yeniden tüm ürünlere dönersiniz.</li>
+  <li>Ne aradığınızı daraltmak isterseniz kategorilerden birine dokunun: <strong>Yemek, Örgü, Takı, Ev süsü…</strong></li>
+  <li>Bir şey arıyorsanız en üstteki arama kutusuna yazın: "mantı", "patik" gibi.</li>
   <li>Haritada görmek isterseniz <strong>"Haritada gör"</strong>e dokunun. Satıcıların yerleri tam adres olarak değil, mahalle büyüklüğünde yuvarlak bir alan olarak görünür.</li>
 </ol>
-<div class="tip">${iconSVG("sparkles")}<p><strong>Ayşe Abla'dan ipucu:</strong> Aradığınızı bulamadıysanız bana söyleyin: "Yakınımda ev mantısı var mı?" Ben sizin için bakarım.</p></div>
+<div class="tip">${iconSVG("sparkles")}<p><strong>Ayşe Abla'dan ipucu:</strong> Aradığınızı bulamadıysanız bana söyleyin: "Ev mantısı var mı?" Ben sizin için bakarım.</p></div>
 </section>
 
 <section id="mesajlasmak">

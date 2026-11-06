@@ -152,7 +152,7 @@ async function userSays(text, { echo = true } = {}) {
     setTimeout(() => highlight(res.highlight), 250);
   }
   if (res.search) {
-    navigate(`/yakinimda?q=${encodeURIComponent(res.search)}`);
+    navigate(`/urunler?q=${encodeURIComponent(res.search)}`);
   }
 }
 
@@ -166,7 +166,7 @@ function scripted(text) {
   if (/(fiyat|kaç lira|para)/.test(t))
     return { reply: "Ürün koyarken benzerlerinin fiyatını ben söylerim. Karar sizin.", buttons: ["Bir şey satmak istiyorum"] };
   if (/(alışveriş|almak|bak)/.test(t))
-    return { reply: "Yakınınızdaki ürünler \"Yakınımda\" düğmesinde. Oraya dokunun.", highlight: "nav-yakinimda" };
+    return { reply: "Tüm ürünler \"Ürünler\" düğmesinde. Yandan il ve ilçe seçebilirsiniz.", highlight: "nav-urunler" };
   if (/(nasıl|öğren|rehber|kitap)/.test(t))
     return { reply: "Size küçük bir kitapçık hazırladım. Birlikte okuyalım mı?", buttons: ["Rehberi aç"] };
   const m = t.match(/(?:yakınımda|var mı|arıyorum|lazım)\s*(.*)/);
@@ -204,8 +204,8 @@ function firstVisit() {
       ]);
     } },
     { label: "Alışveriş yapmak istiyorum", action: () => {
-      say("Mahallenizdeki el emeği ürünlere bakalım.", [
-        { label: "Göster bana", primary: true, action: () => { close(); navigate("/yakinimda"); } }, later,
+      say("El emeği ürünlere bakalım.", [
+        { label: "Göster bana", primary: true, action: () => { close(); navigate("/urunler"); } }, later,
       ]);
     } },
     { label: "Sadece bakıyorum", action: () => { say("Tabii, rahatça gezin. Ben buradayım.", []); setTimeout(close, 2500); } },

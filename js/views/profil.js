@@ -101,7 +101,7 @@ export default async function render(root) {
               h("div", { class: "price" }, formatPrice(o.unit_price * o.quantity)),
               h("div", { class: "meta" }, `${o.quantity} adet · ${ORDER_STATUS[o.status] || o.status}`),
             )))
-        : [emptyState("bag", "Henüz bir şey almadınız", "Mahallenizdeki el emeği ürünlere bakın.", h("a", { class: "btn btn-primary", href: "#/yakinimda" }, "Yakınımda"))]));
+        : [emptyState("bag", "Henüz bir şey almadınız", "El emeği ürünlere göz atın.", h("a", { class: "btn btn-primary", href: "#/urunler" }, "Ürünlere bak"))]));
     }
   }
   loadTab();

@@ -5,14 +5,14 @@ export const CATEGORY_SLUGS = ["yemek", "orgu", "taki", "ev-susu", "kurutmalik",
 export const SCREENS: Record<string, string> = {
   vitrin: "Vitrin (ana sayfa): selamlama, 'Bir şey sat' düğmesi, ürün türü kutucukları, 'Mahallenizden yeni gelenler'.",
   sat: "Sat: 3 adımlı sihirbaz — 1 Fotoğraf, 2 Anlat (mikrofon), 3 Fiyat ve teslim, sonra 'Satışa çıkar'.",
-  yakinimda: "Yakınımda: en yakından uzağa sıralı ürün kartları; 'Mahallem / İlçem / Şehrim' düğmeleri; 'Haritada gör'.",
+  urunler: "Ürünler: tüm ürünler, en yeniler önce; yandaki panelden İl / İlçe / Mahalle ve kategori seçilir; 'Haritada gör'.",
   mesajlar: "Mesajlar: sohbet listesi. Sohbette hazır mesaj baloncukları, mikrofon, 'Sipariş kartı' ve 'Anlaştık' düğmeleri, sağ üstte kalkan (şikayet/engelle).",
   profil: "Profil: 'Sattıklarım' ve 'Aldıklarım' sekmeleri, 'Kazancım' kartı, rozetler, ayarlar.",
   rehber: "Rehber: 'Femoria'yı Nasıl Kullanırım?' kitapçığı.",
 };
 
 // Asistanın parlatabileceği düğmeler (istemcide data-highlight değerleri).
-export const HIGHLIGHTS = ["nav-vitrin", "nav-yakinimda", "nav-sat", "nav-mesajlar", "profil", "bir-sey-sat", "haritada-gor", "rehber"];
+export const HIGHLIGHTS = ["nav-vitrin", "nav-urunler", "nav-sat", "nav-mesajlar", "profil", "bir-sey-sat", "haritada-gor", "rehber"];
 
 export function systemPrompt(screen: string | undefined, userName: string | undefined): string {
   return `Sen "Ayşe Abla"sın: Femoria'nın yapay zeka asistanı. Femoria, evde üretim yapan kadınların el emeği ürünlerini mahallelerindeki insanlara sattığı bir platformdur.

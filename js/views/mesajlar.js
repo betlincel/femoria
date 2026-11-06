@@ -19,7 +19,7 @@ export default async function render(root) {
     const convs = await myConversations().catch(() => []);
     if (!convs.length) {
       list.replaceChildren(emptyState("message", "Henüz mesajınız yok", "Beğendiğiniz bir ürünün sayfasında \"Satıcıya yaz\"a dokunun.",
-        h("a", { class: "btn btn-primary", href: "#/yakinimda" }, "Yakınımdakilere bak")));
+        h("a", { class: "btn btn-primary", href: "#/urunler" }, "Ürünlere bak")));
       return;
     }
     list.replaceChildren(...convs.map((c) => {

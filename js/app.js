@@ -9,7 +9,14 @@ import { iconSVG, ayseAvatarSVG, categoryIconName } from "./icons.js";
 import { ensureKvkkConsent } from "./consent.js";
 
 route(/^\/$/, "vitrin", () => import("./views/vitrin.js"));
-route(/^\/yakinimda$/, "yakinimda", () => import("./views/yakinimda.js"));
+route(/^\/urunler$/, "urunler", () => import("./views/urunler.js"));
+// Eski "Yakınımda" bağlantıları yeni ürün listesine gider (kategori ve arama korunur)
+route(/^\/yakinimda$/, "urunler", async () => ({
+  default: (_root, { query }) => {
+    const qs = new URLSearchParams(Object.entries(query).filter(([k]) => ["kategori", "q"].includes(k))).toString();
+    navigate(`/urunler${qs ? "?" + qs : ""}`, { replace: true });
+  },
+}));
 route(/^\/sat$/, "sat", () => import("./views/sat.js"), "narrow");
 route(/^\/mesajlar$/, "mesajlar", () => import("./views/mesajlar.js"), "medium");
 route(/^\/sohbet\/([\w-]+)$/, "mesajlar", () => import("./views/sohbet.js"), "medium");
@@ -72,8 +79,8 @@ onRoute(({ screen }) => {
     document.getElementById("unread-dot-top").hidden = true;
   }
   setTimeout(ensureKvkkConsent, 0); // aydınlatma sayfasından çıkınca onay iste
-  // Başlıktaki arama kutusu Yakınımda dışında temizlenir
-  if (screen !== "yakinimda") document.getElementById("q").value = "";
+  // Başlıktaki arama kutusu ürün listesi dışında temizlenir
+  if (screen !== "urunler") document.getElementById("q").value = "";
   expandFab();
 });
 
@@ -94,11 +101,11 @@ function paintShell() {
   document.querySelectorAll("[data-icon]").forEach((el) => el.insertAdjacentHTML("afterbegin", iconSVG(el.dataset.icon, 24)));
 }
 
-// Başlıktaki arama: Yakınımda'da sonuçları gösterir (bulunamazsa talep panosuna yazılır)
+// Başlıktaki arama: sonuçlar "Tüm ürünler" sayfasında gösterilir
 document.getElementById("header-search").addEventListener("submit", (e) => {
   e.preventDefault();
   const q = document.getElementById("q").value.trim();
-  navigate(q ? `/yakinimda?q=${encodeURIComponent(q)}` : "/yakinimda");
+  navigate(q ? `/urunler?q=${encodeURIComponent(q)}` : "/urunler");
 });
 
 async function fillCategoryBar() {
@@ -106,7 +113,7 @@ async function fillCategoryBar() {
   const bar = document.getElementById("category-bar");
   for (const c of cats) {
     const a = document.createElement("a");
-    a.href = `#/yakinimda?kategori=${c.slug}`;
+    a.href = `#/urunler?kategori=${c.slug}`;
     a.innerHTML = iconSVG(categoryIconName(c.slug), 18);
     a.append(c.name);
     bar.append(a);
