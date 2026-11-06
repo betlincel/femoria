@@ -19,7 +19,7 @@ export default async function render(root, { params: [id] }) {
   const p = await getProduct(id).catch(() => null);
   root.replaceChildren();
   if (!p) {
-    root.append(h("div", { class: "card" }, emptyState("bag", "Bu ürün bulunamadı", "Satılmış ya da kaldırılmış olabilir.", h("a", { class: "btn btn-primary", href: "#/yakinimda" }, "Yakınımdakilere bak"))));
+    root.append(h("div", { class: "card" }, emptyState("bag", "Bu ürün bulunamadı", "Satılmış ya da kaldırılmış olabilir.", h("a", { class: "btn btn-primary", href: "#/urunler" }, "Ürünlere bak"))));
     return;
   }
 
@@ -35,7 +35,7 @@ export default async function render(root, { params: [id] }) {
   const verified = seller.email_verified || seller.phone_verified;
 
   root.append(
-    breadcrumb(["Ana sayfa", "#/"], [cat.name, `#/yakinimda?kategori=${p.category}`], [p.title]),
+    breadcrumb(["Ana sayfa", "#/"], [cat.name, `#/urunler?kategori=${p.category}`], [p.title]),
     h("div", { class: "product-layout" },
       // ----- Galeri -----
       h("div", { class: "product-gallery stack" },

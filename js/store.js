@@ -103,8 +103,8 @@ export async function updateProfile(patch) {
 }
 
 /**
- * Alışveriş yapanın konumu ("Yakınımda" sıralaması için). Yalnız bu cihazda saklanır;
- * profile ya da sunucuya yazılmaz. Ürünlerin konumu her ürün için ayrıca girilir.
+ * En son kullanılan konum: bir sonraki ürünü satarken öneri olarak gelir. Yalnız bu cihazda
+ * saklanır; profile ya da sunucuya yazılmaz. Ürünlerin konumu her ürün için ayrıca kaydedilir.
  */
 export async function saveLocation(loc) {
   state.location = loc;

@@ -12,7 +12,7 @@ mobil öncelikli web uygulaması + Supabase altyapısı + "Ayşe Abla" yapay zek
 | Taslak bölümü | Nerede |
 |---|---|
 | 1.1 Tasarım ilkeleri (56 px düğme, 18 px yazı, ikon+yazı, tek sütun) | `css/styles.css` |
-| 1.2 Ana ekranlar: Vitrin, Sat, Yakınımda, Mesajlar, Profil | `js/views/*.js` |
+| 1.2 Ana ekranlar: Vitrin, Sat, Ürünler, Mesajlar, Profil | `js/views/*.js` |
 | 1.3 İlk ürünü 3 adımda satışa çıkarma | `js/views/sat.js` |
 | 1.4 Sohbet: hazır mesajlar, sesli mesaj, sipariş kartı, IBAN kalkanı, gece sessizliği, şikayet/engelle | `js/views/sohbet.js`, `supabase/migrations/…_functions.sql` |
 | 1.5 Ölçülecek olaylar | `events` tablosu, `track()` çağrıları |

@@ -118,10 +118,10 @@ function getPosition() {
 
 /**
  * Konumu cihazdan alır (gerekirse önce aydınlatma + rıza ekranı). Promise<location|null>
- * Kullanım: Yakınımda, Ayarlar → Konum, ilk giriş, ürün yayınlama.
+ * Kullanım: ürün yayınlama ("Ürün nerede?"), Ayarlar → Konum.
  */
 /**
- * opts.save (varsayılan true): alınan konum alışveriş konumu olarak bu cihaza kaydedilsin mi.
+ * opts.save (varsayılan true): alınan konum "son kullanılan konum" olarak bu cihaza kaydedilsin mi.
  *   Ürün konumu seçilirken false verilir; konum yalnızca o ürüne yazılır.
  * opts.title: liste ekranının başlığı.
  */

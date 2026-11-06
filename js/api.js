@@ -15,7 +15,6 @@ export const FALLBACK_CATEGORIES = [
   { slug: "diger", name: "Diğer", icon: "🎁" },
 ];
 
-export const RADIUS = { mahallem: 2, ilcem: 10, sehrim: 40 };
 export const DELIVERY_LABEL = { elden: "Elden teslim", kargo: "Kargo", ikisi: "Elden veya kargo" };
 
 // ---------- Ölçüm (formdaki başarı ölçütleri) ----------
@@ -53,11 +52,28 @@ export function photoUrl(path) {
   return supabase?.storage.from("product-photos").getPublicUrl(path).data.publicUrl ?? null;
 }
 
-export async function nearbyProducts({ lat, lng, radiusKm = 10, category = null, limit = 50 }) {
-  if (!isConfigured) return [];
-  return supabase.rpc("nearby_products", {
-    p_lat: lat, p_lng: lng, p_radius_km: radiusKm, p_category: category, p_limit: limit,
-  }).then(ok);
+/** LIKE/ILIKE kalıbında özel karakterleri kaçır ("%", "_", "\\") */
+const likeEscape = (v) => String(v).replace(/[\\%_]/g, (c) => "\\" + c);
+
+/**
+ * Ürün listesi (en yeniden eskiye). Konum, kategori ve arama isteğe bağlıdır.
+ * Konum adları büyük/küçük harf duyarsız eşleşir (il, ilçe, mahalle).
+ * Döner: { rows, hasMore }
+ */
+export async function listProducts({ city = null, district = null, neighborhood = null, category = null, q = "", limit = 48, offset = 0 } = {}) {
+  if (!isConfigured) return { rows: [], hasMore: false };
+  let query = supabase.from("products").select(PRODUCT_COLS).eq("status", "satista");
+  if (category) query = query.eq("category", category);
+  if (city) query = query.ilike("city", likeEscape(city));
+  if (district) query = query.ilike("district", likeEscape(district));
+  if (neighborhood) query = query.ilike("neighborhood", likeEscape(neighborhood));
+  const words = String(q || "").trim().split(/\s+/).filter((w) => w.length > 1).slice(0, 4);
+  for (const w of words) query = query.ilike("title", `%${likeEscape(w)}%`);
+  const rows = await query
+    .order("published_at", { ascending: false })
+    .range(offset, offset + limit) // bir fazlasını iste: devamı var mı?
+    .then(ok);
+  return { rows: rows.slice(0, limit), hasMore: rows.length > limit };
 }
 
 export async function latestProducts({ city, district, limit = 6 } = {}) {

@@ -108,25 +108,21 @@ function hitapBlock() {
 
 // Konum: cihazdan al / yenile, listeden seç, rızayı geri al (KVKK)
 function locationBlock(loc) {
-  const label = loc?.neighborhood || loc?.district ? [loc.neighborhood, loc.district].filter(Boolean).join(", ") : loc?.lat ? "Konumunuz alındı" : "Henüz paylaşılmadı";
+  const label = loc?.neighborhood || loc?.district ? [loc.neighborhood, loc.district].filter(Boolean).join(", ") : loc?.lat ? "konum alındı" : "yok";
   const consent = hasLocationConsent();
   const refresh = () => navigate("/ayarlar", { replace: true });
   return h("div", { class: "list-block stack", id: "konum" },
     h("div", { class: "row", style: { gap: "14px", alignItems: "flex-start" } },
       icon("map-pin"),
       h("div", { style: { flex: 1 } },
-        h("strong", {}, "Alışveriş konumu"),
-        h("div", { class: "small muted" }, label),
-        h("div", { class: "small muted" }, "Yakınınızdaki ürünleri sıralamak için kullanılır ve yalnızca bu cihazda saklanır; profilinize kaydedilmez. Sattığınız ürünlerin konumunu her ürün için ayrıca seçersiniz."),
+        h("strong", {}, "Konum"),
+        h("div", { class: "small muted" }, `Son kullanılan: ${label}`),
+        h("div", { class: "small muted" }, "Ürün satarken öneri olarak gelir ve yalnızca bu cihazda saklanır; profilinize kaydedilmez. Her ürünün konumunu satarken ayrıca seçersiniz."),
         consent ? h("div", { class: "small muted" }, "Konum izni verdiniz.") : null,
       ),
     ),
-    h("div", { class: "btn-group" },
-      h("button", { class: "btn btn-secondary", onclick: async () => { if (await askLocation()) refresh(); } }, ...withIcon("map-pin", loc?.lat ? "Konumu yenile" : "Konumumu paylaş")),
-      h("button", { class: "btn btn-secondary", onclick: async () => { if (await pickLocation()) refresh(); } }, ...withIcon("list", "Listeden seç")),
-    ),
     consent || loc ? h("button", { class: "btn btn-danger", onclick: async () => {
-      if (!(await ask("Konum izninizi geri alalım mı?", "Bu cihazdaki konumunuz silinir. Yakınınızdaki ürünleri görmek için yeniden izin vermeniz gerekir. Satıştaki ürünlerinizin konumu ürünle birlikte kalır; ürünü vitrinden kaldırınca silinir. Tarayıcınızın konum iznini de tarayıcı ayarlarından kapatabilirsiniz.", "Evet, geri al"))) return;
+      if (!(await ask("Konum izninizi geri alalım mı?", "Bu cihazdaki konumunuz silinir; ürün satarken konum yeniden sorulur. Satıştaki ürünlerinizin konumu ürünle birlikte kalır; ürünü vitrinden kaldırınca silinir. Tarayıcınızın konum iznini de tarayıcı ayarlarından kapatabilirsiniz.", "Evet, geri al"))) return;
       try { await withdrawLocation(); toast("Konum izniniz geri alındı ve konumunuz silindi."); refresh(); }
       catch { toast("Silinemedi, tekrar deneyin."); }
     } }, ...withIcon("x", "Konum iznimi geri al")) : null,

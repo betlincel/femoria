@@ -1,7 +1,7 @@
 // Vitrin (Ana sayfa) — e-ticaret düzeni: afiş, kategoriler, yeni ürünler, nasıl çalışır, güven.
 import { h, greeting, loading, emptyState, icon, withIcon } from "../ui.js";
 import { state } from "../store.js";
-import { getCategories, latestProducts, nearbyProducts, RADIUS, photoUrl } from "../api.js";
+import { getCategories, latestProducts, photoUrl } from "../api.js";
 import { productGrid, categoryTiles } from "../components.js";
 
 function featureCard({ ico, title, text, href, warm = false, children = [] }) {
@@ -35,13 +35,13 @@ export default async function render(root) {
     h("section", { class: "hero" },
       h("div", { class: "hero-grid" },
         h("div", {},
-          h("div", { class: "eyebrow" }, loc?.neighborhood ? `${loc.neighborhood}, ${loc.district}` : "Mahallenin el emeği pazarı"),
+          h("div", { class: "eyebrow" }, "Mahallenin el emeği pazarı"),
           h("h1", {}, name ? `${greeting(name, gender)},` : "Komşunuzun elinden,"),
           h("h1", { style: { color: "var(--primary)" } }, name ? "bugün ne satıyoruz?" : "sofranıza ve evinize."),
-          h("p", {}, "Ev yemekleri, örgü, takı ve daha fazlası. Evde ürettiğinizi 3 adımda satışa çıkarın; mahallenizdeki el emeğini keşfedin."),
+          h("p", {}, "Ev yemekleri, örgü, takı ve daha fazlası. Evde ürettiğinizi 3 adımda satışa çıkarın; el emeği ürünleri keşfedin."),
           h("div", { class: "hero-actions" },
             h("a", { class: "btn btn-primary btn-xl", href: "#/sat", "data-highlight": "bir-sey-sat" }, withIcon("camera", "Ürün sat")),
-            h("a", { class: "btn btn-secondary btn-xl", href: "#/yakinimda" }, withIcon("map-pin", "Yakınımdakileri gör")),
+            h("a", { class: "btn btn-secondary btn-xl", href: "#/urunler" }, withIcon("bag", "Tüm ürünleri gör")),
           ),
         ),
         heroArtSlot,
@@ -49,16 +49,16 @@ export default async function render(root) {
     ),
 
     h("section", { class: "section" },
-      h("div", { class: "section-title" }, h("h2", {}, "Kategoriler"), h("a", { href: "#/yakinimda" }, "Tüm ürünler")),
-      categoryTiles(await getCategories(), { hrefFor: (c) => `#/yakinimda?kategori=${c.slug}` }),
+      h("div", { class: "section-title" }, h("h2", {}, "Kategoriler"), h("a", { href: "#/urunler" }, "Tüm ürünler")),
+      categoryTiles(await getCategories(), { hrefFor: (c) => `#/urunler?kategori=${c.slug}` }),
     ),
 
     extras,
 
     h("section", { class: "section" },
       h("div", { class: "section-title" },
-        h("h2", {}, loc?.neighborhood ? "Mahallenizden yeni gelenler" : "Yeni gelenler"),
-        h("a", { href: "#/yakinimda" }, "Tümünü gör"),
+        h("h2", {}, "Yeni gelenler"),
+        h("a", { href: "#/urunler" }, "Tümünü gör"),
       ),
       newArrivals,
     ),
@@ -86,16 +86,12 @@ export default async function render(root) {
   );
   root.querySelector('a[href="#/rehber"]').dataset.highlight = "rehber";
 
-  // Yeni gelenler: konum varsa en yakınlar, yoksa en yeniler
-  const items = await (loc?.lat
-    ? nearbyProducts({ lat: loc.lat, lng: loc.lng, radiusKm: RADIUS.ilcem, limit: 30 })
-        .then((rows) => rows.sort((a, b) => new Date(b.published_at) - new Date(a.published_at)).slice(0, 8))
-    : latestProducts({ limit: 8 })
-  ).catch(() => []);
+  // Yeni gelenler: tüm Türkiye'den en yeni ürünler
+  const items = await latestProducts({ limit: 8 }).catch(() => []);
   heroArtSlot.replaceWith(heroArt(items));
   newArrivals.replaceChildren(items.length
     ? productGrid(items)
-    : h("div", { class: "card" }, emptyState("bag", "Henüz ürün yok", "Mahallenizde ilk ürünü siz koyun.", h("a", { class: "btn btn-primary", href: "#/sat" }, "İlk ürünü koy"))));
+    : h("div", { class: "card" }, emptyState("bag", "Henüz ürün yok", "İlk ürünü siz koyun.", h("a", { class: "btn btn-primary", href: "#/sat" }, "İlk ürünü koy"))));
 
   // Cinsiyet seçmemiş (eski) hesaplara bir kerelik hatırlatma
   if (state.user && state.profile && !state.profile.gender) {
