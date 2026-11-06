@@ -7,6 +7,7 @@ import { initAssistant, assistantEvent } from "./assistant.js";
 import { esc, toast } from "./ui.js";
 import { iconSVG, ayseAvatarSVG, categoryIconName } from "./icons.js";
 import { ensureKvkkConsent } from "./consent.js";
+import { pickBrowsePlace, getBrowsePlace, placeLabel } from "./components.js";
 
 route(/^\/$/, "vitrin", () => import("./views/vitrin.js"));
 route(/^\/urunler$/, "urunler", () => import("./views/urunler.js"));
@@ -47,6 +48,9 @@ function renderAvatar() {
   else el.innerHTML = iconSVG("user", 22);
   document.getElementById("account-label").textContent = state.user ? (p?.full_name?.split(" ")[0] || "Hesabım") : "Giriş yap";
   document.querySelector('.header-link[data-route="profil"]').setAttribute("href", state.user ? "#/profil" : "#/giris");
+  // Giriş yapılmamışsa belirgin "Giriş" düğmesi, yapılmışsa hesap bağlantısı
+  document.getElementById("login-pill").hidden = !!state.user;
+  document.querySelector('.header-link[data-route="profil"]').classList.toggle("logged-out", !state.user);
   document.querySelector(".fab-face").innerHTML = ayseAvatarSVG(40);
 }
 
@@ -108,6 +112,20 @@ document.getElementById("header-search").addEventListener("submit", (e) => {
   navigate(q ? `/urunler?q=${encodeURIComponent(q)}` : "/urunler");
 });
 
+// Başlıktaki konum düğmesi: il / ilçe seç → o yerin ürünleri
+function paintPlace(place = getBrowsePlace()) {
+  document.getElementById("place-label").textContent = placeLabel(place);
+}
+document.getElementById("place-pill").addEventListener("click", async () => {
+  const place = await pickBrowsePlace();
+  if (!place) return;
+  const qs = new URLSearchParams();
+  if (place.city) qs.set("il", place.city);
+  if (place.district) qs.set("ilce", place.district);
+  navigate(`/urunler${qs.toString() ? "?" + qs : ""}`);
+});
+window.addEventListener("femoria:place", (e) => paintPlace(e.detail));
+
 async function fillCategoryBar() {
   const cats = await getCategories();
   const bar = document.getElementById("category-bar");
@@ -122,6 +140,7 @@ async function fillCategoryBar() {
 
 async function main() {
   paintShell();
+  paintPlace();
   fillCategoryBar();
   document.getElementById("config-banner").hidden = isConfigured;
   await initAuth();
