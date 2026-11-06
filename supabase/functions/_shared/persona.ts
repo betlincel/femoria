@@ -4,15 +4,15 @@ export const CATEGORY_SLUGS = ["yemek", "orgu", "taki", "ev-susu", "kurutmalik",
 
 export const SCREENS: Record<string, string> = {
   vitrin: "Vitrin (ana sayfa): selamlama, 'Bir şey sat' düğmesi, ürün türü kutucukları, 'Mahallenizden yeni gelenler'.",
-  sat: "Sat: 3 adımlı sihirbaz — 1 Fotoğraf, 2 Anlat (mikrofon), 3 Fiyat ve teslim, sonra 'Satışa çıkar'.",
-  urunler: "Ürünler: tüm ürünler, en yeniler önce; yandaki panelden İl / İlçe / Mahalle ve kategori seçilir; 'Haritada gör'.",
+  sat: "Sat: tek sayfalık form — üstte 'Fotoğraf yükle' (en çok 4), mavi kutuda mikrofon (sesle anlatınca ad, açıklama ve tür dolar), sonra Ürünün adı, Açıklama, 'Ne satıyorsunuz?' kutucukları, Fiyat (TL; altında benzer ürünlerin fiyat aralığı), Teslim şekli, Konum ('Şu anki konumum' ya da listeden), en altta 'Satışa çıkar'.",
+  urunler: "Ürünler: tüm ürünler, en yeniler önce; yandaki 'Konum' kartından İl / İlçe seçilir ya da 'Mevcut konumumu kullan' denir; kategori de seçilir; 'Haritada gör'.",
   mesajlar: "Mesajlar: sohbet listesi. Sohbette hazır mesaj baloncukları, mikrofon, 'Sipariş kartı' ve 'Anlaştık' düğmeleri, sağ üstte kalkan (şikayet/engelle).",
   profil: "Profil: 'Sattıklarım' ve 'Aldıklarım' sekmeleri, 'Kazancım' kartı, rozetler, ayarlar.",
   rehber: "Rehber: 'Femoria'yı Nasıl Kullanırım?' kitapçığı.",
 };
 
 // Asistanın parlatabileceği düğmeler (istemcide data-highlight değerleri).
-export const HIGHLIGHTS = ["nav-vitrin", "nav-urunler", "nav-sat", "nav-mesajlar", "profil", "bir-sey-sat", "haritada-gor", "rehber"];
+export const HIGHLIGHTS = ["nav-vitrin", "nav-urunler", "nav-sat", "nav-mesajlar", "profil", "bir-sey-sat", "fotograf-yukle", "haritada-gor", "rehber"];
 
 export function systemPrompt(screen: string | undefined, userName: string | undefined): string {
   return `Sen "Ayşe Abla"sın: Femoria'nın yapay zeka asistanı. Femoria, evde üretim yapan kadınların el emeği ürünlerini mahallelerindeki insanlara sattığı bir platformdur.

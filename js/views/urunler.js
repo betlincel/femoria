@@ -79,42 +79,64 @@ export default async function render(root, { query }) {
   }
 
   // ---------- Filtre paneli ----------
-  function select(id, label, options, value, onChange, { disabled = false, all = "Tümü" } = {}) {
-    const el = h("select", { class: "input", id, disabled, onchange: (e) => onChange(e.target.value || null) },
+  function select(id, label, options, value, onChange, { disabled = false, all } = {}) {
+    return h("select", { class: "input place-select", id, disabled, "aria-label": label, onchange: (e) => onChange(e.target.value || null) },
       h("option", { value: "" }, all),
       ...options.map((o) => h("option", { value: o, selected: o === value }, o)),
     );
-    return h("div", {}, h("label", { for: id, class: "small" }, label), el);
   }
 
-  async function renderFilters() {
-    const province = provinces.find((p) => p.n === f.city) || null;
-    const btn = (pressed, onclick, ...children) => h("button", { type: "button", "aria-pressed": String(pressed), onclick }, ...children);
+  // Konum kartı: başlık (katlanır) → İl / İlçe → mevcut konum
+  let locationOpen = true;
+  function locationCard() {
+    const usingCurrent = f.current && f.city;
+    // Mevcut konum kullanılırken kutular boş görünür; yer, alttaki yeşil kutuda yazar
+    const city = usingCurrent ? null : f.city;
+    const province = provinces.find((p) => p.n === city) || null;
+    const clear = () => { f.city = f.district = null; f.current = false; update(); };
     const useCurrent = async () => {
       const place = await useCurrentPlace();
       if (!place) return;
       Object.assign(f, { city: place.city, district: place.district, current: !!place.current });
       update();
     };
+    const body = h("div", { class: "loc-body", id: "loc-body", hidden: !locationOpen },
+      select("f-il", "İl", provinces.map((p) => p.n), city,
+        (v) => { f.city = v; f.district = null; f.current = false; update(); }, { all: "İl seçin" }),
+      select("f-ilce", "İlçe", province ? province.d : [], usingCurrent ? null : f.district,
+        (v) => { f.district = v; f.current = false; update(); }, { disabled: !province, all: "İlçe seçin" }),
+      h("hr", { class: "loc-sep" }),
+      usingCurrent
+        ? h("div", { class: "current-place", role: "status" },
+            h("span", { class: "cp-icon" }, icon("shield-check", 20)),
+            h("span", { class: "cp-text" },
+              h("b", {}, "Mevcut konum kullanılıyor"),
+              h("span", { class: "cp-place" },
+                h("span", {}, [f.district, f.city].filter(Boolean).join(", ")),
+                h("button", { type: "button", class: "cp-clear", "aria-label": "Mevcut konumu kaldır", title: "Kaldır", onclick: clear }, icon("x", 16)))))
+        : h("button", { type: "button", class: "use-current", onclick: useCurrent }, icon("map-pin", 18), h("span", {}, "Mevcut konumumu kullan")),
+      !usingCurrent && f.city
+        ? h("button", { type: "button", class: "loc-clear", onclick: clear }, "Konumu temizle")
+        : null,
+    );
+    const toggle = h("button", { type: "button", class: "loc-head", "aria-expanded": String(locationOpen), "aria-controls": "loc-body",
+      onclick: () => {
+        locationOpen = !locationOpen;
+        body.hidden = !locationOpen;
+        toggle.setAttribute("aria-expanded", String(locationOpen));
+      } }, h("span", {}, "Konum"), icon("chevron-down", 20));
+    return h("div", { class: "loc-card" }, toggle, body);
+  }
 
+  async function renderFilters() {
+    const btn = (pressed, onclick, ...children) => h("button", { type: "button", "aria-pressed": String(pressed), onclick }, ...children);
     filtersEl.replaceChildren(
       f.q ? h("div", { class: "card row", style: { padding: "8px 8px 8px 14px" } },
         h("span", { class: "row", style: { gap: "8px", flex: "1" } }, icon("search", 18), h("span", {}, f.q)),
         h("button", { class: "btn btn-ghost btn-inline", onclick: () => { f.q = ""; if (headerSearch) headerSearch.value = ""; update(); } }, "Temizle"),
       ) : null,
 
-      h("div", { class: "filter-group card stack", style: { padding: "12px 14px" } },
-        h("h3", {}, "Konum"),
-        select("f-il", "İl", provinces.map((p) => p.n), f.city,
-          (v) => { f.city = v; f.district = null; f.current = false; update(); }, { all: "Tüm Türkiye" }),
-        select("f-ilce", "İlçe", province ? province.d : [], f.district,
-          (v) => { f.district = v; f.current = false; update(); }, { disabled: !province, all: "Tüm ilçeler" }),
-        f.current && f.city
-          ? h("div", { class: "current-place", role: "status" }, icon("map-pin", 18), h("span", {}, "Mevcut konum kullanılıyor"))
-          : h("button", { class: "btn btn-secondary", onclick: useCurrent }, ...withIcon("map-pin", "Mevcut konumumu kullan")),
-        f.city ? h("button", { class: "btn btn-ghost btn-inline", style: { alignSelf: "flex-start" },
-          onclick: () => { f.city = f.district = null; f.current = false; update(); } }, ...withIcon("x", "Konumu temizle")) : null,
-      ),
+      locationCard(),
 
       h("div", { class: "filter-group" },
         h("h3", {}, "Kategori"),

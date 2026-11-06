@@ -1,305 +1,284 @@
-// Sat — "İlk ürünü 3 adımda satışa çıkarma" (taslak 1.3)
-//   1 Fotoğraf · 2 Anlat · 3 Fiyat
+// Sat — tek sayfalık "Ürün bilgileri" formu: fotoğraf, ad, açıklama, tür, fiyat, teslim ve konum
+// aynı ekranda girilir. Ayşe Abla'ya sesle anlatılırsa ad / açıklama / tür kendiliğinden dolar.
 // Üyelik ürün yüklemenin önüne konmaz: giriş/üyelik yalnızca "Satışa çıkar" anında istenir.
-// Yarım iş her adımda otomatik saklanır (localStorage).
-import { h, toast, micButton, prepareImage, formatPrice, speak, canListen, ask, icon, withIcon, iconCircle, statusScreen } from "../ui.js";
-import { categoryIconName } from "../icons.js";
+// Yarım iş her değişiklikte otomatik saklanır (localStorage).
+import { h, toast, micButton, prepareImage, formatPrice, canListen, ask, sheet, icon, withIcon, iconCircle, statusScreen, speak } from "../ui.js";
 import { state, LS } from "../store.js";
-import { getCategories, categoryOf, priceSuggestion, publishProduct, askAssistant, track } from "../api.js";
+import { getCategories, priceSuggestion, publishProduct, askAssistant, track } from "../api.js";
 import { pageTitle, categoryTiles, askLocation, pickLocation } from "../components.js";
 import { navigate, requireAuth } from "../router.js";
 import { assistantEvent } from "../assistant.js";
 
 const MAX_PHOTOS = 4;
+const TITLE_MAX = 120;
+const DESC_MAX = 2000;
 
 const newDraft = () => ({
-  step: 1, photos: [], transcript: "", title: "", description: "", category: null,
+  photos: [], transcript: "", title: "", description: "", category: null,
   price: null, delivery: null, suggestion: null, location: null, startedAt: Date.now(), updatedAt: Date.now(),
 });
 
+const DELIVERY = [["elden", "users", "Elden teslim"], ["kargo", "package", "Kargo"], ["ikisi", "repeat", "İkisi de"]];
+
 export default async function render(root) {
-  let draft = LS.get("draft") || newDraft();
-  let stream = null;
+  let draft = { ...newDraft(), ...(LS.get("draft") || {}) };
+  delete draft.step; // eski 3 adımlı taslaklardan kalan alan
   const categories = await getCategories();
-  const body = h("div", { class: "stack" });
-  const stepsEl = h("div", { class: "steps", "aria-label": "Adımlar" });
+  const form = h("form", { class: "sell-form", novalidate: true, onsubmit: (e) => { e.preventDefault(); publish(); } });
 
   if (!LS.get("draft")) track("listing_started");
 
-  const save = () => { draft.updatedAt = Date.now(); LS.set("draft", draft); };
-  const stopCamera = () => { stream?.getTracks().forEach((t) => t.stop()); stream = null; };
+  const save = () => {
+    draft.updatedAt = Date.now();
+    try { LS.set("draft", draft); } catch { toast("Telefonun hafızası doldu; taslak saklanamadı."); }
+  };
 
-  root.append(pageTitle("Satışa çıkar"), stepsEl, body);
+  root.append(pageTitle("Satışa çıkar"), form);
 
-  function go(step) {
-    stopCamera();
-    draft.step = step;
+  // ---------- Yardımcılar ----------
+  // Yüzen etiketli alan (etiket kutunun içinde; yazınca yukarı kayar)
+  function floatField({ id, label, required, control, help, counter }) {
+    const err = h("div", { class: "field-error", id: `${id}-err`, hidden: true });
+    return h("div", { class: "field", "data-field": id },
+      h("div", { class: "ffield" }, control, h("label", { for: id }, label, required ? h("span", { class: "req" }, " *") : null)),
+      h("div", { class: "field-help" }, h("span", {}, help || ""), counter || null),
+      err,
+    );
+  }
+  const counterFor = (el, max) => {
+    const c = h("span", { class: "counter" }, `${el.value.length}/${max}`);
+    el.addEventListener("input", () => (c.textContent = `${el.value.length}/${max}`));
+    return c;
+  };
+  function setError(id, msg) {
+    const box = form.querySelector(`[data-field="${id}"]`);
+    if (!box) return;
+    box.classList.toggle("has-error", !!msg);
+    const err = box.querySelector(".field-error");
+    err.hidden = !msg;
+    err.textContent = msg || "";
+  }
+
+  // ---------- Fotoğraflar ----------
+  const photoGrid = h("div", { class: "photo-grid" });
+  const photoCount = h("span", { class: "muted" });
+  const fileInput = h("input", { type: "file", accept: "image/*", multiple: true, hidden: true, onchange: async (e) => {
+    const files = [...(e.target.files || [])];
+    e.target.value = "";
+    const room = MAX_PHOTOS - draft.photos.length;
+    if (files.length > room) toast(`En çok ${MAX_PHOTOS} fotoğraf ekleyebilirsiniz.`);
+    for (const f of files.slice(0, room)) {
+      try { draft.photos = [...draft.photos, await prepareImage(f)]; } catch { toast("Bu fotoğraf açılamadı."); }
+    }
     save();
-    track("listing_step", { step });
-    draw();
-    window.scrollTo(0, 0);
-  }
+    setError("photos", null);
+    drawPhotos();
+  } });
 
-  function drawSteps() {
-    const labels = ["Fotoğraf", "Anlat", "Fiyat"];
-    stepsEl.replaceChildren(...labels.map((l, i) => {
-      const n = i + 1;
-      const cls = draft.step === n ? "active" : draft.step > n ? "done" : "";
-      return h("div", { class: `step ${cls}`, "aria-current": draft.step === n ? "step" : null },
-        h("span", { class: "bar" }),
-        h("span", { class: "label" }, h("span", { class: "n" }, draft.step > n ? icon("check") : n), l));
-    }));
-  }
-
-  const laterBtn = () => h("button", { class: "btn btn-ghost", onclick: () => {
-    save(); stopCamera(); toast("Sakladım. Kaldığınız yerden devam edersiniz."); navigate("/");
-  } }, "Sonra devam ederim");
-
-  const backBtn = (to) => h("button", { class: "btn btn-secondary", onclick: () => go(to) }, withIcon("chevron-left", "Geri"));
-
-  // ---------------- 1. Fotoğraf ----------------
-  async function stepPhoto(forceCamera = false) {
-    body.replaceChildren();
-    if (draft.photos.length && !forceCamera) {
-      const last = draft.photos.at(-1);
-      body.append(
-        h("div", { class: "camera" }, h("img", { src: last, alt: "Çektiğiniz fotoğraf" })),
-        h("p", { class: "center" }, "Işığını biraz düzelttim. Beğendiniz mi?"),
-        h("button", { class: "btn btn-success btn-xl", onclick: () => go(2) }, withIcon("check", "Güzel olmuş")),
-        h("button", { class: "btn btn-secondary", onclick: () => { draft.photos.pop(); save(); stepPhoto(true); } }, withIcon("refresh", "Tekrar çek")),
-        draft.photos.length < MAX_PHOTOS
-          ? h("button", { class: "btn btn-secondary", onclick: () => stepPhoto(true) }, withIcon("plus", `Bir fotoğraf daha (${draft.photos.length}/${MAX_PHOTOS})`))
-          : null,
-        draft.photos.length > 1 ? h("div", { class: "thumbs" }, draft.photos.map((p, i) => h("img", { src: p, alt: `Fotoğraf ${i + 1}` }))) : null,
-        laterBtn(),
+  function drawPhotos() {
+    photoCount.textContent = ` (${draft.photos.length}/${MAX_PHOTOS})`;
+    const full = draft.photos.length >= MAX_PHOTOS;
+    const uploader = h("div", { class: "photo-upload" + (full ? " is-full" : "") },
+      h("button", { type: "button", class: "btn btn-primary btn-inline", disabled: full, "data-highlight": "fotograf-yukle", onclick: () => fileInput.click() },
+        ...withIcon("camera", "Fotoğraf yükle")),
+      h("p", { class: "small muted" }, full ? "Fotoğraf sınırına ulaştınız." : h("span", {}, h("b", {}, "İpucu: "), "Gün ışığında, pencere kenarında çekin.")),
+    );
+    const slots = Array.from({ length: MAX_PHOTOS }, (_, i) => {
+      const src = draft.photos[i];
+      if (!src) return h("button", { type: "button", class: "photo-slot", "aria-label": "Fotoğraf ekle", disabled: full, onclick: () => fileInput.click() }, icon("plus", 20));
+      return h("div", { class: "photo-slot filled" },
+        h("img", { src, alt: `Fotoğraf ${i + 1}` }),
+        i === 0 ? h("span", { class: "cover" }, "Vitrin") : null,
+        h("button", { type: "button", class: "photo-del", "aria-label": `${i + 1}. fotoğrafı kaldır`, onclick: () => {
+          draft.photos = draft.photos.filter((_, j) => j !== i); save(); drawPhotos();
+        } }, icon("x", 16)),
       );
-      return;
-    }
-
-    const fileInput = h("input", { type: "file", accept: "image/*", capture: "environment", hidden: true, onchange: async (e) => {
-      const f = e.target.files?.[0];
-      if (f) addPhoto(await prepareImage(f));
-    } });
-    const galleryInput = h("input", { type: "file", accept: "image/*", hidden: true, onchange: async (e) => {
-      const f = e.target.files?.[0];
-      if (f) addPhoto(await prepareImage(f));
-    } });
-
-    const cam = h("div", { class: "camera" });
-    body.append(cam, fileInput, galleryInput);
-
-    try {
-      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment", width: { ideal: 1600 } }, audio: false });
-      const video = h("video", { autoplay: true, playsinline: true, muted: true });
-      video.srcObject = stream;
-      cam.append(video, h("div", { class: "frame" }), h("div", { class: "hint" }, "Ürünü bu kutunun içine koyun, pencere kenarında çekin"));
-      body.append(
-        h("button", { class: "shutter", "aria-label": "Fotoğraf çek", onclick: async () => {
-          const c = Object.assign(document.createElement("canvas"), { width: video.videoWidth, height: video.videoHeight });
-          // Kesik çizgili karenin içini kırp (kare, %76)
-          const side = Math.min(c.width, c.height) * 0.76;
-          const sx = (c.width - side) / 2, sy = (c.height - side) / 2;
-          const out = Object.assign(document.createElement("canvas"), { width: side, height: side });
-          out.getContext("2d").drawImage(video, sx, sy, side, side, 0, 0, side, side);
-          stopCamera();
-          addPhoto(await prepareImage(out.toDataURL("image/jpeg", 0.92)));
-        } }),
-        h("button", { class: "btn btn-secondary", onclick: () => galleryInput.click() }, withIcon("image", "Galeriden seç")),
-      );
-    } catch {
-      // Kamera izni yoksa telefonun kendi kamerası açılır.
-      cam.append(h("div", { class: "placeholder" }, icon("camera")), h("div", { class: "frame" }), h("div", { class: "hint" }, "Ürününüzü pencere kenarında, gün ışığında çekin"));
-      body.append(
-        h("button", { class: "btn btn-primary btn-xl", onclick: () => fileInput.click() }, withIcon("camera", "Fotoğraf çek")),
-        h("button", { class: "btn btn-secondary", onclick: () => galleryInput.click() }, withIcon("image", "Galeriden seç")),
-      );
-    }
-    if (draft.photos.length) body.append(h("button", { class: "btn btn-ghost", onclick: () => stepPhoto(false) }, "Vazgeç"));
-    body.append(laterBtn());
+    });
+    photoGrid.replaceChildren(uploader, ...slots);
   }
 
-  function addPhoto(dataUrl) {
-    draft.photos = [...draft.photos, dataUrl].slice(0, MAX_PHOTOS);
-    try { save(); } catch { toast("Telefonun hafızası doldu; fotoğraf saklanamadı."); }
-    stepPhoto(false);
+  function photoTips() {
+    sheet("Güzel fotoğraf için", h("div", { class: "stack" },
+      h("ul", { class: "tips-list" },
+        h("li", {}, "Pencere kenarında, gün ışığında çekin; flaş kullanmayın."),
+        h("li", {}, "Ürünü sade bir zemine (beyaz örtü, tahta masa) koyun."),
+        h("li", {}, "Ürün kareyi doldursun; bir de yakından çekin."),
+        h("li", {}, "İlk fotoğraf vitrinde görünür; en güzelini ilk ekleyin."),
+      ),
+      h("p", { class: "small muted" }, "Işığı ve rengi biz biraz düzeltiyoruz."),
+    ));
   }
 
-  // ---------------- 2. Anlat ----------------
-  function stepDescribe(editing = false) {
-    body.replaceChildren();
-    if (draft.title && !editing) {
-      // "Şöyle yazdım: ... Doğru mu?"
-      body.append(
-        h("div", { class: "card" },
-          h("div", { class: "eyebrow" }, "Şöyle yazdım"),
-          h("h2", {}, draft.title),
-          draft.description ? h("p", { class: "muted" }, draft.description) : null,
-          h("span", { class: "chip chip-brand" }, icon(categoryIconName(draft.category)), categoryOf(draft.category).name),
+  // ---------- Form ----------
+  function draw() {
+    const title = h("input", { class: "input", id: "f-title", placeholder: " ", maxlength: TITLE_MAX, value: draft.title,
+      oninput: (e) => { draft.title = e.target.value; save(); setError("f-title", null); },
+      onchange: () => refreshSuggestion() });
+    const desc = h("textarea", { class: "input", id: "f-desc", placeholder: " ", maxlength: DESC_MAX, rows: 4,
+      oninput: (e) => { draft.description = e.target.value; save(); } }, draft.description || "");
+    const price = h("input", { class: "input", id: "f-price", placeholder: " ", inputmode: "decimal", autocomplete: "off",
+      value: draft.price ?? "",
+      oninput: (e) => {
+        const v = e.target.value.replace(/[^\d,.]/g, "");
+        if (v !== e.target.value) e.target.value = v;
+        draft.price = v === "" ? null : Math.round(Number(v.replace(",", ".")) || 0);
+        save(); setError("f-price", null);
+      } });
+
+    const priceHelp = h("span", { id: "price-help" }, "Doğru fiyat daha hızlı satmanıza yardımcı olur.");
+    const priceField = floatField({ id: "f-price", label: "Fiyat (TL)", required: true, control: price });
+    priceField.querySelector(".field-help").replaceChildren(priceHelp);
+
+    // Tür
+    const tilesWrap = h("div");
+    const drawTiles = () => tilesWrap.replaceChildren(categoryTiles(categories, { selected: draft.category, onSelect: (c) => {
+      draft.category = c.slug; draft.suggestion = null; save(); setError("category", null); drawTiles(); refreshSuggestion();
+    } }));
+    drawTiles();
+
+    // Teslim
+    const delivery = h("div", { class: "seg", role: "radiogroup", "aria-label": "Teslim şekli" });
+    const drawDelivery = () => delivery.replaceChildren(...DELIVERY.map(([v, ico, label]) => h("button", {
+      type: "button", role: "radio", "aria-checked": String(draft.delivery === v),
+      onclick: () => { draft.delivery = v; save(); setError("delivery", null); drawDelivery(); },
+    }, icon(ico, 20), h("span", {}, label))));
+    drawDelivery();
+
+    // Konum
+    const locBox = h("div");
+    const setLoc = (loc) => { if (loc) { draft.location = { ...loc, suggested: false }; save(); setError("location", null); drawLoc(); } };
+    const drawLoc = () => {
+      const l = draft.location;
+      const label = l ? [l.neighborhood, l.district, l.city].filter(Boolean).join(", ") || "Konum alındı" : "";
+      locBox.replaceChildren(
+        h("button", { type: "button", class: "loc-field" + (l ? " has-value" : ""), onclick: async () => setLoc(await pickLocation({ title: "Ürün nerede?" })) },
+          h("span", { class: "loc-field-text" },
+            h("span", { class: "loc-field-label" }, "Konum", h("span", { class: "req" }, " *")),
+            l ? h("b", {}, label) : null),
+          icon("chevron-down", 20)),
+        h("div", { class: "field-help" },
+          h("span", {}, l?.precision === "il" ? `Mahalle bulunamadı; ${l.city} merkezi kullanılacak.` : "Alıcılar yalnız mahalle adını görür; tam adresiniz paylaşılmaz."),
+          h("button", { type: "button", class: "link-btn", onclick: async () => setLoc(await askLocation()) }, ...withIcon("map-pin", "Şu anki konumum"))),
+      );
+    };
+    drawLoc();
+
+    const voice = h("div", { class: "ai-banner", "aria-live": "polite" },
+      icon("sparkles", 20),
+      h("p", {}, canListen
+        ? h("span", {}, h("b", {}, "Ayşe Abla yazsın: "), "mikrofona basılı tutup ürününüzü anlatın; adını, açıklamasını ve türünü ben doldurayım.")
+        : h("span", {}, h("b", {}, "Ayşe Abla yazsın: "), "ürününüzü birkaç cümleyle açıklamaya yazın, \"Doldur\"a basın.")),
+      canListen
+        ? micButton({ size: "sm", label: "Ürününüzü anlatmak için basılı tutun", onEnd: (t) => t && understand(t) })
+        : h("button", { type: "button", class: "btn btn-secondary btn-inline", onclick: () => desc.value.trim() ? understand(desc.value.trim()) : toast("Önce açıklamaya birkaç cümle yazın.") }, "Doldur"),
+    );
+
+    const section = (t, ...kids) => h("section", { class: "sell-section" }, h("h2", {}, t), ...kids);
+
+    form.replaceChildren(
+      h("div", { class: "card sell-card" },
+        h("div", { class: "sell-photo-head" },
+          h("h3", {}, "Fotoğraf", h("span", { class: "req" }, " *"), photoCount),
+          h("button", { type: "button", class: "chip chip-brand", onclick: photoTips }, "Fotoğraf ipuçları")),
+        h("p", { class: "small muted", style: { margin: "0 0 12px" } }, `En az 1, en çok ${MAX_PHOTOS} fotoğraf. İlk fotoğraf vitrinde görünür.`),
+        h("div", { class: "field", "data-field": "photos" }, photoGrid, h("div", { class: "field-error", hidden: true })),
+        fileInput,
+        voice,
+
+        section("Ürün bilgileri",
+          floatField({ id: "f-title", label: "Ürünün adı", required: true, control: title,
+            help: "Ne olduğunu ve miktarını yazın (ör. Ev yapımı vişne reçeli – 400 g)", counter: counterFor(title, TITLE_MAX) }),
+          floatField({ id: "f-desc", label: "Açıklama", control: desc,
+            help: "Malzemesi, ölçüsü, nasıl yapıldığı gibi bilgileri ekleyin", counter: counterFor(desc, DESC_MAX) }),
+          h("div", { class: "field", "data-field": "category" },
+            h("div", { class: "field-label" }, "Ne satıyorsunuz?", h("span", { class: "req" }, " *")),
+            tilesWrap, h("div", { class: "field-error", hidden: true })),
+          priceField,
+          h("div", { class: "field", "data-field": "delivery" },
+            h("div", { class: "field-label" }, "Teslim şekli", h("span", { class: "req" }, " *")),
+            delivery, h("div", { class: "field-error", hidden: true })),
+          h("div", { class: "field", "data-field": "location", id: "urun-konum" }, locBox, h("div", { class: "field-error", hidden: true })),
         ),
-        h("p", { class: "center muted" }, "Doğru mu?"),
-        h("button", { class: "btn btn-success btn-xl", onclick: () => go(3) }, withIcon("check", "Tamam")),
-        h("button", { class: "btn btn-secondary", onclick: () => stepDescribe(true) }, withIcon("pencil", "Düzelteyim")),
-        backBtn(1), laterBtn(),
-      );
-      speak(`Şöyle yazdım: ${draft.title}. Doğru mu?`);
-      return;
-    }
-
-    if (editing) {
-      const title = h("input", { class: "input", id: "f-title", value: draft.title, maxlength: 120 });
-      const desc = h("textarea", { class: "input", id: "f-desc", maxlength: 2000 }, draft.description || "");
-      let cat = draft.category;
-      const tilesWrap = h("div");
-      const drawTiles = () => tilesWrap.replaceChildren(categoryTiles(categories, { selected: cat, onSelect: (c) => { cat = c.slug; drawTiles(); } }));
-      drawTiles();
-      body.append(
-        h("div", {}, h("label", { for: "f-title" }, "Ürünün adı"), h("div", { class: "input-row" }, title, micButton({ size: "sm", onText: (t) => (title.value = t) }))),
-        h("div", {}, h("label", { for: "f-desc" }, "Anlatım"), desc, h("div", { class: "row", style: { marginTop: "8px" } }, micButton({ size: "sm", onText: (t) => (desc.value = t) }))),
-        h("div", {}, h("label", {}, "Ne sattığınız"), tilesWrap),
-        h("button", { class: "btn btn-success btn-xl", onclick: () => {
-          if (title.value.trim().length < 2) return toast("Ürününüze bir ad verelim.");
-          if (!cat) return toast("Ne sattığınızı seçin.");
-          Object.assign(draft, { title: title.value.trim(), description: desc.value.trim(), category: cat });
-          go(3);
-        } }, "Tamam"),
-        backBtn(1), laterBtn(),
-      );
-      return;
-    }
-
-    const live = h("p", { class: "card muted", style: { minHeight: "80px" }, "aria-live": "polite" }, draft.transcript || "Söyledikleriniz burada yazılacak.");
-    const status = h("p", { class: "center muted" }, canListen ? "Basılı tutun ve konuşun. Bitince bırakın." : "Bu telefonda sesle yazma yok; klavyeyle yazabilirsiniz.");
-    body.append(
-      h("h2", { class: "center" }, "Ürününüzü anlatın, ben yazayım"),
-      h("p", { class: "center muted" }, "Bir komşunuza anlatır gibi: \"Bu ev yapımı vişne reçeli, şekeri az, kavanozu 400 gram.\""),
-      canListen ? micButton({
-        label: "Ürününüzü anlatmak için basılı tutun",
-        onText: (t) => { live.textContent = t; },
-        onEnd: (t) => { if (t) understand(t); },
-      }) : null,
-      status, live,
-      h("button", { class: "btn btn-secondary", onclick: () => typeInstead() }, withIcon("keyboard", "Klavyeyle yazacağım")),
-      backBtn(1), laterBtn(),
+      ),
+      h("div", { class: "sell-actions" },
+        h("button", { type: "submit", class: "btn btn-success btn-xl" }, ...withIcon("arrow-right", "Satışa çıkar")),
+        h("button", { type: "button", class: "btn btn-ghost", onclick: () => { save(); toast("Sakladım. Kaldığınız yerden devam edersiniz."); navigate("/"); } }, "Sonra devam ederim"),
+        h("button", { type: "button", class: "btn btn-ghost btn-inline small", onclick: async () => {
+          if (!(await ask("Formu temizleyelim mi?", "Fotoğraflar ve yazdıklarınız silinir.", "Evet, temizle", "Vazgeç"))) return;
+          draft = newDraft(); save(); drawPhotos(); draw();
+        } }, "Formu temizle"),
+      ),
     );
-    speak("Ürününüzü bana anlatın, ben yazayım.");
+    drawPhotos();
+    refreshSuggestion();
   }
 
-  function typeInstead() {
-    const ta = h("textarea", { class: "input", placeholder: "Ürününüzü birkaç cümleyle anlatın", "aria-label": "Ürününüzü anlatın" }, draft.transcript || "");
-    body.replaceChildren(
-      h("h2", {}, "Ürününüzü anlatın"),
-      ta,
-      h("button", { class: "btn btn-primary btn-xl", onclick: () => ta.value.trim() && understand(ta.value.trim()) }, "Devam"),
-      h("button", { class: "btn btn-ghost", onclick: () => stepDescribe() }, withIcon("mic", "Sesle anlatayım")),
+  // Fiyat önerisi (benzer ürünlerin aralığı) — fiyatın altında yazar
+  let sugSeq = 0;
+  async function refreshSuggestion() {
+    const help = form.querySelector("#price-help");
+    if (!help || !draft.category) return;
+    const seq = ++sugSeq;
+    const s = draft.suggestion || (await priceSuggestion(draft.category, draft.title).catch(() => null));
+    if (seq !== sugSeq || !help.isConnected) return;
+    if (!s) { help.textContent = "Mahallenizde benzer ürün henüz yok. Emeğinize uygun bir fiyat yazın."; return; }
+    draft.suggestion = s; save();
+    const mid = Math.round((Number(s.low) + Number(s.high)) / 2 / 10) * 10;
+    help.replaceChildren(
+      h("span", {}, `Benzer ürünler ${formatPrice(s.low)} – ${formatPrice(s.high)} arası satılıyor. `),
+      h("button", { type: "button", class: "link-btn", onclick: () => {
+        const el = form.querySelector("#f-price"); el.value = mid; el.dispatchEvent(new Event("input"));
+      } }, `${formatPrice(mid)} yaz`),
     );
-    ta.focus();
   }
 
+  // Sesle anlatılanı Ayşe Abla yazıya döker → ad, açıklama, tür dolar
   async function understand(transcript) {
     draft.transcript = transcript;
-    save();
-    body.replaceChildren(statusScreen("sparkles", "Yazıyorum…"));
+    const banner = form.querySelector(".ai-banner p");
+    if (banner) banner.textContent = "Yazıyorum…";
     const ai = await askAssistant({ mode: "describe", transcript });
     const out = ai?.title ? ai : localDescribe(transcript);
-    Object.assign(draft, { title: out.title, description: out.description, category: out.category });
+    Object.assign(draft, { title: out.title.slice(0, TITLE_MAX), description: (out.description || "").slice(0, DESC_MAX), category: out.category, suggestion: null });
     save();
-    stepDescribe();
+    draw();
+    toast("Doldurdum. Kontrol edip düzeltebilirsiniz.");
+    speak(`Şöyle yazdım: ${draft.title}.`);
   }
 
-  // ---------------- 3. Fiyat ve teslim ----------------
-  async function stepPrice() {
-    body.replaceChildren();
-    const sugText = h("p", {}, "Benzer ürünlere bakıyorum…");
-    const sugBox = h("div", { class: "tip", "aria-live": "polite" }, icon("sparkles"), sugText);
-    const out = h("output", { "aria-live": "polite" });
-    const stepOf = (p) => (p >= 100 ? 10 : 5);
-    const setPrice = (p) => { draft.price = Math.max(0, Math.round(p)); out.textContent = formatPrice(draft.price); save(); };
-
-    body.append(
-      sugBox,
-      h("label", { class: "center" }, "Kaç lira istersiniz?"),
-      h("div", { class: "price-picker" },
-        h("button", { "aria-label": "Fiyatı azalt", onclick: () => setPrice((draft.price || 0) - stepOf(draft.price || 0)) }, icon("minus")),
-        out,
-        h("button", { "aria-label": "Fiyatı artır", onclick: () => setPrice((draft.price || 0) + stepOf(draft.price || 0)) }, icon("plus")),
-      ),
-      h("button", { class: "btn btn-ghost", onclick: async () => {
-        const v = prompt("Fiyatı yazın (TL):", draft.price ?? "");
-        if (v != null && !Number.isNaN(Number(v.replace(",", ".")))) setPrice(Number(v.replace(",", ".")));
-      } }, "Fiyatı kendim yazayım"),
-      h("h3", { class: "center" }, "Alıcıya nasıl ulaştıracaksınız?"),
-      deliveryButtons(),
-      locationSection(),
-      h("button", { class: "btn btn-success btn-xl", onclick: publish }, withIcon("arrow-right", "Satışa çıkar")),
-      backBtn(2), laterBtn(),
-    );
-
-    const s = draft.suggestion || (await priceSuggestion(draft.category, draft.title));
-    if (s) {
-      draft.suggestion = s;
-      sugText.textContent = `Benzer ürünler ${formatPrice(s.low)} ile ${formatPrice(s.high)} arası satılıyor. Karar sizin.`;
-      if (draft.price == null) setPrice(Math.round((Number(s.low) + Number(s.high)) / 2 / 10) * 10);
-    } else {
-      sugText.textContent = "Mahallenizde benzer ürün henüz yok. Emeğinize uygun bir fiyat seçin.";
+  // ---------- Yayınla ----------
+  function validate() {
+    const errors = [
+      ["photos", !draft.photos.length && "En az 1 fotoğraf ekleyin."],
+      ["f-title", (draft.title || "").trim().length < 2 && "Ürününüze bir ad verin."],
+      ["category", !draft.category && "Ne sattığınızı seçin."],
+      ["f-price", draft.price == null && "Fiyat yazın (ücretsizse 0)."],
+      ["delivery", !draft.delivery && "Teslim şeklini seçin."],
+      ["location", !draft.location?.lat && "Ürünün nerede olduğunu seçin."],
+    ];
+    let first = null;
+    for (const [id, msg] of errors) {
+      setError(id, msg || null);
+      if (msg && !first) first = id;
     }
-    if (draft.price == null) setPrice(100);
-    else out.textContent = formatPrice(draft.price);
-    speak(sugText.textContent);
-  }
-
-  function deliveryButtons() {
-    const opts = [["elden", "users", "Elden teslim"], ["kargo", "package", "Kargo"], ["ikisi", "repeat", "İkisi de"]];
-    const wrap = h("div", { class: "stack", role: "radiogroup", "aria-label": "Teslim şekli" });
-    const draw = () => wrap.replaceChildren(...opts.map(([v, ico, label]) => h("button", {
-      class: "btn btn-secondary btn-choice", role: "radio", "aria-checked": String(draft.delivery === v), "aria-pressed": String(draft.delivery === v),
-      onclick: () => { draft.delivery = v; save(); draw(); },
-    }, withIcon(ico, label))));
-    draw();
-    return wrap;
-  }
-
-  // ---------- Ürün nerede? (konum ürün bazında; profilde tutulmaz) ----------
-  function locationSection() {
-    const wrap = h("section", { class: "card stack", id: "urun-konum" });
-    const set = (loc) => { if (loc) { draft.location = { ...loc, suggested: false }; save(); draw(); } };
-    const draw = () => {
-      const l = draft.location;
-      const label = l ? [l.neighborhood, l.district, l.city].filter(Boolean).join(", ") || "Konum alındı" : null;
-      wrap.replaceChildren(...[
-        h("h3", { style: { margin: 0 } }, "Ürün nerede?"),
-        h("p", { class: "small muted", style: { margin: 0 } }, "Ürününüz bu konuma yakın alıcılara gösterilir. Alıcılar yalnızca mahallenin adını görür; tam adresiniz paylaşılmaz."),
-        l ? h("div", { class: "row", style: { gap: "8px", justifyContent: "flex-start" } },
-              icon("map-pin", 20), h("strong", { style: { flex: "0 1 auto" } }, label),
-              l.suggested ? h("span", { class: "chip" }, "önerilen") : null)
-          : h("p", { class: "notice", style: { margin: 0 } }, icon("alert", 20), "Henüz seçilmedi."),
-        l?.precision === "il" ? h("p", { class: "small muted", style: { margin: 0 } }, `Mahalle bulunamadı; ${l.city} merkezi kullanılacak.`) : null,
-        h("div", { class: "btn-group" },
-          h("button", { class: "btn btn-secondary", onclick: async () => set(await askLocation()) }, ...withIcon("map-pin", "Şu anki konumum")),
-          h("button", { class: "btn btn-secondary", onclick: async () => set(await pickLocation({ title: "Ürün nerede?" })) }, ...withIcon("list", "Listeden seç")),
-        ),
-      ].filter(Boolean));
-    };
-    draw();
-    return wrap;
+    if (first) {
+      form.querySelector(`[data-field="${first}"]`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+      toast("Eksik bilgileri tamamlayın.");
+    }
+    return !first;
   }
 
   async function publish() {
-    if (!draft.photos.length) return go(1);
-    if (!draft.title || !draft.category) return go(2);
-    if (!draft.delivery) return toast("Teslim şeklini seçin.");
-    if (!draft.location?.lat) {
-      toast("Ürünün nerede olduğunu seçin.");
-      document.getElementById("urun-konum")?.scrollIntoView({ behavior: "smooth", block: "center" });
-      return;
-    }
-    if (!draft.price && !(await ask("Ücretsiz mi vereceksiniz?", "Fiyatı 0 TL seçtiniz.", "Evet, ücretsiz", "Fiyat seçeyim"))) return;
+    if (!validate()) return;
+    if (!draft.price && !(await ask("Ücretsiz mi vereceksiniz?", "Fiyatı 0 TL yazdınız.", "Evet, ücretsiz", "Fiyat yazayım"))) return;
     draft.publishAfterLogin = Date.now();
     save();
     if (!requireAuth("/sat")) return; // giriş sonrası buraya dönülür ve otomatik yayınlanır
 
-    body.replaceChildren(statusScreen("refresh", "Vitrine koyuyorum…", { spin: true }));
+    form.replaceChildren(statusScreen("refresh", "Vitrine koyuyorum…", { spin: true }));
+    window.scrollTo(0, 0);
     try {
-      const product = await publishProduct(draft);
+      const product = await publishProduct({ ...draft, title: draft.title.trim() });
       const seconds = Math.round((Date.now() - draft.startedAt) / 1000);
       track("listing_published", { seconds, photos: draft.photos.length, used_voice: !!draft.transcript });
       LS.set("draft", null);
@@ -314,39 +293,26 @@ export default async function render(root) {
   }
 
   function celebrate(product) {
-    stepsEl.replaceChildren();
     const first = !LS.get("published_before");
     LS.set("published_before", true);
-    body.replaceChildren(
+    form.replaceChildren(
       h("div", { class: "celebrate" },
         iconCircle("check", "ok"),
         h("h1", {}, first ? "Tebrikler! İlk ürününüz vitrinde." : "Tebrikler! Ürününüz vitrinde."),
         h("p", { class: "muted" }, "Mahallenizdeki komşularınız artık görebilir."),
       ),
       h("a", { class: "btn btn-primary btn-xl", href: `#/urun/${product.id}` }, "Ürünümü gör"),
-      h("button", { class: "btn btn-secondary", onclick: () => { draft = newDraft(); save(); track("listing_started"); draw(); } }, "Bir ürün daha koy"),
+      h("button", { type: "button", class: "btn btn-secondary", onclick: () => { draft = newDraft(); save(); track("listing_started"); draw(); window.scrollTo(0, 0); } }, "Bir ürün daha koy"),
     );
+    window.scrollTo(0, 0);
     speak(first ? "Tebrikler! İlk ürününüz vitrinde." : "Tebrikler! Ürününüz vitrinde.");
     assistantEvent("product_published", product);
   }
 
-  function draw() {
-    drawSteps();
-    if (draft.step === 1) stepPhoto();
-    else if (draft.step === 2) stepDescribe();
-    else stepPrice();
-  }
-
   // Girişten dönüldüyse kaldığı yerden otomatik yayınla.
   // (Yalnızca son 30 dakika içinde "Satışa çıkar"a basıldıysa.)
-  if (draft.publishAfterLogin && Date.now() - draft.publishAfterLogin < 30 * 60e3 && state.user) {
-    drawSteps();
-    publish();
-  } else {
-    draw();
-  }
-
-  return stopCamera;
+  draw();
+  if (draft.publishAfterLogin && Date.now() - draft.publishAfterLogin < 30 * 60e3 && state.user) publish();
 }
 
 // ---------- Yapay zeka yokken: basit anlama ----------
