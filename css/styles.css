@@ -313,7 +313,7 @@ p { margin: 0 0 .75rem; }
 }
 @media (min-width: 900px) {
   .pgrid.pgrid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-  .catalog { grid-template-columns: 240px 1fr; align-items: start; }
+  .catalog { grid-template-columns: 290px 1fr; align-items: start; }
   .filters { position: sticky; top: 150px; }
   .product-layout { grid-template-columns: 1.1fr 1fr; gap: 40px; align-items: start; }
   .hero-grid { grid-template-columns: 1.2fr 1fr; }
@@ -770,5 +770,38 @@ details > summary::-webkit-details-marker { display: none; }
 /* "ya da" ayırıcı çizgi */
 .or-line { display: flex; align-items: center; gap: 10px; color: var(--text-faint); font-size: .85rem; }
 .or-line::before, .or-line::after { content: ""; flex: 1; height: 1px; background: var(--line); }
-/* Ürünler: mevcut konum bilgisi */
-.current-place { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-radius: var(--radius-sm); background: var(--success-soft); color: var(--success); font-weight: 700; font-size: .92rem; }
+/* Ürünler: Konum kartı */
+.loc-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 6px 12px 12px; }
+.loc-head { width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 10px 2px; border: 0; background: none; cursor: pointer; font-size: 1.15rem; font-weight: 700; color: var(--text); }
+.loc-head .icon { flex: none; transition: transform .2s ease; }
+.loc-head[aria-expanded="true"] .icon { transform: rotate(180deg); }
+.loc-body { display: grid; gap: 10px; padding-top: 4px; }
+.loc-body[hidden] { display: none; }
+select.place-select {
+  appearance: none; -webkit-appearance: none; min-height: 46px; padding: 10px 40px 10px 14px; border-radius: var(--radius-sm);
+  border-color: var(--line); font-size: .95rem; color: var(--text); cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 14px center;
+}
+select.place-select:has(option[value=""]:checked) { color: var(--text-faint); }
+select.place-select:disabled { cursor: not-allowed; background-color: var(--bg); }
+.loc-sep { border: 0; border-top: 1px solid var(--line); margin: 6px 0 2px; }
+.current-place {
+  display: flex; align-items: center; gap: 8px; padding: 12px 10px 12px 12px; min-width: 0;
+  border: 1px solid var(--line); border-left: 4px solid var(--success); border-radius: var(--radius-sm); background: var(--surface);
+}
+.current-place .cp-icon { display: grid; place-items: center; color: var(--success); flex: none; }
+.current-place .cp-text { display: grid; gap: 2px; flex: 1; min-width: 0; }
+.current-place .cp-text b { color: var(--success); font-size: .88rem; }
+.current-place .cp-place { display: flex; align-items: center; gap: 2px; min-width: 0; }
+.current-place .cp-place > span { font-size: .88rem; font-weight: 600; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.current-place .cp-clear { display: grid; place-items: center; width: 28px; height: 28px; margin: -4px 0; border: 0; border-radius: 50%; background: none; color: var(--text); cursor: pointer; flex: none; }
+.current-place .cp-clear:hover { background: var(--line); }
+.use-current {
+  display: flex; align-items: center; gap: 8px; width: 100%; padding: 12px; cursor: pointer;
+  border: 1px dashed var(--line-strong); border-radius: var(--radius-sm); background: none;
+  color: var(--primary); font-weight: 700; font-size: .92rem; text-align: left; white-space: nowrap;
+}
+.use-current:hover { border-color: var(--primary); background: var(--primary-soft); }
+.use-current .icon { flex: none; }
+.loc-clear { justify-self: start; border: 0; background: none; padding: 2px 0; color: var(--text-soft); font-size: .88rem; text-decoration: underline; cursor: pointer; }
