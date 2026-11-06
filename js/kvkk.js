@@ -5,7 +5,7 @@
 //
 // ⚠️ Yayına çıkmadan önce bir hukukçuya kontrol ettirin ve iletişim adresini doldurun.
 
-export const KVKK_VERSION = "2026-11-12";
+export const KVKK_VERSION = "2026-11-13";
 
 // Başvuru ve sorular için iletişim adresi (yayından önce doldurun).
 export const KVKK_CONTACT = "[iletişim e-posta adresi]";
@@ -14,10 +14,10 @@ export const KVKK_CONTACT = "[iletişim e-posta adresi]";
 export const LOCATION_SUMMARY = [
   ["Neden?", "Satarken ürününüzün nerede olduğunu göstermek; böylece alıcılar ürünleri il, ilçe ve mahalleye göre bulabilir."],
   ["Nasıl?", "Konumunuz telefonunuzun ya da bilgisayarınızın konum özelliğiyle, yalnızca siz izin verince alınır."],
-  ["Ne saklanır?", "Konumunuz profilinize kaydedilmez. Son kullandığınız konum, bir sonraki ürünü satarken öneri olarak gelmesi için yalnızca bu cihazda kalır. Bir ürün satarken seçtiğiniz konum o ürünle birlikte, yaklaşık 500 metre rastgele kaydırılarak saklanır; başkaları yalnızca mahallenin adını görür."],
+  ["Ne saklanır?", "Konumunuz profilinize ya da cihazınıza kaydedilmez. Bir ürün satarken seçtiğiniz konum o ürünle birlikte, yaklaşık 500 metre rastgele kaydırılarak saklanır; başkaları yalnızca mahallenin adını görür."],
   ["Kimle paylaşılır?", "Mahalle adını bulmak için yaklaşık (yuvarlanmış) konum OpenStreetMap'in adres servisine gönderilir. Başka kimseyle paylaşılmaz."],
   ["Paylaşmak istemezsem?", "Femoria'yı yine kullanabilirsiniz: ilinizi, ilçenizi ve mahallenizi listeden seçersiniz."],
-  ["Geri alabilir miyim?", "Evet. Ayarlar → Konum bölümünden konum izninizi istediğiniz an geri alabilirsiniz."],
+  ["Geri alabilir miyim?", "Evet. Tarayıcınızın ayarlarından Femoria'nın konum iznini istediğiniz an kapatabilirsiniz. Ürünün konumu, ürünü vitrinden kaldırınca silinir."],
 ];
 
 export const KVKK_SECTIONS = [
@@ -33,7 +33,7 @@ export const KVKK_SECTIONS = [
     list: [
       "Hesap bilgileri: adınız, e-posta adresiniz ve şifreniz. Şifreniz şifrelenmiş olarak saklanır; biz de göremeyiz.",
       "Cinsiyet: yalnızca size nasıl hitap edeceğimizi (Hanım / Bey) belirlemek için. Başkalarına gösterilmez. \"Belirtmek istemiyorum\" seçebilirsiniz.",
-      "Konum: sattığınız ürünlerin yaklaşık konumu ve mahalle, ilçe, il adı; son kullandığınız konum yalnızca cihazınızda (ayrıntısı aşağıda).",
+      "Konum: yalnızca sattığınız ürünlerin yaklaşık konumu ve mahalle, ilçe, il adı (ayrıntısı aşağıda).",
       "Ürün bilgileri: ürün fotoğrafları, ad, açıklama, fiyat ve sesle anlattığınızın yazıya dökülmüş hali.",
       "Mesajlar: alıcı ve satıcıların birbirine yazdığı mesajlar, sesli mesajlar ve sipariş kartları.",
       "Güvenlik bilgileri: engellediğiniz kişiler ve şikayetler.",
@@ -46,10 +46,10 @@ export const KVKK_SECTIONS = [
     body: [
       "Neden: Satarken ürününüzün nerede olduğunu göstermek için; alıcılar ürünleri il, ilçe ve mahalleye göre süzebilir. Ürünlere bakarken konumunuz sorulmaz.",
       "Nasıl alınır: Konumunuz yalnızca siz \"Konumumu paylaş\" düğmesine bastıktan ve tarayıcınızın sorduğu izne \"İzin ver\" dedikten sonra, cihazınızın konum özelliğiyle alınır. İzin vermezseniz Femoria'yı yine kullanabilirsiniz; ilinizi, ilçenizi ve mahallenizi listeden seçersiniz.",
-      "Ne saklanır: Konumunuz profilinize kaydedilmez. Son kullandığınız konum, bir sonraki üründe öneri olarak gelmesi için yalnızca cihazınızda (tarayıcınızda) kalır ve bize gönderilmez. Bir ürünü satışa çıkarırken o ürün için seçtiğiniz konum ürünle birlikte saklanır; kaydedilirken yaklaşık 500 metre rastgele kaydırılır. Tam konumunuz ve ev adresiniz hiçbir zaman saklanmaz. Başka kullanıcılar haritada nokta değil, mahalle büyüklüğünde bir daire ve mahallenin adını görür. Ürünü vitrinden kaldırdığınızda konumu da ürünle birlikte silinir.",
+      "Ne saklanır: Konumunuz profilinize ya da cihazınıza kaydedilmez; ürünlere bakarken konumunuz sorulmaz. Bir ürünü satışa çıkarırken o ürün için seçtiğiniz konum ürünle birlikte saklanır; kaydedilirken yaklaşık 500 metre rastgele kaydırılır. Tam konumunuz ve ev adresiniz hiçbir zaman saklanmaz. Başka kullanıcılar haritada nokta değil, mahalle büyüklüğünde bir daire ve mahallenin adını görür. Ürünü vitrinden kaldırdığınızda konumu da ürünle birlikte silinir.",
       "Kime gönderilir: Mahallenizin adını bulmak için konumunuz yaklaşık 100 metreye yuvarlanarak OpenStreetMap Vakfı'nın adres servisine (Nominatim) gönderilir. Listeden seçtiğinizde ise mahallenizin konumunu bulmak için yalnızca seçtiğiniz il, ilçe ve mahalle adı bu servise gönderilir. Bu servis yurt dışındadır.",
       "Hukuki sebep: Konumunuz açık rızanıza dayanarak işlenir (KVKK m. 5/1).",
-      "Rızanızı geri alma: Ayarlar → Konum → \"Konum iznimi geri al\" ile cihazınızdaki konum silinir. Satıştaki ürünlerinizin konumu, ürünü vitrinden kaldırdığınızda silinir. Tarayıcınızın konum iznini de tarayıcı ayarlarından kapatabilirsiniz.",
+      "Rızanızı geri alma: Tarayıcınızın ayarlarından Femoria'nın konum iznini istediğiniz an kapatabilirsiniz; o andan sonra konumunuz alınamaz (ürün satarken mahalleyi listeden seçebilirsiniz). Satıştaki ürünlerinizin konumu, ürünü vitrinden kaldırdığınızda silinir.",
     ],
   },
   {

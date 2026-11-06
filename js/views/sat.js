@@ -260,8 +260,6 @@ export default async function render(root) {
 
   // ---------- Ürün nerede? (konum ürün bazında; profilde tutulmaz) ----------
   function locationSection() {
-    // Bu cihazda en son kullanılan konum varsa öneri olarak doldur (değiştirilebilir)
-    if (!draft.location && state.location?.lat) { draft.location = { ...state.location, suggested: true }; save(); }
     const wrap = h("section", { class: "card stack", id: "urun-konum" });
     const set = (loc) => { if (loc) { draft.location = { ...loc, suggested: false }; save(); draw(); } };
     const draw = () => {

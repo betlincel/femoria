@@ -6,14 +6,6 @@ import { getProduct, photoUrl, categoryOf, startConversation, setProductStatus, 
 import { badgeChips, breadcrumb } from "../components.js";
 import { navigate, requireAuth } from "../router.js";
 
-const km = (a, b) => {
-  if (a?.lat == null || b?.approx_lat == null) return null;
-  const R = 6371, rad = Math.PI / 180;
-  const dLat = (b.approx_lat - a.lat) * rad, dLng = (b.approx_lng - a.lng) * rad;
-  const x = Math.sin(dLat / 2) ** 2 + Math.cos(a.lat * rad) * Math.cos(b.approx_lat * rad) * Math.sin(dLng / 2) ** 2;
-  return 2 * R * Math.asin(Math.sqrt(x));
-};
-
 export default async function render(root, { params: [id] }) {
   root.append(loading());
   const p = await getProduct(id).catch(() => null);
@@ -29,7 +21,6 @@ export default async function render(root, { params: [id] }) {
   const main = photos.length
     ? h("img", { class: "main-img", src: photos[0], alt: p.title })
     : h("div", { class: "main-img", style: { display: "grid", placeItems: "center", color: "var(--text-faint)" } }, icon(categoryIconName(p.category), 96));
-  const distance = km(state.location, p);
   const seller = p.seller || {};
   const months = seller.created_at ? monthsSince(seller.created_at) : 0;
   const verified = seller.email_verified || seller.phone_verified;
@@ -54,7 +45,7 @@ export default async function render(root, { params: [id] }) {
           h("div", { class: "price", style: { fontSize: "2rem", letterSpacing: "-.02em" } }, formatPrice(p.price)),
           h("div", { class: "badges" },
             h("span", { class: "chip" }, icon("truck"), DELIVERY_LABEL[p.delivery]),
-            distance != null || p.neighborhood ? h("span", { class: "chip" }, icon("map-pin"), distance != null ? `${formatDistance(distance)} uzakta` : p.neighborhood) : null,
+            p.neighborhood || p.district ? h("span", { class: "chip" }, icon("map-pin"), [p.neighborhood, p.district, p.city].filter(Boolean).join(", ")) : null,
           ),
           p.status === "satildi" ? h("p", { class: "notice" }, icon("alert", 20), "Bu ürün satıldı.") : null,
           mine ? ownerActions(p) : buyerActions(p),

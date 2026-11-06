@@ -1,9 +1,8 @@
-// Ayarlar — ana liste 5 maddeyi geçmez: yazı büyüklüğü, sesli okuma, bildirimler, konum, çıkış.
-// Güvenlik ve gizlilik ayrı grupta (gece sessizliği, kadın satıcı koruması, konum, KVKK).
+// Ayarlar — ana liste 5 maddeyi geçmez: hitap, yazı büyüklüğü, sesli okuma, bildirimler, çıkış.
+// Güvenlik ve gizlilik ayrı grupta (gece sessizliği, kadın satıcı koruması, KVKK).
 import { h, toast, ask, speak, sheet, icon, withIcon, canSpeak, stopSpeaking, GENDERS, hitap } from "../ui.js";
 import { state, saveSettings, updateProfile, signOut } from "../store.js";
-import { askLocation, pickLocation, pageTitle } from "../components.js";
-import { withdrawLocation, hasLocationConsent } from "../store.js";
+import { pageTitle } from "../components.js";
 import { deleteMyAccount } from "../api.js";
 import { navigate } from "../router.js";
 
@@ -36,7 +35,6 @@ export default async function render(root, { query }) {
       onclick: async () => { await saveSettings({ font_scale: v }); drawFont(); } }, l)));
   drawFont();
 
-  const loc = state.location;
   root.append(
     pageTitle("Ayarlar", { back: true }),
 
@@ -49,7 +47,6 @@ export default async function render(root, { query }) {
         toggle("Sesli okuma", s.tts_enabled === true, (v) => { saveSettings({ tts_enabled: v }); if (v) speak("Sesli okuma açık.", { force: true }); else stopSpeaking(); })) : null,
       item("bell", "Bildirimler", "Yeni mesaj gelince haber veririz.",
         toggle("Bildirimler", s.notifications_enabled !== false, (v) => saveSettings({ notifications_enabled: v }))),
-      locationBlock(loc),
       loggedIn
         ? h("button", { class: "list-item", onclick: async () => { await signOut(); toast("Çıkış yaptınız."); navigate("/"); } },
             icon("logout"), h("div", { class: "body" }, h("strong", {}, "Çıkış yap")))
@@ -79,7 +76,6 @@ export default async function render(root, { query }) {
   if (query.guvenlik) document.getElementById("guvenlik")?.scrollIntoView({ behavior: "smooth" });
   if (query.hitap) document.getElementById("hitap")?.scrollIntoView({ behavior: "smooth", block: "center" });
   if (query.kvkk) navigate("/aydinlatma", { replace: true });
-  if (query.konum) document.getElementById("konum")?.scrollIntoView({ behavior: "smooth", block: "center" });
 }
 
 // Hitap: "Hanım" / "Bey" / yalnız ad. Cinsiyet başkalarına gösterilmez.
@@ -106,28 +102,6 @@ function hitapBlock() {
   );
 }
 
-// Konum: cihazdan al / yenile, listeden seç, rızayı geri al (KVKK)
-function locationBlock(loc) {
-  const label = loc?.neighborhood || loc?.district ? [loc.neighborhood, loc.district].filter(Boolean).join(", ") : loc?.lat ? "konum alındı" : "yok";
-  const consent = hasLocationConsent();
-  const refresh = () => navigate("/ayarlar", { replace: true });
-  return h("div", { class: "list-block stack", id: "konum" },
-    h("div", { class: "row", style: { gap: "14px", alignItems: "flex-start" } },
-      icon("map-pin"),
-      h("div", { style: { flex: 1 } },
-        h("strong", {}, "Konum"),
-        h("div", { class: "small muted" }, `Son kullanılan: ${label}`),
-        h("div", { class: "small muted" }, "Ürün satarken öneri olarak gelir ve yalnızca bu cihazda saklanır; profilinize kaydedilmez. Her ürünün konumunu satarken ayrıca seçersiniz."),
-        consent ? h("div", { class: "small muted" }, "Konum izni verdiniz.") : null,
-      ),
-    ),
-    consent || loc ? h("button", { class: "btn btn-danger", onclick: async () => {
-      if (!(await ask("Konum izninizi geri alalım mı?", "Bu cihazdaki konumunuz silinir; ürün satarken konum yeniden sorulur. Satıştaki ürünlerinizin konumu ürünle birlikte kalır; ürünü vitrinden kaldırınca silinir. Tarayıcınızın konum iznini de tarayıcı ayarlarından kapatabilirsiniz.", "Evet, geri al"))) return;
-      try { await withdrawLocation(); toast("Konum izniniz geri alındı ve konumunuz silindi."); refresh(); }
-      catch { toast("Silinemedi, tekrar deneyin."); }
-    } }, ...withIcon("x", "Konum iznimi geri al")) : null,
-  );
-}
 
 
 

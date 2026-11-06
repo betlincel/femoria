@@ -2,7 +2,7 @@
 import { h, formatPrice, formatDistance, toast, sheet, icon, withIcon } from "./ui.js";
 import { categoryIconName } from "./icons.js";
 import { photoUrl, getLocations } from "./api.js";
-import { state, saveLocation, hasLocationConsent, recordLocationConsent } from "./store.js";
+import { state, hasLocationConsent, recordLocationConsent } from "./store.js";
 import { LOCATION_SUMMARY } from "./kvkk.js";
 import { loadProvinces, loadNeighbourhoods, normalizeTr, locateSelection, nearestProvince } from "./tr-locations.js";
 
@@ -118,10 +118,9 @@ function getPosition() {
 
 /**
  * Konumu cihazdan alır (gerekirse önce aydınlatma + rıza ekranı). Promise<location|null>
- * Kullanım: ürün yayınlama ("Ürün nerede?"), Ayarlar → Konum.
+ * Kullanım: ürün yayınlama ("Ürün nerede?"). Alınan konum hiçbir yerde saklanmaz; yalnız ürüne yazılır.
  */
 /**
- * opts.save (varsayılan true): alınan konum "son kullanılan konum" olarak bu cihaza kaydedilsin mi.
  *   Ürün konumu seçilirken false verilir; konum yalnızca o ürüne yazılır.
  * opts.title: liste ekranının başlığı.
  */
@@ -195,7 +194,6 @@ async function captureLocation(opts = {}) {
     || {};
   wait();
   const loc = { lat, lng, city: names.city ?? null, district: names.district ?? null, neighborhood: names.neighborhood ?? null, source: "gps" };
-  if (opts.save !== false) await saveLocation(loc);
   const label = [loc.neighborhood, loc.district].filter(Boolean).join(", ");
   toast(label ? `Konumunuz alındı: ${label}` : "Konumunuz alındı.");
   return loc;
@@ -304,7 +302,6 @@ export function pickLocation(opts = {}) {
         neighborhood: neighborhood ? neighborhood.replace(/\s*\(.*\)$/, "") : null,
         precision: pos.precision, source: "liste",
       };
-      if (opts.save !== false) await saveLocation(loc);
       settled = true;
       obs.disconnect();
       closeFn();
