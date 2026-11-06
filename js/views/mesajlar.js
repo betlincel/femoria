@@ -3,6 +3,7 @@ import { h, loading, emptyState, timeAgo, icon } from "../ui.js";
 import { state } from "../store.js";
 import { myConversations, photoUrl, subscribeIncoming } from "../api.js";
 import { requireAuth } from "../router.js";
+import { categoryIconName } from "../icons.js";
 
 export default async function render(root) {
   root.append(h("h1", {}, "Mesajlar"));
@@ -24,10 +25,10 @@ export default async function render(root) {
     list.replaceChildren(...convs.map((c) => {
       const img = photoUrl(c.products?.photos?.[0]);
       return h("a", { class: "card card-link conv-item", href: `#/sohbet/${c.id}` },
-        img ? h("img", { src: img, alt: "" }) : h("div", { class: "ph", "aria-hidden": "true" }, icon("bag")),
+        img ? h("img", { src: img, alt: "" }) : h("div", { class: "ph", "aria-hidden": "true" }, icon(categoryIconName(c.products?.category || c.product_category))),
         h("div", {},
           h("strong", {}, c.other.full_name || "Komşu"),
-          h("div", { class: "meta" }, c.products?.title || "Ürün"),
+          h("div", { class: "meta" }, c.products?.title || c.product_title || "Ürün", c.products ? null : " (kaldırıldı)"),
           h("div", { class: "meta small" }, c.iAmBuyer ? "Siz alıcısınız" : "Siz satıcısınız", " · ", timeAgo(c.last_message_at)),
         ),
         c.unread ? h("span", { class: "dot", style: { position: "static" }, "aria-label": "Okunmamış" }) : h("span"),

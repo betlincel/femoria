@@ -5,7 +5,7 @@
 //
 // ⚠️ Yayına çıkmadan önce bir hukukçuya kontrol ettirin ve iletişim adresini doldurun.
 
-export const KVKK_VERSION = "2026-11-10";
+export const KVKK_VERSION = "2026-11-11";
 
 // Başvuru ve sorular için iletişim adresi (yayından önce doldurun).
 export const KVKK_CONTACT = "[iletişim e-posta adresi]";
@@ -78,7 +78,7 @@ export const KVKK_SECTIONS = [
     title: "Ne kadar süre saklanır?",
     list: [
       "Hesabınız açık olduğu sürece. Hesabınızı sildiğinizde ürünleriniz, fotoğraflarınız, mesajlarınız, sesli mesajlarınız, konumunuz ve tüm bilgileriniz kalıcı olarak silinir.",
-      "Vitrinden kaldırdığınız ürün: Ürünle ilgili hiç mesajlaşma yoksa ürün ve fotoğrafları hemen silinir. Mesajlaşma varsa sohbetler bozulmasın diye ürünün adı ve fiyatı sohbette kalır; fotoğrafları 30 gün sonra kalıcı olarak silinir. Bu 30 gün içinde ürünü geri alabilirsiniz.",
+      "Vitrinden kaldırdığınız ürün: ürün, fotoğrafları ve konumu hemen kalıcı olarak silinir. Ürünle ilgili sohbetleriniz silinmez; sohbette yalnızca ürünün adı ve fiyatı görünmeye devam eder.",
       "Sohbetin karşı tarafı hesabını silerse, o sohbete ait sesli mesajlar da en geç bir gün içinde silinir.",
       "Kullanım sayıları isimsiz olarak proje süresince saklanabilir.",
     ],
