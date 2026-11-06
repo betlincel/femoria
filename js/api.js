@@ -106,6 +106,42 @@ export async function removeProduct(id) {
   return res;
 }
 
+export async function priceSuggestion(category, title) {
+  if (!isConfigured) return null;
+  const rows = await supabase.rpc("price_suggestion", { p_category: category, p_title: title || null })
+    .then(ok).catch(() => []);
+  return rows?.[0] ?? null;
+}
+
+/** Taslağı yayınlar: fotoğrafları yükler, ürünü "satışta" olarak ekler. */
+export async function publishProduct(draft) {
+  need();
+  const uid = state.user.id;
+  const paths = [];
+  for (const [i, dataUrl] of draft.photos.entries()) {
+    const blob = await dataUrlToBlob(dataUrl);
+    const path = `${uid}/${Date.now()}-${i}.jpg`;
+    await supabase.storage.from("product-photos").upload(path, blob, { contentType: "image/jpeg", upsert: false }).then(ok);
+    paths.push(path);
+  }
+  return supabase.from("products").insert({
+    title: draft.title.trim(),
+    description: draft.description?.trim() || null,
+    category: draft.category,
+    price: draft.price,
+    delivery: draft.delivery,
+    photos: paths,
+    voice_transcript: draft.transcript || null,
+    status: "satista",
+    // Ürünün konumu (satıcı bu ürün için girdi). Sunucu kaydederken ~500 m kaydırır.
+    approx_lat: draft.location.lat,
+    approx_lng: draft.location.lng,
+    city: draft.location.city || null,
+    district: draft.location.district || null,
+    neighborhood: draft.location.neighborhood || null,
+  }).select().single().then(ok);
+}
+
 // ---------- Profil / rozet / kazanç ----------
 export async function userBadges(userId) {
   if (!isConfigured) return [];
