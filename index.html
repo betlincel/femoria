@@ -10,7 +10,7 @@
   <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
@@ -35,23 +35,30 @@
         <button type="submit" class="btn btn-primary">Ara</button>
       </form>
 
+      <button type="button" id="place-pill" class="place-pill" aria-haspopup="dialog" aria-label="Konum seç">
+        <span data-icon="map-pin" aria-hidden="true"></span>
+        <span id="place-label">Tüm Türkiye</span>
+        <span data-icon="chevron-down" aria-hidden="true"></span>
+      </button>
+
       <nav class="header-actions" aria-label="Hesap">
         <a href="#/mesajlar" class="header-link" data-route="mesajlar" data-highlight="nav-mesajlar-top">
           <span class="hl-ico" data-icon="message" aria-hidden="true"><span id="unread-dot-top" class="dot" hidden></span></span>
           <span>Mesajlar</span>
         </a>
+        <a href="#/giris" id="login-pill" class="btn login-pill">Giriş</a>
         <a href="#/profil" class="header-link" data-route="profil" data-highlight="profil">
           <span id="topbar-avatar" class="avatar avatar-sm"></span>
           <span id="account-label">Giriş yap</span>
         </a>
         <a href="#/sat" class="btn btn-primary header-sell" data-highlight="nav-sat-top">
-          <span data-icon="camera" aria-hidden="true"></span>Ürün sat
+          <span data-icon="camera" aria-hidden="true"></span>Sat
         </a>
       </nav>
     </div>
     <nav class="category-bar" aria-label="Kategoriler">
       <div class="category-inner" id="category-bar">
-        <a href="#/urunler">Tüm ürünler</a>
+        <a href="#/urunler" class="all-cats"><span data-icon="grid" aria-hidden="true"></span>Tüm Kategoriler</a>
       </div>
     </nav>
   </header>
@@ -69,7 +76,7 @@
       </div>
       <div class="footer-col">
         <h3>Alışveriş</h3>
-        <a href="#/urunler">Tüm ürünler</a>
+        <a href="#/urunler" class="all-cats"><span data-icon="grid" aria-hidden="true"></span>Tüm Kategoriler</a>
         <a href="#/urunler?kategori=yemek">Ev yemekleri</a>
         <a href="#/urunler?kategori=orgu">Örgü</a>
         <a href="#/urunler?kategori=taki">Takı</a>

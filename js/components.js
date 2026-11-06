@@ -320,3 +320,48 @@ export function pickLocation(opts = {}) {
 function statusScreenEl(text) {
   return h("div", { class: "status-screen" }, h("div", { class: "icon-circle", "aria-hidden": "true" }, icon("refresh", 34, "spin")), h("p", {}, text));
 }
+
+// ---------- Başlıktaki konum düğmesi: "Nerede arıyorsunuz?" ----------
+const PLACE_KEY = "femoria:browse_place";
+export function getBrowsePlace() {
+  try { return JSON.parse(localStorage.getItem(PLACE_KEY)) || {}; } catch { return {}; }
+}
+export function setBrowsePlace(place) {
+  try { localStorage.setItem(PLACE_KEY, JSON.stringify(place || {})); } catch { /* gizli sekme */ }
+  window.dispatchEvent(new CustomEvent("femoria:place", { detail: place || {} }));
+}
+export const placeLabel = (p) => [p?.district, p?.city].filter(Boolean).join(", ") || "Tüm Türkiye";
+
+/** İl / ilçe seçtirir. Promise<{ city, district } | {} (Tüm Türkiye) | null (vazgeçti)> */
+export function pickBrowsePlace() {
+  return new Promise(async (resolve) => {
+    let settled = false;
+    const done = (v) => { if (!settled) { settled = true; resolve(v); } };
+    const provinces = await loadProvinces().catch(() => []);
+    const cur = getBrowsePlace();
+    const ilSel = h("select", { class: "input", id: "pp-il" }, h("option", { value: "" }, "Tüm Türkiye"),
+      ...provinces.map((p) => h("option", { value: p.n, selected: p.n === cur.city }, p.n)));
+    const ilceSel = h("select", { class: "input", id: "pp-ilce" });
+    const fillDistricts = (keep) => {
+      const prov = provinces.find((p) => p.n === ilSel.value);
+      ilceSel.replaceChildren(h("option", { value: "" }, "Tüm ilçeler"),
+        ...(prov ? prov.d.map((d) => h("option", { value: d, selected: d === keep }, d)) : []));
+      ilceSel.disabled = !prov;
+    };
+    fillDistricts(cur.district);
+    ilSel.addEventListener("change", () => fillDistricts(null));
+    const close = sheet("Nerede arıyorsunuz?", (closeSheet) => h("div", { class: "stack" },
+      h("p", { class: "muted", style: { margin: 0 } }, "Seçtiğiniz yerdeki ürünleri gösterelim. Konumunuz istenmez."),
+      h("div", {}, h("label", { for: "pp-il" }, "İl"), ilSel),
+      h("div", {}, h("label", { for: "pp-ilce" }, "İlçe"), ilceSel),
+      h("button", { class: "btn btn-primary btn-xl", onclick: () => {
+        const place = ilSel.value ? { city: ilSel.value, district: ilceSel.value || null } : {};
+        setBrowsePlace(place); closeSheet(); done(place);
+      } }, ...withIcon("bag", "Ürünleri göster")),
+      h("button", { class: "btn btn-ghost", onclick: () => { setBrowsePlace({}); closeSheet(); done({}); } }, "Tüm Türkiye'yi göster"),
+    ));
+    const obs = new MutationObserver(() => { if (!document.getElementById("pp-il")) { obs.disconnect(); done(null); } });
+    obs.observe(document.getElementById("sheet-root"), { childList: true });
+    void close;
+  });
+}

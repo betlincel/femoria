@@ -3,7 +3,7 @@
 // Seçimler adres çubuğuna yazılır (#/urunler?il=…&ilce=…&mahalle=…&kategori=…&q=…), paylaşılabilir.
 import { h, loading, emptyState, micButton, toast, icon, withIcon } from "../ui.js";
 import { getCategories, listProducts, logSearchRequest, track, photoUrl } from "../api.js";
-import { productGrid, breadcrumb } from "../components.js";
+import { productGrid, breadcrumb, setBrowsePlace } from "../components.js";
 import { iconSVG, categoryIconName } from "../icons.js";
 import { loadProvinces, loadNeighbourhoods } from "../tr-locations.js";
 
@@ -59,6 +59,7 @@ export default async function render(root, { query }) {
     if (f.q) params.set("q", f.q);
     const qs = params.toString();
     history.replaceState(null, "", `#/urunler${qs ? "?" + qs : ""}`);
+    setBrowsePlace(f.city ? { city: f.city, district: f.district } : {});
   }
 
   // ---------- Başlık ----------
