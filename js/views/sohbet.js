@@ -10,6 +10,7 @@ import {
 import { navigate, requireAuth } from "../router.js";
 import { assistantEvent } from "../assistant.js";
 import { pageTitle } from "../components.js";
+import { categoryIconName } from "../icons.js";
 
 const QUICK = {
   buyer: ["Hâlâ satışta mı?", "Kargo ücreti ne kadar?", "Elden alabilir miyim?"],
@@ -33,17 +34,31 @@ export default async function render(root, { params: [id] }) {
   const messages = conv.messages;
   const orders = new Map(conv.orders.map((o) => [o.id, o]));
   const listEl = h("div", { class: "chat-list", "aria-live": "polite" });
-  const product = conv.products || {};
+  // Ürün satıcı tarafından silindiyse sohbete kaydedilmiş adı ve fiyatı kullanılır
+  const product = conv.products || {
+    id: null, title: conv.product_title || "Kaldırılan ürün", price: conv.product_price,
+    category: conv.product_category, photos: [], deleted: true,
+  };
 
   // ---------- Başlık + kalkan ----------
   const title = pageTitle(conv.other.full_name || "Komşu", { back: () => navigate("/mesajlar") });
   title.append(h("button", { class: "icon-btn", "aria-label": "Güvenlik: şikayet, engelle", title: "Güvenlik", onclick: shieldMenu }, icon("shield")));
 
-  const productCard = h("a", { class: "card card-link conv-item chat-product", href: `#/urun/${product.id}` },
-    product.photos?.[0] ? h("img", { src: photoUrl(product.photos[0]), alt: "" }) : h("div", { class: "ph" }, icon("bag")),
-    h("div", {}, h("strong", {}, product.title), h("div", { class: "price" }, formatPrice(product.price))),
-    h("span", { style: { color: "var(--text-faint)" } }, icon("chevron-right")),
-  );
+  const productCard = product.deleted
+    ? h("div", { class: "card conv-item chat-product" },
+        h("div", { class: "ph", "aria-hidden": "true" }, icon(categoryIconName(product.category))),
+        h("div", {},
+          h("strong", {}, product.title),
+          product.price != null ? h("div", { class: "price" }, formatPrice(product.price)) : null,
+          h("div", { class: "meta small" }, "Bu ürün satıcı tarafından kaldırıldı."),
+        ),
+        h("span"),
+      )
+    : h("a", { class: "card card-link conv-item chat-product", href: `#/urun/${product.id}` },
+        product.photos?.[0] ? h("img", { src: photoUrl(product.photos[0]), alt: "" }) : h("div", { class: "ph" }, icon(categoryIconName(product.category))),
+        h("div", {}, h("strong", {}, product.title), h("div", { class: "price" }, formatPrice(product.price))),
+        h("span", { style: { color: "var(--text-faint)" } }, icon("chevron-right")),
+      );
 
   // ---------- Yazma alanı ----------
   const textarea = h("textarea", { class: "input", rows: 1, placeholder: "Mesaj yazın…", "aria-label": "Mesaj" });
@@ -53,7 +68,7 @@ export default async function render(root, { params: [id] }) {
 
   const quick = h("div", { class: "quick-replies", role: "group", "aria-label": "Hazır mesajlar" },
     QUICK[role].map((q) => h("button", { onclick: () => send(q, "hazir") }, q)),
-    h("button", { class: "accent", onclick: orderSheet }, withIcon("receipt", "Sipariş kartı")),
+    product.deleted ? null : h("button", { class: "accent", onclick: orderSheet }, withIcon("receipt", "Sipariş kartı")),
   );
 
   root.append(

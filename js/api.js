@@ -45,7 +45,7 @@ export async function getLocations() {
 }
 
 // ---------- Ürünler ----------
-const PRODUCT_COLS = "id,title,description,price,category,delivery,photos,status,seller_id,neighborhood,district,city,approx_lat,approx_lng,published_at,created_at,removed_at,photos_purged_at";
+const PRODUCT_COLS = "id,title,description,price,category,delivery,photos,status,seller_id,neighborhood,district,city,approx_lat,approx_lng,published_at,created_at";
 
 export function photoUrl(path) {
   if (!path) return null;
@@ -91,74 +91,19 @@ export async function setProductStatus(id, status) {
   return supabase.from("products").update({ status }).eq("id", id).then(ok);
 }
 
-export const PHOTO_RETENTION_DAYS = 30;
-
 /**
- * Vitrinden kaldır. Sohbeti/siparişi yoksa ürün hemen silinir ve fotoğrafları depodan silinir;
- * varsa 30 gün saklanır (bu sürede geri alınabilir), sonra fotoğrafları gece temizliğinde silinir.
- * Döner: { deleted: boolean, purge_after?: string }
+ * Vitrinden kaldır = ürün veritabanından hemen silinir; fotoğrafları depodan silinir.
+ * Ürünle ilgili sohbetler ve sipariş kartları kalır (sohbette ürünün adı ve fiyatı görünür).
+ * Döner: { deleted: true, photos: [...] }
  */
 export async function removeProduct(id) {
   need();
   const res = await supabase.rpc("remove_product", { p_product_id: id }).then(ok);
-  if (res?.deleted && res.photos?.length) {
+  if (res?.photos?.length) {
     // Silinemeyen dosya kalırsa gece temizliği "sahipsiz fotoğraf" olarak siler.
     await supabase.storage.from("product-photos").remove(res.photos).catch(() => {});
   }
   return res;
-}
-
-export async function restoreProduct(id) {
-  need();
-  return supabase.rpc("restore_product", { p_product_id: id }).then(ok);
-}
-
-export async function myRemovedProducts() {
-  need();
-  return supabase.from("products").select(PRODUCT_COLS).eq("seller_id", state.user.id)
-    .eq("status", "kaldirildi").order("removed_at", { ascending: false }).then(ok);
-}
-
-/** Fotoğrafların silinmesine kalan gün (0 = bugün/yarın silinecek) */
-export function daysUntilPurge(removedAt) {
-  const end = new Date(removedAt).getTime() + PHOTO_RETENTION_DAYS * 864e5;
-  return Math.max(0, Math.ceil((end - Date.now()) / 864e5));
-}
-
-export async function priceSuggestion(category, title) {
-  if (!isConfigured) return null;
-  const rows = await supabase.rpc("price_suggestion", { p_category: category, p_title: title || null })
-    .then(ok).catch(() => []);
-  return rows?.[0] ?? null;
-}
-
-/** Taslağı yayınlar: fotoğrafları yükler, ürünü "satışta" olarak ekler. */
-export async function publishProduct(draft) {
-  need();
-  const uid = state.user.id;
-  const paths = [];
-  for (const [i, dataUrl] of draft.photos.entries()) {
-    const blob = await dataUrlToBlob(dataUrl);
-    const path = `${uid}/${Date.now()}-${i}.jpg`;
-    await supabase.storage.from("product-photos").upload(path, blob, { contentType: "image/jpeg", upsert: false }).then(ok);
-    paths.push(path);
-  }
-  return supabase.from("products").insert({
-    title: draft.title.trim(),
-    description: draft.description?.trim() || null,
-    category: draft.category,
-    price: draft.price,
-    delivery: draft.delivery,
-    photos: paths,
-    voice_transcript: draft.transcript || null,
-    status: "satista",
-    // Ürünün konumu (satıcı bu ürün için girdi). Sunucu kaydederken ~500 m kaydırır.
-    approx_lat: draft.location.lat,
-    approx_lng: draft.location.lng,
-    city: draft.location.city || null,
-    district: draft.location.district || null,
-    neighborhood: draft.location.neighborhood || null,
-  }).select().single().then(ok);
 }
 
 // ---------- Profil / rozet / kazanç ----------
@@ -177,7 +122,7 @@ export async function myEarnings() {
 export async function myPurchases() {
   need();
   return supabase.from("orders")
-    .select("id,quantity,unit_price,status,delivery,promised_date,created_at,conversation_id,products(id,title,photos)")
+    .select("id,quantity,unit_price,status,delivery,promised_date,created_at,conversation_id,products(id,title,photos,category),conversations(product_title,product_category)")
     .eq("buyer_id", state.user.id).neq("status", "iptal").order("created_at", { ascending: false }).then(ok);
 }
 
@@ -257,7 +202,7 @@ export async function myConversations() {
   need();
   const uid = state.user.id;
   const convs = await supabase.from("conversations")
-    .select("*, products(id,title,photos,price)")
+    .select("*, products(id,title,photos,price,category)")
     .or(`buyer_id.eq.${uid},seller_id.eq.${uid}`)
     .order("last_message_at", { ascending: false }).then(ok);
   const otherIds = [...new Set(convs.map((c) => (c.buyer_id === uid ? c.seller_id : c.buyer_id)))];
@@ -278,7 +223,7 @@ export async function myConversations() {
 
 export async function getConversation(id) {
   need();
-  const conv = await supabase.from("conversations").select("*, products(id,title,photos,price,delivery)")
+  const conv = await supabase.from("conversations").select("*, products(id,title,photos,price,delivery,category)")
     .eq("id", id).maybeSingle().then(ok);
   if (!conv) return null;
   const iAmBuyer = conv.buyer_id === state.user.id;

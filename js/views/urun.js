@@ -2,7 +2,7 @@
 import { h, formatPrice, formatDistance, monthsSince, toast, loading, emptyState, ask, icon, withIcon } from "../ui.js";
 import { categoryIconName } from "../icons.js";
 import { state } from "../store.js";
-import { getProduct, photoUrl, categoryOf, startConversation, setProductStatus, removeProduct, restoreProduct, daysUntilPurge, PHOTO_RETENTION_DAYS, track, DELIVERY_LABEL } from "../api.js";
+import { getProduct, photoUrl, categoryOf, startConversation, setProductStatus, removeProduct, track, DELIVERY_LABEL } from "../api.js";
 import { badgeChips, breadcrumb } from "../components.js";
 import { navigate, requireAuth } from "../router.js";
 
@@ -57,7 +57,6 @@ export default async function render(root, { params: [id] }) {
             distance != null || p.neighborhood ? h("span", { class: "chip" }, icon("map-pin"), distance != null ? `${formatDistance(distance)} uzakta` : p.neighborhood) : null,
           ),
           p.status === "satildi" ? h("p", { class: "notice" }, icon("alert", 20), "Bu ürün satıldı.") : null,
-          p.status === "kaldirildi" && !mine ? h("p", { class: "notice" }, icon("alert", 20), "Bu ürün satıcı tarafından vitrinden kaldırıldı.") : null,
           mine ? ownerActions(p) : buyerActions(p),
           h("div", { class: "small muted row", style: { gap: "8px" } }, icon("shield-check", 18),
             h("span", { style: { flex: "1" } }, "Ödemeyi teslimde yapın; ev adresi ve banka bilgisi paylaşmayın.")),
@@ -96,17 +95,6 @@ function buyerActions(p) {
   } }, withIcon("message", "Satıcıya yaz"));
 }
 
-function removedNotice(p) {
-  if (p.photos_purged_at) return h("p", { class: "notice" }, icon("trash", 20), "Bu ürün vitrinden kaldırıldı ve fotoğrafları silindi.");
-  const days = daysUntilPurge(p.removed_at);
-  return h("div", { class: "stack" },
-    h("p", { class: "notice" }, icon("alert", 20), days > 0 ? `Bu ürün vitrinden kaldırıldı. Fotoğrafları ${days} gün sonra silinecek.` : "Bu ürün vitrinden kaldırıldı. Fotoğrafları bu gece silinecek."),
-    h("button", { class: "btn btn-secondary", onclick: async () => {
-      try { await restoreProduct(p.id); toast("Ürününüz yeniden vitrinde."); navigate(`/urun/${p.id}`, { replace: true }); }
-      catch (e) { toast(e.message || "Geri alınamadı."); }
-    } }, withIcon("refresh", "Geri al")),
-  );
-}
 
 function ownerActions(p) {
   return h("div", { class: "stack" },
@@ -117,14 +105,14 @@ function ownerActions(p) {
     p.status === "satildi" ? h("button", { class: "btn btn-secondary", onclick: async () => {
       await setProductStatus(p.id, "satista"); toast("Yeniden satışta."); navigate(`/urun/${p.id}`, { replace: true });
     } }, "Yeniden satışa çıkar") : null,
-    p.status === "kaldirildi" ? removedNotice(p) : h("button", { class: "btn btn-danger", onclick: async () => {
+    h("button", { class: "btn btn-danger", onclick: async () => {
       if (!(await ask("Ürünü vitrinden kaldıralım mı?",
-        `Bu ürünle ilgili hiç mesajlaşma yoksa ürün ve fotoğrafları hemen kalıcı olarak silinir. Mesajlaşma varsa sohbetleriniz bozulmasın diye ${PHOTO_RETENTION_DAYS} gün saklanır; bu sürede geri alabilirsiniz, sonra fotoğrafları silinir.`,
-        "Evet, kaldır"))) return;
+        "Ürün ve fotoğrafları hemen ve kalıcı olarak silinir; geri alınamaz. Bu ürünle ilgili sohbetleriniz silinmez, sohbette yalnızca ürünün adı ve fiyatı görünmeye devam eder.",
+        "Evet, sil"))) return;
       try {
-        const res = await removeProduct(p.id);
-        track("product_removed", { deleted: !!res?.deleted });
-        toast(res?.deleted ? "Ürün ve fotoğrafları silindi." : `Vitrinden kaldırıldı. ${PHOTO_RETENTION_DAYS} gün içinde Profil → Kaldırılanlar'dan geri alabilirsiniz.`, 5000);
+        await removeProduct(p.id);
+        track("product_removed", { deleted: true });
+        toast("Ürün ve fotoğrafları silindi.");
         navigate("/profil");
       } catch (e) { toast(e.message || "Kaldırılamadı, tekrar deneyin."); }
     } }, withIcon("trash", "Vitrinden kaldır")),

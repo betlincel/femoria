@@ -147,7 +147,7 @@ npm run db:start
 
 ## Kaldırılan ürünler ve gece temizliği
 
-"Vitrinden kaldır" denince ürünün mesajlaşması yoksa ürün ve fotoğrafları hemen silinir. Mesajlaşması varsa sohbetler bozulmasın diye 30 gün saklanır (Profil → Kaldırılanlar'dan geri alınabilir), sonra fotoğrafları silinir. Dosya silme işini her gece `purge-removed-photos` Edge Function'ı yapar; aynı fonksiyon sahipsiz kalmış fotoğrafları ve sohbeti silinmiş sesli mesajları da temizler.
+"Vitrinden kaldır" denince ürün, fotoğrafları ve konumu hemen veritabanından silinir; geri alınamaz. Ürünle ilgili sohbetler ve sipariş kartları silinmez, sohbette ürünün adı ve fiyatı görünmeye devam eder. Her gece çalışan `purge-removed-photos` Edge Function'ı, silinirken kalmış olabilecek sahipsiz fotoğrafları ve sohbeti silinmiş sesli mesajları temizler.
 
 Kurulum (bir kez):
 
