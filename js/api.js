@@ -161,21 +161,7 @@ export async function deleteMyAccount() {
   await supabase.auth.signOut();
 }
 
-// ---------- Duyuru ve talep panosu ----------
-export async function announcements() {
-  if (!isConfigured) return [];
-  const loc = state.location;
-  let q = supabase.from("announcements").select("*").order("starts_at", { ascending: false }).limit(3);
-  if (loc?.city) q = q.or(`city.is.null,city.eq.${loc.city}`);
-  return q.then(ok).catch(() => []);
-}
-
-export async function districtDemand() {
-  const loc = state.location;
-  if (!isConfigured || !loc?.district) return [];
-  return supabase.rpc("district_demand", { p_city: loc.city, p_district: loc.district }).then(ok).catch(() => []);
-}
-
+// ---------- Arama talepleri ----------
 export async function logSearchRequest(query, category = null) {
   if (!isConfigured || !query?.trim()) return;
   const loc = state.location || {};

@@ -34,8 +34,8 @@ Supabase
 | `orders` | Sipariş kartı: adet, fiyat, teslim, tarih, iki tarafın "Anlaştık" onayı. |
 | `blocks`, `reports` | Engelleme ve tek dokunuşla şikayet. |
 | `user_badges` | Komşu Rozetleri. |
-| `announcements` | Kooperatif / buluşma günü duyuruları (Vitrin'de kart). |
-| `search_requests` | Bulunamayan aramalar → "Mahallende Aranıyor" panosu. |
+| `announcements` | Kooperatif / buluşma günü duyuruları (şu an arayüzde gösterilmiyor). |
+| `search_requests` | Bulunamayan aramalar (kullanım istatistiği; şu an arayüzde gösterilmiyor). |
 | `events`, `assistant_feedback` | Başarı ölçütleri ve Ayşe Abla geri bildirimleri. |
 
 ## Güvenlik ve gizlilik kuralları (veritabanında uygulanır)
@@ -82,8 +82,8 @@ Supabase
 | Sesle Vitrin | ✅ Tarayıcı ses tanıma + `describe` modu | Yöresel ağız/Karadeniz şivesi test cümleleri toplamak |
 | Güven Kalkanı (yaklaşık konum, mesaj kalkanı, KVKK) | ✅ (acil durum kişisi kaldırıldı) | Kimlik doğrulama akışı (e-Devlet/NFC) |
 | Emek Defteri ve rozetler | ✅ 5 rozet kuralı | Aylık "Emek Defteri" bildirimi |
-| Mahallende Aranıyor panosu | ✅ Talep kaydı + Vitrin kartı | Haftalık bildirim (zamanlanmış Edge Function) |
-| Mahalle Buluşma Günleri | ✅ Duyuru kartı (`announcements`) | Saha işi |
+| Mahallende Aranıyor panosu | ⏸ Talepler kaydediliyor; ana sayfa kartı kaldırıldı | Gerekirse yeniden açılabilir |
+| Mahalle Buluşma Günleri | ⏸ Ana sayfa duyuru kartı kaldırıldı (`announcements` tablosu duruyor) | Saha işi |
 | Abla–Kardeş mentorluk | ⏳ Veri alanı (`mentor_id`) + "Yol Gösteren" rozeti | Eşleştirme ekranı (Femoria 2.0) |
 | Güvenli ödeme (emanet) | ⏳ Prototipte "elden ödeme" | iyzico / PayTR entegrasyonu (Femoria 2.0) |
 | Fotoğrafta arka plan temizleme | ⏳ Otomatik ışık/kontrast düzeltme var | Arka plan silme modeli |

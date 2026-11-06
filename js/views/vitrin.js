@@ -1,7 +1,7 @@
 // Vitrin (Ana sayfa) — e-ticaret düzeni: afiş, kategoriler, yeni ürünler, nasıl çalışır, güven.
 import { h, greeting, loading, emptyState, icon, withIcon } from "../ui.js";
 import { state } from "../store.js";
-import { getCategories, latestProducts, nearbyProducts, announcements, districtDemand, RADIUS, photoUrl } from "../api.js";
+import { getCategories, latestProducts, nearbyProducts, RADIUS, photoUrl } from "../api.js";
 import { productGrid, categoryTiles } from "../components.js";
 
 function featureCard({ ico, title, text, href, warm = false, children = [] }) {
@@ -97,27 +97,12 @@ export default async function render(root) {
     ? productGrid(items)
     : h("div", { class: "card" }, emptyState("bag", "Henüz ürün yok", "Mahallenizde ilk ürünü siz koyun.", h("a", { class: "btn btn-primary", href: "#/sat" }, "İlk ürünü koy"))));
 
-  // Kooperatif / buluşma günü duyuruları + "Mahallende Aranıyor"
   // Cinsiyet seçmemiş (eski) hesaplara bir kerelik hatırlatma
   if (state.user && state.profile && !state.profile.gender) {
     extras.append(h("div", { class: "section" }, featureCard({
       ico: "user", title: "Size nasıl hitap edelim?",
       text: "Cinsiyetinizi seçerseniz size \"Hanım\" ya da \"Bey\" diye hitap ederiz. Başkalarına gösterilmez.",
       href: "#/ayarlar?hitap=1", warm: true,
-    })));
-  }
-
-  const [ann, demand] = await Promise.all([announcements(), state.user ? districtDemand() : []]);
-  for (const a of ann.slice(0, 1)) {
-    extras.append(h("div", { class: "section" }, featureCard({ ico: "megaphone", title: a.title, text: a.body, warm: true })));
-  }
-  if (demand.length) {
-    const top = demand[0];
-    extras.append(h("div", { class: "section" }, featureCard({
-      ico: "search",
-      title: "Mahallende aranıyor",
-      text: `İlçenizde ${top.people} kişi "${top.query}" aradı.${demand.length > 1 ? ` Ayrıca: ${demand.slice(1, 4).map((d) => d.query).join(", ")}.` : ""}`,
-      children: [h("a", { class: "btn btn-secondary", href: "#/sat", style: { marginTop: "12px" } }, "Ben yapabilirim")],
     })));
   }
 }
