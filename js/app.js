@@ -4,7 +4,7 @@ import { state, initAuth, onChange, LS } from "./store.js";
 import { route, startRouter, onRoute, navigate } from "./router.js";
 import { subscribeIncoming, track, getCategories } from "./api.js";
 import { initAssistant, assistantEvent } from "./assistant.js";
-import { esc, toast } from "./ui.js";
+import { esc, toast, h } from "./ui.js";
 import { iconSVG, ayseAvatarSVG, categoryIconName } from "./icons.js";
 import { ensureKvkkConsent } from "./consent.js";
 import { pickBrowsePlace, getBrowsePlace, placeLabel } from "./components.js";
@@ -114,7 +114,17 @@ document.getElementById("header-search").addEventListener("submit", (e) => {
 
 // Başlıktaki konum düğmesi: il / ilçe seç → o yerin ürünleri
 function paintPlace(place = getBrowsePlace()) {
-  document.getElementById("place-label").textContent = placeLabel(place);
+  const label = document.getElementById("place-label");
+  const name = [place?.district, place?.city].filter(Boolean).join(", ");
+  if (place?.current && name) {
+    // İki satır: küçük "Mevcut konum" etiketi + yer adı (kısalıp kaybolmasın)
+    label.replaceChildren(h("small", {}, "Mevcut konum"), h("b", {}, place.district || place.city));
+    label.classList.add("is-current");
+  } else {
+    label.textContent = placeLabel(place);
+    label.classList.remove("is-current");
+  }
+  document.getElementById("place-pill").title = placeLabel(place);
 }
 document.getElementById("place-pill").addEventListener("click", async () => {
   const place = await pickBrowsePlace();
@@ -122,6 +132,7 @@ document.getElementById("place-pill").addEventListener("click", async () => {
   const qs = new URLSearchParams();
   if (place.city) qs.set("il", place.city);
   if (place.district) qs.set("ilce", place.district);
+  if (place.current) qs.set("konum", "mevcut");
   navigate(`/urunler${qs.toString() ? "?" + qs : ""}`);
 });
 window.addEventListener("femoria:place", (e) => paintPlace(e.detail));
