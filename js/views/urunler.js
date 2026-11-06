@@ -1,20 +1,20 @@
 // Tüm ürünler — konum sormadan bütün ürünleri gösterir (en yeniden eskiye).
-// Belirli bir yere bakmak için yandaki panelden İl → İlçe → Mahalle seçilir; kategori ve arama da süzer.
-// Seçimler adres çubuğuna yazılır (#/urunler?il=…&ilce=…&mahalle=…&kategori=…&q=…), paylaşılabilir.
+// Belirli bir yere bakmak için yandaki panelden İl → İlçe seçilir ya da "Mevcut konumumu kullan" denir
+// (cihaz konumundan il/ilçe bulunur; konumun kendisi saklanmaz). Kategori ve arama da süzer.
+// Seçimler adres çubuğuna yazılır (#/urunler?il=…&ilce=…&konum=mevcut&kategori=…&q=…), paylaşılabilir.
 import { h, loading, emptyState, micButton, toast, icon, withIcon } from "../ui.js";
 import { getCategories, listProducts, logSearchRequest, track, photoUrl } from "../api.js";
-import { productGrid, breadcrumb, setBrowsePlace } from "../components.js";
+import { productGrid, breadcrumb, setBrowsePlace, useCurrentPlace } from "../components.js";
 import { iconSVG, categoryIconName } from "../icons.js";
-import { loadProvinces, loadNeighbourhoods } from "../tr-locations.js";
+import { loadProvinces } from "../tr-locations.js";
 
 const PAGE = 48;
-const plainHood = (n) => String(n || "").replace(/\s*\(.*\)$/, "");
 
 export default async function render(root, { query }) {
   const f = {
     city: query.il || null,
     district: query.ilce || null,
-    neighborhood: query.mahalle || null,
+    current: query.konum === "mevcut", // il/ilçe cihaz konumundan bulundu
     category: query.kategori || null,
     q: query.q || "",
   };
@@ -54,18 +54,18 @@ export default async function render(root, { query }) {
     const params = new URLSearchParams();
     if (f.city) params.set("il", f.city);
     if (f.district) params.set("ilce", f.district);
-    if (f.neighborhood) params.set("mahalle", f.neighborhood);
+    if (f.current && f.city) params.set("konum", "mevcut");
     if (f.category) params.set("kategori", f.category);
     if (f.q) params.set("q", f.q);
     const qs = params.toString();
     history.replaceState(null, "", `#/urunler${qs ? "?" + qs : ""}`);
-    setBrowsePlace(f.city ? { city: f.city, district: f.district } : {});
+    setBrowsePlace(f.city ? { city: f.city, district: f.district, current: f.current } : {});
   }
 
   // ---------- Başlık ----------
   function renderHead() {
     const cat = categories.find((c) => c.slug === f.category);
-    const place = [f.neighborhood, f.district, f.city].filter(Boolean).join(", ");
+    const place = [f.district, f.city].filter(Boolean).join(", ") + (f.current && f.city ? " (mevcut konum)" : "");
     titleEl.textContent = f.q ? `"${f.q}" için sonuçlar` : cat ? cat.name : "Tüm ürünler";
     crumbs.replaceChildren(breadcrumb(
       ["Ana sayfa", "#/"],
@@ -74,7 +74,7 @@ export default async function render(root, { query }) {
       ...(place ? [[place]] : []),
     ));
     viewToggle.replaceChildren(...withIcon(showMap ? "list" : "map", showMap ? "Liste" : "Haritada gör"));
-    const active = [f.neighborhood || f.district || f.city, cat?.name].filter(Boolean).join(" · ");
+    const active = [f.current && f.city ? "Mevcut konum" : f.district || f.city, cat?.name].filter(Boolean).join(" · ");
     filterSummary.replaceChildren(icon("settings"), h("span", {}, active ? `Filtrele: ${active}` : "Filtrele (konum, kategori)"));
   }
 
@@ -89,12 +89,13 @@ export default async function render(root, { query }) {
 
   async function renderFilters() {
     const province = provinces.find((p) => p.n === f.city) || null;
-    let hoods = [];
-    if (province && f.district) {
-      hoods = ((await loadNeighbourhoods(province.k).catch(() => ({})))[f.district] || []).map(plainHood);
-      hoods = [...new Set(hoods)];
-    }
     const btn = (pressed, onclick, ...children) => h("button", { type: "button", "aria-pressed": String(pressed), onclick }, ...children);
+    const useCurrent = async () => {
+      const place = await useCurrentPlace();
+      if (!place) return;
+      Object.assign(f, { city: place.city, district: place.district, current: !!place.current });
+      update();
+    };
 
     filtersEl.replaceChildren(
       f.q ? h("div", { class: "card row", style: { padding: "8px 8px 8px 14px" } },
@@ -105,13 +106,14 @@ export default async function render(root, { query }) {
       h("div", { class: "filter-group card stack", style: { padding: "12px 14px" } },
         h("h3", {}, "Konum"),
         select("f-il", "İl", provinces.map((p) => p.n), f.city,
-          (v) => { f.city = v; f.district = null; f.neighborhood = null; update(); }, { all: "Tüm Türkiye" }),
+          (v) => { f.city = v; f.district = null; f.current = false; update(); }, { all: "Tüm Türkiye" }),
         select("f-ilce", "İlçe", province ? province.d : [], f.district,
-          (v) => { f.district = v; f.neighborhood = null; update(); }, { disabled: !province, all: "Tüm ilçeler" }),
-        select("f-mahalle", "Mahalle", hoods, f.neighborhood,
-          (v) => { f.neighborhood = v; update(); }, { disabled: !f.district, all: "Tüm mahalleler" }),
+          (v) => { f.district = v; f.current = false; update(); }, { disabled: !province, all: "Tüm ilçeler" }),
+        f.current && f.city
+          ? h("div", { class: "current-place", role: "status" }, icon("map-pin", 18), h("span", {}, "Mevcut konum kullanılıyor"))
+          : h("button", { class: "btn btn-secondary", onclick: useCurrent }, ...withIcon("map-pin", "Mevcut konumumu kullan")),
         f.city ? h("button", { class: "btn btn-ghost btn-inline", style: { alignSelf: "flex-start" },
-          onclick: () => { f.city = f.district = f.neighborhood = null; update(); } }, ...withIcon("x", "Konumu temizle")) : null,
+          onclick: () => { f.city = f.district = null; f.current = false; update(); } }, ...withIcon("x", "Konumu temizle")) : null,
       ),
 
       h("div", { class: "filter-group" },
@@ -137,7 +139,7 @@ export default async function render(root, { query }) {
     if (!append) { resultsEl.replaceChildren(loading()); moreEl.replaceChildren(); }
     let res;
     try {
-      res = await listProducts({ ...f, limit: PAGE, offset: append ? rows.length : 0 });
+      res = await listProducts({ city: f.city, district: f.district, category: f.category, q: f.q, limit: PAGE, offset: append ? rows.length : 0 });
     } catch {
       if (seq !== loadSeq) return;
       resultsEl.replaceChildren(h("div", { class: "card" }, emptyState("alert", "Ürünler yüklenemedi", "İnternet bağlantınızı kontrol edip tekrar deneyin.",
@@ -168,12 +170,12 @@ export default async function render(root, { query }) {
     return h("div", { class: "card stack" },
       emptyState("search", "Bu seçimde ürün yok",
         anyFilter ? "Filtreleri değiştirebilir ya da ne aradığınızı bize yazabilirsiniz." : "Henüz satışta ürün yok. İlk ürünü siz koyun!"),
-      anyFilter ? h("button", { class: "btn btn-secondary", onclick: () => { f.city = f.district = f.neighborhood = f.category = null; f.q = ""; if (headerSearch) headerSearch.value = ""; update(); } }, "Tüm ürünleri göster") : null,
+      anyFilter ? h("button", { class: "btn btn-secondary", onclick: () => { f.city = f.district = f.category = null; f.current = false; f.q = ""; if (headerSearch) headerSearch.value = ""; update(); } }, "Tüm ürünleri göster") : null,
       h("div", { class: "input-row" }, input, micButton({ size: "sm", onText: (t) => (input.value = t) })),
       h("button", { class: "btn btn-primary", onclick: async () => {
         const q = input.value.trim();
         if (!q) return;
-        await logSearchRequest(q, f.category, { city: f.city, district: f.district, neighborhood: f.neighborhood });
+        await logSearchRequest(q, f.category, { city: f.city, district: f.district });
         toast("Not aldık, teşekkürler. Hangi ürünlerin arandığını görmemize yardımcı oluyor.");
       } }, "Gönder"),
     );

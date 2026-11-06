@@ -30,10 +30,7 @@ export function productCard(p) {
     h("div", { class: "pcard-body" },
       h("div", { class: "pcard-title" }, p.title),
       h("div", { class: "price" }, formatPrice(p.price)),
-      h("div", { class: "meta" },
-        p.distance_km != null || p.neighborhood ? icon("map-pin") : null,
-        p.distance_km != null ? formatDistance(p.distance_km) : p.neighborhood || "",
-      ),
+      h("div", { class: "meta" }), // ürün listelerinde mahalle gösterilmez (Profil'de durum rozeti buraya eklenir)
     ),
   );
 }
@@ -327,7 +324,28 @@ export function setBrowsePlace(place) {
   try { localStorage.setItem(PLACE_KEY, JSON.stringify(place || {})); } catch { /* gizli sekme */ }
   window.dispatchEvent(new CustomEvent("femoria:place", { detail: place || {} }));
 }
-export const placeLabel = (p) => [p?.district, p?.city].filter(Boolean).join(", ") || "Tüm Türkiye";
+export const placeLabel = (p) => {
+  const name = [p?.district, p?.city].filter(Boolean).join(", ");
+  if (p?.current) return `Mevcut konum · ${p.district || p.city || ""}`.trim();
+  return name || "Tüm Türkiye";
+};
+
+/**
+ * "Mevcut konumumu kullan": cihaz konumundan il ve ilçe bulunur (konum izni + aydınlatma onayıyla).
+ * Konumun kendisi saklanmaz ve sunucuya gönderilmez; yalnızca il / ilçe adı cihazda hatırlanır.
+ * Promise<{ city, district, current: true } | { city, district } (listeden seçildiyse) | null>
+ */
+export async function useCurrentPlace() {
+  const loc = await askLocation();
+  if (!loc) return null;
+  if (!loc.city) {
+    toast("Konumunuzdan il bulunamadı. İl ve ilçeyi listeden seçebilirsiniz.");
+    return null;
+  }
+  const place = { city: loc.city, district: loc.district || null, current: loc.source === "gps" };
+  setBrowsePlace(place);
+  return place;
+}
 
 /** İl / ilçe seçtirir. Promise<{ city, district } | {} (Tüm Türkiye) | null (vazgeçti)> */
 export function pickBrowsePlace() {
@@ -348,7 +366,12 @@ export function pickBrowsePlace() {
     fillDistricts(cur.district);
     ilSel.addEventListener("change", () => fillDistricts(null));
     const close = sheet("Nerede arıyorsunuz?", (closeSheet) => h("div", { class: "stack" },
-      h("p", { class: "muted", style: { margin: 0 } }, "Seçtiğiniz yerdeki ürünleri gösterelim. Konumunuz istenmez."),
+      h("button", { class: "btn btn-secondary btn-xl", onclick: () => {
+        settled = true; // pencere kapanınca "vazgeçti" sayılmasın
+        closeSheet();
+        useCurrentPlace().then(resolve);
+      } }, ...withIcon("map-pin", "Mevcut konumumu kullan")),
+      h("div", { class: "or-line" }, h("span", {}, "ya da il / ilçe seçin")),
       h("div", {}, h("label", { for: "pp-il" }, "İl"), ilSel),
       h("div", {}, h("label", { for: "pp-ilce" }, "İlçe"), ilceSel),
       h("button", { class: "btn btn-primary btn-xl", onclick: () => {
