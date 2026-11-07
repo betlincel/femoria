@@ -482,7 +482,6 @@ textarea.input { min-height: 110px; resize: vertical; }
 .quote { border-left: 3px solid var(--primary); padding: 4px 0 4px 14px; color: var(--text-soft); font-style: italic; }
 
 /* ---------- Harita ---------- */
-.map { height: 420px; border-radius: var(--radius-lg); overflow: hidden; border: 1px solid var(--line); }
 
 /* ---------- Alt menü ---------- */
 .bottom-nav {

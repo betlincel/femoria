@@ -40,7 +40,7 @@ Supabase
 
 ## Güvenlik ve gizlilik kuralları (veritabanında uygulanır)
 
-- **Yaklaşık konum:** `profiles` ve `products` tetikleyicileri gelen koordinatı her kayıtta ~500 m (ürünlerde ek ~200 m) rastgele kaydırır. Tam konum hiç saklanmaz. Haritada nokta yerine 500 m'lik daire çizilir.
+- **Yaklaşık konum:** `profiles` ve `products` tetikleyicileri gelen koordinatı her kayıtta ~500 m (ürünlerde ek ~200 m) rastgele kaydırır. Tam konum hiç saklanmaz.
 - **Akıllı mesaj kalkanı:** `message_shield_flags()` telefon, IBAN, adres ve "önce kapora at" kalıplarını işaretler. İstemci aynı kurallarla göndermeden önce yumuşak uyarı verir; mesaj engellenmez, karar kullanıcının.
 - **Kadın satıcı koruması:** `only_trusted_messages` açıksa yalnız e-postası (ya da telefonu) doğrulanmış ve en az bir tamamlanmış alışverişi olan alıcılar yazabilir (`can_message()`, `start_conversation()`).
 - **Gece sessizliği:** `quiet_hours_enabled` açıksa 22:00–08:00 (İstanbul) arası gelen ilk mesaja otomatik "sabah dönecek" sistem notu düşer.
