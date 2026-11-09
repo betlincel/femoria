@@ -19,7 +19,7 @@ Supabase
   ├─ PostgREST ....... tablolar (RLS ile korunur) + RPC fonksiyonları
   ├─ Realtime ........ messages, orders, conversations
   ├─ Storage ......... product-photos (açık), avatars (açık), voice-messages (yalnız katılımcılar)
-  └─ Edge Function ... ayse-abla → OpenAI (sohbet, ürün tarifi, ses→yazı)
+  └─ Edge Function ... ayse-abla → Google Gemini (sohbet, ürün tarifi, ses→yazı, sesli okuma; OpenAI isteğe bağlı yedek)
 ```
 
 ## Veri modeli
@@ -69,11 +69,11 @@ Supabase
 ## Ayşe Abla
 
 - **Persona** (`supabase/functions/_shared/persona.ts`): kısa cümle (≤ 12 kelime), "siz" hitabı, teknik kelime yok, her cevapta tek sonraki adım, hukuk/vergi/sağlıkta uzmana yönlendirme, ödeme/şifre istemez.
-- **Sesli okuma isteğe bağlıdır ve varsayılan olarak kapalıdır** (taslakta "varsayılan açık" yazıyordu; kullanıcı geri bildirimiyle değiştirildi). Asistan panelindeki hoparlör düğmesinden ya da Ayarlar'dan açılır; kapalıyken her mesajın yanındaki "Dinle" düğmesiyle tek mesaj dinlenebilir. Ses, `ayse-abla` fonksiyonunun `speak` modunda OpenAI ile üretilen sabit bir kadın sesidir (`OPENAI_TTS_VOICE`, varsayılan `coral`, "ellili yaşlarda sıcak bir abla" ton tarifiyle); uzun metinler cümle sınırında parçalanıp sırayla çalınır. Sunucu sesi yoksa tarayıcı sesine düşülür (bilinen Türkçe kadın sesleri seçilir, yalnız erkek sesi varsa perde yükseltilir).
+- **Sesli okuma isteğe bağlıdır ve varsayılan olarak kapalıdır** (taslakta "varsayılan açık" yazıyordu; kullanıcı geri bildirimiyle değiştirildi). Asistan panelindeki hoparlör düğmesinden ya da Ayarlar'dan açılır; kapalıyken her mesajın yanındaki "Dinle" düğmesiyle tek mesaj dinlenebilir. Ses, `ayse-abla` fonksiyonunun `speak` modunda Gemini TTS ile üretilen sabit bir kadın sesidir (`GEMINI_TTS_VOICE`, varsayılan `Sulafat`, "ellili yaşlarda sıcak bir abla" ton tarifiyle; Gemini ham PCM döndürür, fonksiyon WAV'a sarar); uzun metinler cümle sınırında parçalanıp sırayla çalınır. Sunucu sesi yoksa tarayıcı sesine düşülür (bilinen Türkçe kadın sesleri seçilir, yalnız erkek sesi varsa perde yükseltilir).
 - **Ekran haritası** sistem talimatına eklenir; asistan `highlight` alanıyla ekrandaki düğmeyi parlatabilir ("burayı göster").
 - **Proaktif tetikleyiciler** (`js/assistant.js`): ilk giriş, aynı ekranda 30 sn hareketsizlik, aynı düğmeye 2 sn içinde 3 dokunuş, yarım kalan ürün, ilk gelen mesaj. "Sonra" denirse o oturumda kendiliğinden çıkmaz.
 - **Geri bildirim:** tek soru, tek dokunuş, haftada en fazla 2 soru; "Sonra" denirse o hafta sorulmaz. Sorular: ilk ürün sonrası, 5 dk gezinti, ilk satış, rehber okuma, 2 hafta sonra dönüş.
-- **Yedek mod:** OpenAI anahtarı yoksa ya da hata olursa kurallı cevaplar ve yerel "ürün tarifi" çalışır; uygulama asla kilitlenmez.
+- **Yedek mod:** Gemini (ya da OpenAI) anahtarı yoksa ya da hata olursa kurallı cevaplar ve yerel "ürün tarifi" çalışır; uygulama asla kilitlenmez.
 
 ## Taslak 4.4 önceliklerine göre durum
 
