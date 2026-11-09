@@ -356,9 +356,16 @@ export async function askAssistant(payload) {
   if (!isConfigured) return null;
   try {
     const { data, error } = await supabase.functions.invoke("ayse-abla", { body: payload });
-    if (error || !data || data.error) return null;
+    if (error || !data || data.error) {
+      // Sorun giderme: asıl sebep tarayıcı konsolunda görünür (ekranda yedek cevaplar çalışır)
+      let detail = data?.error || error?.message || "boş cevap";
+      try { if (error?.context) detail = `${error.context.status} ${await error.context.text()}`; } catch {}
+      console.warn("[Ayşe Abla] yapay zekaya ulaşılamadı, kurallı cevaplar kullanılıyor:", detail);
+      return null;
+    }
     return data;
-  } catch {
+  } catch (e) {
+    console.warn("[Ayşe Abla] yapay zekaya ulaşılamadı:", e);
     return null;
   }
 }
