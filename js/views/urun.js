@@ -3,7 +3,7 @@ import { h, formatPrice, formatDistance, monthsSince, toast, loading, emptyState
 import { categoryIconName } from "../icons.js";
 import { state } from "../store.js";
 import { getProduct, photoUrl, categoryOf, startConversation, setProductStatus, removeProduct, track, DELIVERY_LABEL } from "../api.js";
-import { badgeChips, breadcrumb } from "../components.js";
+import { badgeChips, breadcrumb, favButton } from "../components.js";
 import { navigate, requireAuth } from "../router.js";
 
 export default async function render(root, { params: [id] }) {
@@ -49,6 +49,7 @@ export default async function render(root, { params: [id] }) {
           ),
           p.status === "satildi" ? h("p", { class: "notice" }, icon("alert", 20), "Bu ürün satıldı.") : null,
           mine ? ownerActions(p) : buyerActions(p),
+          mine ? null : favButton(p.id, { cls: "btn btn-secondary fav-wide", withText: true }),
           h("div", { class: "small muted row", style: { gap: "8px" } }, icon("shield-check", 18),
             h("span", { style: { flex: "1" } }, "Ödemeyi teslimde yapın; ev adresi ve banka bilgisi paylaşmayın.")),
         ),

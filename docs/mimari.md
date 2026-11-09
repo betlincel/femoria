@@ -32,6 +32,7 @@ Supabase
 | `products` | Ürünler. Konum her ürün için satıcı tarafından girilir (cihazdan ya da listeden), kaydedilirken ~500 m kaydırılır. |
 | `conversations`, `messages` | Ürün başına alıcı–satıcı sohbeti. Mesaj türleri: metin, hazır, ses, sipariş, sistem. |
 | `orders` | Sipariş kartı: adet, fiyat, teslim, tarih, iki tarafın "Anlaştık" onayı. |
+| `favorites` | Favoriler: kullanıcının kalple işaretlediği ürünler (yalnız kendisi görür; ürün ya da hesap silinince silinir). |
 | `blocks`, `reports` | Engelleme ve tek dokunuşla şikayet. |
 | `user_badges` | Komşu Rozetleri. |
 | `announcements` | Kooperatif / buluşma günü duyuruları (şu an arayüzde gösterilmiyor). |

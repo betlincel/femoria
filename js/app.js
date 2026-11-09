@@ -7,6 +7,7 @@ import { initAssistant, assistantEvent } from "./assistant.js";
 import { esc, toast, h } from "./ui.js";
 import { iconSVG, ayseAvatarSVG } from "./icons.js";
 import { ensureKvkkConsent } from "./consent.js";
+import { loadFavorites, favoriteCount } from "./favorites.js";
 import { pickBrowsePlace, getBrowsePlace, placeLabel } from "./components.js";
 
 route(/^\/$/, "vitrin", () => import("./views/vitrin.js"));
@@ -20,6 +21,7 @@ route(/^\/yakinimda$/, "urunler", async () => ({
 }));
 route(/^\/sat$/, "sat", () => import("./views/sat.js"), "medium");
 route(/^\/mesajlar$/, "mesajlar", () => import("./views/mesajlar.js"), "medium");
+route(/^\/favoriler$/, "favoriler", () => import("./views/favoriler.js"));
 route(/^\/sohbet\/([\w-]+)$/, "mesajlar", () => import("./views/sohbet.js"), "medium");
 route(/^\/urun\/([\w-]+)$/, "urun", () => import("./views/urun.js"));
 route(/^\/profil$/, "profil", () => import("./views/profil.js"));
@@ -66,6 +68,7 @@ onChange(() => {
   }
   if (state.user?.id !== lastUserId) {
     lastUserId = state.user?.id ?? null;
+    loadFavorites();
     stopInbox();
     stopInbox = subscribeIncoming((msg) => {
       if (!location.hash.includes(msg.conversation_id)) {
@@ -148,6 +151,15 @@ async function fillCategoryBar() {
   }
 }
 
+// Başlıktaki favori sayısı
+function paintFavCount() {
+  const n = favoriteCount();
+  const el = document.getElementById("fav-count");
+  el.hidden = !n;
+  el.textContent = n > 99 ? "99+" : String(n);
+}
+window.addEventListener("femoria:fav", paintFavCount);
+
 async function main() {
   paintShell();
   paintPlace();
@@ -155,6 +167,7 @@ async function main() {
   document.getElementById("config-banner").hidden = isConfigured;
   await initAuth();
   renderAvatar();
+  loadFavorites();
   initAssistant();
   startRouter();
   if (state.authLinkError) toast("Bağlantının süresi dolmuş ya da daha önce kullanılmış. Lütfen yeni bir bağlantı isteyin.", 6000);

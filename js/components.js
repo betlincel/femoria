@@ -4,6 +4,8 @@ import { categoryIconName } from "./icons.js";
 import { photoUrl, getLocations } from "./api.js";
 import { state, hasLocationConsent, recordLocationConsent } from "./store.js";
 import { LOCATION_SUMMARY } from "./kvkk.js";
+import { isFavorite, toggleFavorite } from "./favorites.js";
+import { requireAuth } from "./router.js";
 import { loadProvinces, loadNeighbourhoods, normalizeTr, locateSelection, nearestProvince } from "./tr-locations.js";
 
 export function pageTitle(text, { back } = {}) {
@@ -20,9 +22,45 @@ export function productPhoto(product, cls = "ph") {
     : h("div", { class: cls, "aria-hidden": "true" }, icon(categoryIconName(product.category)));
 }
 
+// ---------- Favori (kalp) düğmesi ----------
+function paintFav(btn) {
+  const on = isFavorite(btn.dataset.fav);
+  btn.classList.toggle("is-fav", on);
+  btn.setAttribute("aria-pressed", String(on));
+  const label = on ? "Favorilerden çıkar" : "Favorilere ekle";
+  btn.setAttribute("aria-label", label);
+  btn.title = label;
+  const text = btn.querySelector(".fav-text");
+  if (text) text.textContent = on ? "Favorilerde" : "Favorilere ekle";
+}
+window.addEventListener("femoria:fav", () => document.querySelectorAll(".fav-btn").forEach(paintFav));
+
+/** Kalp düğmesi. withText: yanında "Favorilere ekle / Favorilerde" yazar (ürün sayfası). */
+export function favButton(productId, { cls = "", withText = false } = {}) {
+  const btn = h("button", {
+    type: "button", class: `fav-btn ${cls}`, "data-fav": productId,
+    onclick: async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!state.user) { toast("Favorilere eklemek için giriş yapın."); requireAuth(location.hash.slice(1) || "/"); return; }
+      try {
+        const on = await toggleFavorite(productId);
+        toast(on ? "Favorilere eklendi." : "Favorilerden çıkarıldı.");
+      } catch (err) {
+        console.error("[Favoriler]", err);
+        toast("Favori kaydedilemedi. Biraz sonra tekrar deneyin.");
+      }
+    },
+  }, icon("heart", withText ? 20 : 18), withText ? h("span", { class: "fav-text" }) : null);
+  paintFav(btn);
+  return btn;
+}
+
 export function productCard(p) {
   const url = photoUrl(p.photos?.[0]);
-  return h("a", { class: "pcard", href: `#/urun/${p.id}` },
+  const own = state.user?.id && state.user.id === p.seller_id;
+  return h("div", { class: "pcard" },
+    h("a", { class: "pcard-link", href: `#/urun/${p.id}` },
     h("div", { class: "pcard-img" },
       url ? h("img", { src: url, alt: p.title, loading: "lazy" }) : icon(categoryIconName(p.category)),
       p.status === "satildi" ? h("span", { class: "chip pcard-badge" }, "Satıldı") : null,
@@ -33,7 +71,8 @@ export function productCard(p) {
         h("div", { class: "price" }, formatPrice(p.price)),
         h("span", { class: "pcard-go", "aria-hidden": "true" }, icon("arrow-right", 16))),
       h("div", { class: "meta" }), // ürün listelerinde mahalle gösterilmez (Profil'de durum rozeti buraya eklenir)
-    ),
+    )),
+    own ? null : favButton(p.id, { cls: "pcard-fav" }),
   );
 }
 

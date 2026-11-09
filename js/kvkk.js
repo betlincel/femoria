@@ -5,7 +5,7 @@
 //
 // ⚠️ Yayına çıkmadan önce bir hukukçuya kontrol ettirin ve iletişim adresini doldurun.
 
-export const KVKK_VERSION = "2026-11-16";
+export const KVKK_VERSION = "2026-11-17";
 
 // Başvuru ve sorular için iletişim adresi (yayından önce doldurun).
 export const KVKK_CONTACT = "[iletişim e-posta adresi]";
@@ -36,6 +36,7 @@ export const KVKK_SECTIONS = [
       "Konum: yalnızca sattığınız ürünlerin yaklaşık konumu ve mahalle, ilçe, il adı (ayrıntısı aşağıda).",
       "Ürün bilgileri: ürün fotoğrafları, ad, açıklama, fiyat ve sesle anlattığınızın yazıya dökülmüş hali.",
       "Mesajlar: alıcı ve satıcıların birbirine yazdığı mesajlar, sesli mesajlar ve sipariş kartları.",
+      "Favoriler: kalple işaretlediğiniz ürünler. Yalnızca siz görürsünüz; satıcıya ya da başkalarına gösterilmez.",
       "Güvenlik bilgileri: engellediğiniz kişiler ve şikayetler.",
       "Kullanım bilgileri: hangi ekranların ne sıklıkla kullanıldığı (ör. \"ürün yükleme tamamlandı\"). Bunlar uygulamayı geliştirmek için sayılır.",
     ],
