@@ -1037,8 +1037,17 @@ h1 { font-weight: 400; color: var(--primary); font-size: 2rem; letter-spacing: -
 
 /* Sayfa başlıkları ve küçük parçalar */
 .chip-brand { background: var(--primary-soft); color: var(--primary-hover); }
-.tile { border-radius: 18px; }
-.tile-ico { background: var(--pink); }
+/* Ürün türü seçimi: sade, yazılı hap düğmeler (ikonsuz) */
+.tiles, .tiles[role] { display: flex; flex-wrap: wrap; gap: 8px; grid-template-columns: none; }
+.tile {
+  flex-direction: row; min-height: 48px; padding: 10px 20px; border-radius: 999px;
+  font-size: .95rem; box-shadow: none; border-color: var(--line-strong);
+}
+.tile:hover { border-color: var(--primary); color: var(--primary-hover); }
+.tile[aria-pressed="true"] { background: var(--primary); border-color: var(--primary); color: #fff; box-shadow: none; }
+/* Kategori listeleri: yazı tek başına, düzgün hizalı */
+.category-inner a:not(.all-cats) { padding: 0 14px; letter-spacing: .01em; }
+.filter-list button { justify-content: flex-start; padding-left: 14px; }
 .filter-list button[aria-pressed="true"] { background: var(--pink); border-color: transparent; color: var(--primary-hover); }
 .loc-card, .sell-card { border-radius: 22px; }
 .ai-banner { background: var(--blue); color: var(--text); }
@@ -1054,3 +1063,19 @@ h1 { font-weight: 400; color: var(--primary); font-size: 2rem; letter-spacing: -
 .footer-col a:hover { color: var(--primary-hover); }
 .footer-bottom { border-top-color: rgba(43, 27, 24, .15); color: #5A2A26; }
 .product-gallery .main-img { background: var(--pink); border-color: transparent; color: var(--primary); }
+
+/* Konum kartı: üç satır (İl, İlçe, Mevcut konum) her tarayıcıda aynı hizada ve aynı ölçüde */
+.loc-body { grid-template-columns: minmax(0, 1fr); }
+.loc-body > * { min-width: 0; max-width: 100%; margin: 0; }
+select.place-select, .use-current {
+  box-sizing: border-box; width: 100%; height: 48px; min-height: 48px; margin: 0;
+  border: 1px solid var(--line-strong); border-radius: var(--radius-sm);
+}
+select.place-select {
+  display: block; padding: 0 40px 0 14px; line-height: 46px; font-size: .95rem;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; background-color: var(--surface);
+}
+select.place-select:disabled { background-color: var(--surface-2); }
+.use-current { padding: 0 14px; border-style: solid; background: var(--primary-soft); white-space: normal; line-height: 1.2; }
+.use-current:hover { background: var(--pink); border-color: var(--primary); }
+.loc-sep { margin: 4px 0; }

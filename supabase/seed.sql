@@ -4,12 +4,12 @@
 -- =====================================================================
 
 insert into public.categories (slug, name, icon, sort) values
-  ('yemek',     'Yemek',      '🍲', 1),
-  ('orgu',      'Örgü',       '🧶', 2),
-  ('taki',      'Takı',       '📿', 3),
-  ('ev-susu',   'Ev süsü',    '🏺', 4),
-  ('kurutmalik','Kurutmalık', '🌶️', 5),
-  ('diger',     'Diğer',      '🎁', 6)
+  ('yemek',      'Yemek',      'cat-yemek',      1),
+  ('orgu',       'Örgü',       'cat-orgu',       2),
+  ('taki',       'Takı',       'cat-taki',       3),
+  ('ev-susu',    'Ev süsü',    'cat-ev-susu',    4),
+  ('kurutmalik', 'Kurutmalık', 'cat-kurutmalik', 5),
+  ('diger',      'Diğer',      'cat-diger',      6)
 on conflict (slug) do update set name = excluded.name, icon = excluded.icon, sort = excluded.sort;
 
 insert into public.badges (slug, name, description, icon) values

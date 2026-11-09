@@ -60,7 +60,7 @@ export function categoryTiles(categories, { selected = null, onSelect, hrefFor }
       if (hrefFor) props.href = hrefFor(c);
       else props.onclick = () => onSelect?.(c);
       return h(hrefFor ? "a" : "button", { ...props, type: hrefFor ? null : "button" },
-        h("span", { class: "tile-ico", "aria-hidden": "true" }, icon(categoryIconName(c.slug))), h("span", {}, c.name));
+        h("span", {}, c.name));
     }),
   );
 }

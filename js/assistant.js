@@ -16,7 +16,7 @@ let log, choices;
 
 // Metin olarak gelen bazı seçeneklerin doğrudan bir işi var.
 const KNOWN_ACTIONS = {
-  "Rehberi aç": () => { close(); navigate("/rehber"); },
+  "Rehberi aç": () => { navigate("/rehber"); },
 };
 
 const save = () => sessionStorage.setItem("femoria:ayse", JSON.stringify(history.slice(-20)));
@@ -147,10 +147,8 @@ async function userSays(text, { echo = true } = {}) {
   thinking.remove();
   const res = ai || scripted(text);
   say(res.reply, (res.buttons || []).map((b) => ({ label: b })), { open: true });
-  if (res.highlight) {
-    close();
-    setTimeout(() => highlight(res.highlight), 250);
-  }
+  // Panel açık kalır; yalnız kullanıcı kapatınca kapanır
+  if (res.highlight) setTimeout(() => highlight(res.highlight), 250);
   if (res.search) {
     navigate(`/urunler?q=${encodeURIComponent(res.search)}`);
   }
@@ -198,14 +196,14 @@ function firstVisit() {
   setTimeout(() => say("Bugün ne yapmak istersiniz?", [
     { label: "Bir şey satmak istiyorum", primary: true, action: () => {
       say("Ne güzel! Hadi ilkini birlikte satışa çıkaralım. 3 dakika sürer.", [
-        { label: "Hadi başlayalım", primary: true, action: () => { close(); navigate("/sat"); } },
-        { label: "Önce nasıl olduğunu göster", action: () => { close(); navigate("/rehber#satmak"); } },
+        { label: "Hadi başlayalım", primary: true, action: () => { navigate("/sat"); } },
+        { label: "Önce nasıl olduğunu göster", action: () => { navigate("/rehber#satmak"); } },
         later,
       ]);
     } },
     { label: "Alışveriş yapmak istiyorum", action: () => {
       say("El emeği ürünlere bakalım.", [
-        { label: "Göster bana", primary: true, action: () => { close(); navigate("/urunler"); } }, later,
+        { label: "Göster bana", primary: true, action: () => { navigate("/urunler"); } }, later,
       ]);
     } },
     { label: "Sadece bakıyorum", action: () => { say("Tabii, rahatça gezin. Ben buradayım.", []); setTimeout(close, 2500); } },
@@ -247,7 +245,7 @@ function checkUnfinishedDraft() {
   sessionStorage.setItem("femoria:draft-nudged", "1");
   const what = draft.title ? `"${draft.title}"` : "Ürününüz";
   nudge(`${what} yarım kalmıştı, bitirelim mi?`, [
-    { label: "Bitirelim", primary: true, action: () => { close(); navigate("/sat"); } }, later,
+    { label: "Bitirelim", primary: true, action: () => { navigate("/sat"); } }, later,
   ]);
 }
 
@@ -298,7 +296,7 @@ export function assistantEvent(event, payload) {
   if (event === "message_received" && !LS.get("first_message_seen")) {
     LS.set("first_message_seen", true);
     nudge("İlk mesajınız geldi! Nasıl cevap verilir göstereyim mi?", [
-      { label: "Göster bana", primary: true, action: () => { close(); navigate(`/sohbet/${payload.conversation_id}`); setTimeout(() => say("Alttaki hazır cevaplardan birine dokunmanız yeterli. Ya da mikrofona basıp konuşun."), 900); } },
+      { label: "Göster bana", primary: true, action: () => { navigate(`/sohbet/${payload.conversation_id}`); setTimeout(() => say("Alttaki hazır cevaplardan birine dokunmanız yeterli. Ya da mikrofona basıp konuşun."), 900); } },
       later,
     ]);
   }

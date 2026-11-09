@@ -284,8 +284,8 @@ export default async function render(root) {
       LS.set("draft", null);
       celebrate(product);
     } catch (e) {
-      console.error(e);
-      toast("Bir sorun oldu, ürününüz saklandı. Biraz sonra tekrar deneyin.");
+      console.error("[Satışa çıkar] başarısız:", e);
+      toast(`${publishErrorText(e)} Ürününüz saklandı.`, 7000);
       draft.publishAfterLogin = null;
       save();
       draw();
@@ -313,6 +313,19 @@ export default async function render(root) {
   // (Yalnızca son 30 dakika içinde "Satışa çıkar"a basıldıysa.)
   draw();
   if (draft.publishAfterLogin && Date.now() - draft.publishAfterLogin < 30 * 60e3 && state.user) publish();
+}
+
+// Satışa çıkarma hatasını sade bir cümleye çevirir (ayrıntı konsolda)
+function publishErrorText(e) {
+  const msg = `${e?.code ?? ""} ${e?.message ?? ""} ${e?.details ?? ""} ${e?.error ?? ""}`.toLowerCase();
+  if (/products_category_fkey|categories/.test(msg)) return "Ürün türleri veritabanında eksik (kategori listesi yüklenmemiş).";
+  if (/products_seller_id_fkey|profiles/.test(msg)) return "Profiliniz veritabanında eksik görünüyor.";
+  if (/bucket not found/.test(msg)) return "Fotoğraf depolama alanı bulunamadı.";
+  if (/payload too large|exceeded the maximum|too large/.test(msg)) return "Fotoğraf çok büyük.";
+  if (/row-level security|violates row-level|permission denied|unauthorized|jwt|403/.test(msg)) return "İzin hatası: çıkış yapıp yeniden giriş yapın.";
+  if (/konumu gerekli|23502/.test(msg)) return "Ürünün konumu kaydedilemedi.";
+  if (/failed to fetch|network|load failed/.test(msg)) return "İnternet bağlantısı kurulamadı.";
+  return `Satışa çıkarılamadı (${(e?.message || "bilinmeyen hata").slice(0, 120)}).`;
 }
 
 // ---------- Yapay zeka yokken: basit anlama ----------
