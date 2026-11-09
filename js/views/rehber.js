@@ -60,7 +60,6 @@ const GUIDE = `
   <li>Belirli bir yere bakmak isterseniz yandaki <strong>Konum</strong> bölümünden önce <strong>ilinizi</strong>, sonra <strong>ilçenizi</strong>, isterseniz <strong>mahallenizi</strong> seçin. Yalnızca oradaki ürünler kalır. <strong>"Konumu temizle"</strong> ile yeniden tüm ürünlere dönersiniz.</li>
   <li>Ne aradığınızı daraltmak isterseniz kategorilerden birine dokunun: <strong>Yemek, Örgü, Takı, Ev süsü…</strong></li>
   <li>Bir şey arıyorsanız en üstteki arama kutusuna yazın: "mantı", "patik" gibi.</li>
-  <li>Haritada görmek isterseniz <strong>"Haritada gör"</strong>e dokunun. Satıcıların yerleri tam adres olarak değil, mahalle büyüklüğünde yuvarlak bir alan olarak görünür.</li>
 </ol>
 <div class="tip">${iconSVG("sparkles")}<p><strong>Ayşe Abla'dan ipucu:</strong> Aradığınızı bulamadıysanız bana söyleyin: "Ev mantısı var mı?" Ben sizin için bakarım.</p></div>
 </section>

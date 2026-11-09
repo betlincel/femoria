@@ -2,10 +2,10 @@
 // Belirli bir yere bakmak için yandaki panelden İl → İlçe seçilir ya da "Mevcut konumumu kullan" denir
 // (cihaz konumundan il/ilçe bulunur; konumun kendisi saklanmaz). Kategori ve arama da süzer.
 // Seçimler adres çubuğuna yazılır (#/urunler?il=…&ilce=…&konum=mevcut&kategori=…&q=…), paylaşılabilir.
-import { h, loading, emptyState, micButton, toast, icon, withIcon } from "../ui.js";
-import { getCategories, listProducts, logSearchRequest, track, photoUrl } from "../api.js";
+import { h, loading, emptyState, micButton, toast, icon } from "../ui.js";
+import { getCategories, listProducts, logSearchRequest, track } from "../api.js";
 import { productGrid, breadcrumb, setBrowsePlace, useCurrentPlace } from "../components.js";
-import { iconSVG, categoryIconName } from "../icons.js";
+import { categoryIconName } from "../icons.js";
 import { loadProvinces } from "../tr-locations.js";
 
 const PAGE = 48;
@@ -20,8 +20,6 @@ export default async function render(root, { query }) {
   };
   let rows = [];
   let hasMore = false;
-  let showMap = false;
-  let map = null;
   let loadSeq = 0;
 
   const headerSearch = document.getElementById("q");
@@ -38,13 +36,11 @@ export default async function render(root, { query }) {
   const filtersAside = h("aside", { "aria-label": "Filtreler" }, filtersBox);
   const resultsEl = h("div");
   const moreEl = h("div", { class: "center section" });
-  const mapEl = h("div", { class: "map", hidden: true });
-  const viewToggle = h("button", { class: "btn btn-secondary btn-inline", "data-highlight": "haritada-gor", onclick: toggleMap });
 
   root.append(
     crumbs,
-    h("div", { class: "catalog-head" }, h("div", {}, titleEl, countEl), viewToggle),
-    h("div", { class: "catalog" }, filtersAside, h("section", { "aria-label": "Ürünler" }, mapEl, resultsEl, moreEl)),
+    h("div", { class: "catalog-head" }, h("div", {}, titleEl, countEl)),
+    h("div", { class: "catalog" }, filtersAside, h("section", { "aria-label": "Ürünler" }, resultsEl, moreEl)),
   );
 
   const [categories, provinces] = await Promise.all([getCategories(), loadProvinces().catch(() => [])]);
@@ -73,7 +69,6 @@ export default async function render(root, { query }) {
       ...(cat ? [[cat.name]] : []),
       ...(place ? [[place]] : []),
     ));
-    viewToggle.replaceChildren(...withIcon(showMap ? "list" : "map", showMap ? "Liste" : "Haritada gör"));
     const active = [f.current && f.city ? "Mevcut konum" : f.district || f.city, cat?.name].filter(Boolean).join(" · ");
     filterSummary.replaceChildren(icon("settings"), h("span", {}, active ? `Filtrele: ${active}` : "Filtrele (konum, kategori)"));
   }
@@ -182,7 +177,6 @@ export default async function render(root, { query }) {
     moreEl.replaceChildren(hasMore
       ? h("button", { class: "btn btn-secondary btn-inline", onclick: (e) => { e.currentTarget.disabled = true; load({ append: true }); } }, "Daha fazla göster")
       : "");
-    if (showMap) drawMap();
   }
 
   // Bulunamayan aramalar kaydedilir (hangi ürünlerin arandığını görmek için)
@@ -203,55 +197,5 @@ export default async function render(root, { query }) {
     );
   }
 
-  // ---------- Harita (isteğe bağlı) ----------
-  function toggleMap() {
-    showMap = !showMap;
-    mapEl.hidden = !showMap;
-    resultsEl.hidden = showMap;
-    moreEl.hidden = showMap;
-    renderHead();
-    if (showMap) drawMap();
-  }
-
-  async function drawMap() {
-    const L = await loadLeaflet();
-    if (!map) {
-      map = L.map(mapEl, { zoomControl: true }).setView([39.0, 35.2], 6); // Türkiye
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 17, attribution: "© OpenStreetMap" }).addTo(map);
-    }
-    map.eachLayer((layer) => layer instanceof L.Circle && map.removeLayer(layer));
-    const pts = [];
-    // Gizlilik: tam nokta yok — mahalle büyüklüğünde (~500 m) yumuşak daire.
-    for (const r of rows) {
-      if (r.approx_lat == null) continue;
-      pts.push([r.approx_lat, r.approx_lng]);
-      const c = L.circle([r.approx_lat, r.approx_lng], { radius: 500, color: "#A8401C", weight: 1, fillColor: "#A8401C", fillOpacity: 0.15 }).addTo(map);
-      const img = photoUrl(r.photos?.[0]);
-      c.bindPopup(`<a href="#/urun/${r.id}" style="display:block;text-align:center;font:inherit">
-        ${img ? `<img src="${img}" alt="" style="width:120px;height:90px;object-fit:cover;border-radius:8px">` : iconSVG(categoryIconName(r.category), 32)}
-        <strong>${r.title.replace(/</g, "&lt;")}</strong><br>${Number(r.price).toLocaleString("tr-TR")} TL</a>`);
-    }
-    if (pts.length) map.fitBounds(pts, { padding: [40, 40], maxZoom: 14 });
-    setTimeout(() => map.invalidateSize(), 50);
-  }
-
   update();
-  return () => map?.remove();
-}
-
-let leafletPromise;
-function loadLeaflet() {
-  if (window.L) return Promise.resolve(window.L);
-  leafletPromise ??= new Promise((resolve, reject) => {
-    const css = document.createElement("link");
-    css.rel = "stylesheet";
-    css.href = "https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css";
-    document.head.append(css);
-    const s = document.createElement("script");
-    s.src = "https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js";
-    s.onload = () => resolve(window.L);
-    s.onerror = reject;
-    document.head.append(s);
-  });
-  return leafletPromise;
 }

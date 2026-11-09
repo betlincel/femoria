@@ -29,7 +29,9 @@ export function productCard(p) {
     ),
     h("div", { class: "pcard-body" },
       h("div", { class: "pcard-title" }, p.title),
-      h("div", { class: "price" }, formatPrice(p.price)),
+      h("div", { class: "pcard-row" },
+        h("div", { class: "price" }, formatPrice(p.price)),
+        h("span", { class: "pcard-go", "aria-hidden": "true" }, icon("arrow-right", 16))),
       h("div", { class: "meta" }), // ürün listelerinde mahalle gösterilmez (Profil'de durum rozeti buraya eklenir)
     ),
   );
