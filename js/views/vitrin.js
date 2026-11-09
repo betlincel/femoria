@@ -2,7 +2,7 @@
 import { h, loading, emptyState, icon } from "../ui.js";
 import { state } from "../store.js";
 import { latestProducts } from "../api.js";
-import { productGrid } from "../components.js";
+import { productCard } from "../components.js";
 import { ayseAvatarSVG } from "../icons.js";
 
 function featureCard({ ico, title, text, href, warm = false, children = [] }) {
@@ -182,8 +182,29 @@ function promoCarousel() {
   };
 }
 
+// Yeni gelenler: tek satır, yana kaydırılır (telefonda parmakla, masaüstünde oklarla)
+function productRow(items) {
+  const rail = h("div", { class: "prow", role: "list", "aria-label": "Yeni gelen ürünler", tabindex: "0" },
+    items.map((p) => { const c = productCard(p); c.setAttribute("role", "listitem"); return c; }));
+  const step = (dir) => rail.scrollBy({ left: dir * rail.clientWidth * 0.9, behavior: "smooth" });
+  const prev = h("button", { type: "button", class: "row-nav", "aria-label": "Önceki ürünler", onclick: () => step(-1) }, icon("chevron-left", 20));
+  const next = h("button", { type: "button", class: "row-nav", "aria-label": "Sonraki ürünler", onclick: () => step(1) }, icon("chevron-right", 20));
+  const paint = () => {
+    const max = rail.scrollWidth - rail.clientWidth - 2;
+    prev.disabled = rail.scrollLeft <= 2;
+    next.disabled = rail.scrollLeft >= max;
+    arrows.hidden = max <= 0; // hepsi sığıyorsa ok gösterme
+  };
+  const arrows = h("div", { class: "row-arrows" }, prev, next);
+  rail.addEventListener("scroll", paint, { passive: true });
+  window.addEventListener("resize", paint);
+  requestAnimationFrame(paint);
+  return { rail, arrows, stop: () => window.removeEventListener("resize", paint) };
+}
+
 export default async function render(root) {
   const newArrivals = h("div", {}, loading());
+  const arrowSlot = h("div", { class: "row-arrows-slot" });
   const extras = h("div", { class: "stack" });
 
   const promo = promoCarousel();
@@ -197,7 +218,7 @@ export default async function render(root) {
     h("section", { class: "section" },
       h("div", { class: "section-title" },
         h("h2", {}, "Yeni gelenler"),
-        h("a", { href: "#/urunler" }, "Tümünü gör"),
+        h("div", { class: "section-actions" }, h("a", { href: "#/urunler" }, "Tümünü gör"), arrowSlot),
       ),
       newArrivals,
     ),
@@ -216,10 +237,15 @@ export default async function render(root) {
   root.querySelector('a[href="#/rehber"]').dataset.highlight = "rehber";
 
   // Yeni gelenler: tüm Türkiye'den en yeni ürünler
-  const items = await latestProducts({ limit: 8 }).catch(() => []);
-  newArrivals.replaceChildren(items.length
-    ? productGrid(items)
-    : h("div", { class: "card" }, emptyState("bag", "Henüz ürün yok", "İlk ürünü siz koyun.", h("a", { class: "btn btn-primary", href: "#/sat" }, "İlk ürünü koy"))));
+  const items = await latestProducts({ limit: 16 }).catch(() => []);
+  let row = null;
+  if (items.length) {
+    row = productRow(items);
+    newArrivals.replaceChildren(row.rail);
+    arrowSlot.replaceChildren(row.arrows);
+  } else {
+    newArrivals.replaceChildren(h("div", { class: "card" }, emptyState("bag", "Henüz ürün yok", "İlk ürünü siz koyun.", h("a", { class: "btn btn-primary", href: "#/sat" }, "İlk ürünü koy"))));
+  }
 
   // Cinsiyet seçmemiş (eski) hesaplara bir kerelik hatırlatma
   if (state.user && state.profile && !state.profile.gender) {
@@ -230,5 +256,5 @@ export default async function render(root) {
     })));
   }
 
-  return promo.stop;
+  return () => { promo.stop(); row?.stop(); };
 }

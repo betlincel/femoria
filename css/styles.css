@@ -1140,3 +1140,37 @@ select.place-select:disabled { background-color: var(--surface-2); }
 .header-link.icon-only { width: 48px; justify-content: center; padding: 4px; }
 .header-link.icon-only .hl-ico .icon { width: 24px; height: 24px; }
 .header-link[data-route="favoriler"] .hl-ico { margin-right: 0; }
+
+/* ---------- Ana sayfa: tek satır, yana kaydırılan ürünler ---------- */
+.section-actions { display: flex; align-items: center; gap: 12px; }
+.row-arrows { display: none; gap: 8px; }
+.row-arrows[hidden] { display: none !important; }
+.row-nav {
+  width: 40px; height: 40px; display: grid; place-items: center; padding: 0; cursor: pointer;
+  border-radius: 50%; border: 1.5px solid var(--primary); background: var(--surface); color: var(--primary);
+}
+.row-nav:hover:not(:disabled) { background: var(--primary); color: #fff; }
+.row-nav:disabled { opacity: .35; cursor: default; }
+.prow {
+  --per: 2.15; --gap: 12px;
+  display: grid; grid-auto-flow: column; grid-auto-columns: calc((100% - (var(--per) - 1) * var(--gap)) / var(--per));
+  gap: var(--gap); overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory;
+  scroll-padding-left: 0; padding: 4px 2px 14px; margin: -4px -2px 0; scrollbar-width: thin; scrollbar-color: var(--primary-line) transparent;
+}
+.prow::-webkit-scrollbar { height: 6px; }
+.prow::-webkit-scrollbar-thumb { background: var(--primary-line); border-radius: 999px; }
+.prow > .pcard { scroll-snap-align: start; }
+.prow > .pcard:nth-child(4n+2) .pcard-img { background: var(--blue); }
+.prow > .pcard:nth-child(4n+3) .pcard-img { background: var(--pink-2); }
+.prow > .pcard:nth-child(4n+4) .pcard-img { background: var(--peach); }
+.prow:focus-visible { outline: 3px solid #2563EB; outline-offset: 2px; }
+@media (min-width: 600px) { .prow { --per: 3.2; --gap: 16px; } }
+@media (min-width: 900px) {
+  .prow { --per: 4; }
+  .row-arrows { display: flex; }
+}
+.section-title h2, .section-title a { white-space: nowrap; }
+@media (max-width: 599px) {
+  .section-title h2 { font-size: 1.5rem; }
+  .section-title a { padding: 6px 12px; font-size: .85rem; }
+}
