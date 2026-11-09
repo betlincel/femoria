@@ -166,7 +166,7 @@ export function emptyState(iconName, title, text, action) {
 // İsteğe bağlıdır ve varsayılan olarak kapalıdır. Kapalıyken yalnızca kullanıcı
 // "Dinle" düğmesine bastığında okunur ({ force: true }).
 //
-// 1) Asıl ses: ayse-abla Edge Function → OpenAI ile üretilen sabit kadın sesi (her cihazda aynı).
+// 1) Asıl ses: ayse-abla Edge Function → Gemini (ya da yedek OpenAI) ile üretilen sabit kadın sesi (her cihazda aynı).
 // 2) Yedek: tarayıcının Türkçe sesi; bilinen kadın sesleri seçilir, erkek sesleri atlanır,
 //    yalnız erkek sesi varsa ses inceltilir.
 let ttsEnabled = false;
@@ -222,7 +222,10 @@ async function cloudAudioUrl(part) {
   if (!isConfigured || cloudVoiceDown) throw new Error("sunucu sesi yok");
   const { data, error } = await supabase.functions.invoke("ayse-abla", { body: { mode: "speak", text: part } });
   if (error || !(data instanceof Blob) || !data.size) { cloudVoiceDown = true; throw new Error("sunucu sesi alınamadı"); }
-  const url = URL.createObjectURL(new Blob([data], { type: "audio/mpeg" }));
+  // Gemini WAV ("RIFF"), OpenAI MP3 döndürür; türü ilk baytlardan anla
+  const head = new Uint8Array(await data.slice(0, 4).arrayBuffer());
+  const isWav = String.fromCharCode(...head) === "RIFF";
+  const url = URL.createObjectURL(new Blob([data], { type: isWav ? "audio/wav" : "audio/mpeg" }));
   audioCache.set(part, url);
   if (audioCache.size > 30) { const [k, v] = audioCache.entries().next().value; URL.revokeObjectURL(v); audioCache.delete(k); }
   return url;

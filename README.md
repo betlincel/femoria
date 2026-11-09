@@ -24,7 +24,7 @@ mobil öncelikli web uygulaması + Supabase altyapısı + "Ayşe Abla" yapay zek
 
 - **Ön yüz:** HTML5, CSS3, Vanilla JavaScript (ES modülleri) — derleme adımı yok.
 - **Arka uç:** [Supabase](https://supabase.com) — PostgreSQL, e-posta + şifreyle giriş, dosya depolama, canlı mesajlaşma (Realtime), Edge Functions.
-- **Yapay zeka:** OpenAI API (sohbet + konuşmayı yazıya çevirme), anahtar yalnızca Edge Function'da durur.
+- **Yapay zeka:** Google Gemini API (sohbet, ürün tarifi, sesli mesajı yazıya çevirme, sesli okuma); OpenAI isteğe bağlı yedek. Anahtarlar yalnızca Edge Function'da durur.
 - **Harita:** OpenStreetMap + Leaflet (ücretsiz, anahtarsız).
 - **Ses:** Tarayıcının kendi konuşma tanıma (tr-TR) ve sesli okuma özellikleri.
 
@@ -102,15 +102,21 @@ Dashboard → **Authentication → URL Configuration**:
 
 ### 3. Ayşe Abla'yı (yapay zeka) yayınlayın
 
+Ayşe Abla Google Gemini ile çalışır. [Google AI Studio](https://aistudio.google.com/apikey)'dan bir API anahtarı alın ve gizli değer olarak kaydedin:
+
 ```bash
-supabase secrets set OPENAI_API_KEY=sk-... OPENAI_MODEL=gpt-4o-mini
+supabase secrets set GEMINI_API_KEY=...
 ```
 
 ```bash
 supabase functions deploy ayse-abla
 ```
 
-Ayşe Abla'nın sesli okuması da bu fonksiyonla, OpenAI'ın kadın sesiyle (`coral`) yapılır; her cihazda aynı ses duyulur. Sesi değiştirmek için `supabase secrets set OPENAI_TTS_VOICE=nova` (ya da `shimmer`). Fonksiyon güncellendiyse yeniden yayınlayın: `supabase functions deploy ayse-abla`. Sunucu sesi alınamazsa tarayıcının Türkçe sesi kullanılır (kadın sesleri tercih edilir; yalnız erkek sesi varsa ses inceltilir).
+İsteğe bağlı ayarlar (varsayılanlar parantez içinde): `GEMINI_MODEL` (`gemini-3.8-flash`), `GEMINI_TTS_MODEL` (`gemini-3.8-flash-tts`), `GEMINI_TTS_VOICE` (`Sulafat`; sıcak bir kadın sesi, alternatifler `Kore`, `Aoede`, `Achernar`), `GEMINI_THINKING_LEVEL` (boş). Model adları zamanla değişir; güncel adları AI Studio'daki model listesinden kontrol edin.
+
+Ayşe Abla'nın sesli okuması da bu fonksiyonla yapılır; her cihazda aynı kadın sesi duyulur. Sunucu sesi alınamazsa tarayıcının Türkçe sesi kullanılır (kadın sesleri tercih edilir; yalnız erkek sesi varsa ses inceltilir).
+
+**OpenAI (isteğe bağlı yedek):** `GEMINI_API_KEY` yoksa fonksiyon eskisi gibi `OPENAI_API_KEY` ile çalışır. İkisi de tanımlıysa Gemini kullanılır; OpenAI yalnızca bir sesli mesaj Gemini'de yazıya dökülemezse devreye girer.
 
 Anahtar tanımlı değilse uygulama çalışmaya devam eder: Ayşe Abla kurallı cevaplara, "Sesle Vitrin" de basit anahtar kelime eşleştirmeye geçer.
 
