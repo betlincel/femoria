@@ -39,12 +39,12 @@ const W = "rgba(255,255,255,", ART = {
     <path d="M70 150h96v52c0 18-14 32-32 32h-32c-18 0-32-14-32-32z" fill="#7A1E2B" opacity=".75"/>
     <rect x="84" y="118" width="68" height="34" rx="6" fill="#fff"/>
     <circle cx="258" cy="176" r="66" fill="${W}.92)"/>
-    <g fill="none" stroke="#A8401C" stroke-width="5" stroke-linecap="round" opacity=".8">
+    <g fill="none" stroke="#B8241B" stroke-width="5" stroke-linecap="round" opacity=".8">
       <path d="M204 150c30 6 64 30 82 78"/><path d="M196 186c34-2 70 16 86 52"/><path d="M226 116c26 18 50 52 52 100"/><path d="M262 110c18 22 32 52 30 92"/>
     </g>
     <path d="M300 30l44 0 0 44-58 58-44-44z" fill="#fff" transform="rotate(8 300 60)"/>
-    <circle cx="326" cy="52" r="6" fill="#A8401C"/>
-    <text x="300" y="104" font-family="Inter, sans-serif" font-weight="800" font-size="28" fill="#A8401C" transform="rotate(8 300 60)">₺</text>
+    <circle cx="326" cy="52" r="6" fill="#B8241B"/>
+    <text x="300" y="104" font-family="Inter, sans-serif" font-weight="800" font-size="28" fill="#B8241B" transform="rotate(8 300 60)">₺</text>
   </svg>`,
   // Buharı tüten tencere + kase
   yemek: `<svg viewBox="0 0 360 280" aria-hidden="true">
