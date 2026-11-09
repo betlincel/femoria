@@ -1136,3 +1136,7 @@ select.place-select:disabled { background-color: var(--surface-2); }
 @media (min-width: 900px) and (max-width: 1499px) {
   .brand-tag, .header-link[data-route="mesajlar"] > span:not(.hl-ico), .header-link[data-route="favoriler"] > span:not(.hl-ico) { display: none; }
 }
+/* Mesajlar ve Favoriler: yalnız simge (adı üzerine gelince ve ekran okuyucuda) */
+.header-link.icon-only { width: 48px; justify-content: center; padding: 4px; }
+.header-link.icon-only .hl-ico .icon { width: 24px; height: 24px; }
+.header-link[data-route="favoriler"] .hl-ico { margin-right: 0; }
