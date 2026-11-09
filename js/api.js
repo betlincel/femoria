@@ -7,13 +7,16 @@ const need = () => { if (!isConfigured) throw new Error(NOT_CONFIGURED); };
 const ok = ({ data, error }) => { if (error) throw error; return data; };
 
 export const FALLBACK_CATEGORIES = [
-  { slug: "yemek", name: "Yemek", icon: "🍲" },
-  { slug: "orgu", name: "Örgü", icon: "🧶" },
-  { slug: "taki", name: "Takı", icon: "📿" },
-  { slug: "ev-susu", name: "Ev süsü", icon: "🏺" },
-  { slug: "kurutmalik", name: "Kurutmalık", icon: "🌶️" },
-  { slug: "diger", name: "Diğer", icon: "🎁" },
+  { slug: "yemek", name: "Yemek" },
+  { slug: "orgu", name: "Örgü" },
+  { slug: "taki", name: "Takı" },
+  { slug: "ev-susu", name: "Ev süsü" },
+  { slug: "kurutmalik", name: "Kurutmalık" },
+  { slug: "diger", name: "Diğer" },
 ];
+
+// Kategori adları sade gösterilir: veritabanında emoji kalmışsa ayıklanır
+const cleanName = (s) => String(s ?? "").replace(/[\p{Extended_Pictographic}\u{FE0F}\u{200D}]/gu, "").replace(/\s+/g, " ").trim();
 
 export const DELIVERY_LABEL = { elden: "Elden teslim", kargo: "Kargo", ikisi: "Elden veya kargo" };
 
@@ -30,7 +33,7 @@ export async function getCategories() {
   if (state.categories.length) return state.categories;
   if (!isConfigured) return (state.categories = FALLBACK_CATEGORIES);
   const data = await supabase.from("categories").select("*").order("sort").then(ok).catch(() => null);
-  state.categories = data?.length ? data : FALLBACK_CATEGORIES;
+  state.categories = data?.length ? data.map((c) => ({ ...c, name: cleanName(c.name) || c.slug })) : FALLBACK_CATEGORIES;
   return state.categories;
 }
 

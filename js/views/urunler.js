@@ -5,7 +5,6 @@
 import { h, loading, emptyState, micButton, toast, icon } from "../ui.js";
 import { getCategories, listProducts, logSearchRequest, track } from "../api.js";
 import { productGrid, breadcrumb, setBrowsePlace, useCurrentPlace } from "../components.js";
-import { categoryIconName } from "../icons.js";
 import { loadProvinces } from "../tr-locations.js";
 
 const PAGE = 48;
@@ -136,8 +135,8 @@ export default async function render(root, { query }) {
       h("div", { class: "filter-group" },
         h("h3", {}, "Kategori"),
         h("div", { class: "filter-list" },
-          btn(!f.category, () => { f.category = null; update(); }, icon("bag"), "Tümü"),
-          ...categories.map((c) => btn(f.category === c.slug, () => { f.category = c.slug; update(); }, icon(categoryIconName(c.slug)), c.name)),
+          btn(!f.category, () => { f.category = null; update(); }, "Tümü"),
+          ...categories.map((c) => btn(f.category === c.slug, () => { f.category = c.slug; update(); }, c.name)),
         ),
       ),
     );

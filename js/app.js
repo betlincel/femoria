@@ -5,7 +5,7 @@ import { route, startRouter, onRoute, navigate } from "./router.js";
 import { subscribeIncoming, track, getCategories } from "./api.js";
 import { initAssistant, assistantEvent } from "./assistant.js";
 import { esc, toast, h } from "./ui.js";
-import { iconSVG, ayseAvatarSVG, categoryIconName } from "./icons.js";
+import { iconSVG, ayseAvatarSVG } from "./icons.js";
 import { ensureKvkkConsent } from "./consent.js";
 import { pickBrowsePlace, getBrowsePlace, placeLabel } from "./components.js";
 
@@ -143,8 +143,7 @@ async function fillCategoryBar() {
   for (const c of cats) {
     const a = document.createElement("a");
     a.href = `#/urunler?kategori=${c.slug}`;
-    a.innerHTML = iconSVG(categoryIconName(c.slug), 18);
-    a.append(c.name);
+    a.textContent = c.name;
     bar.append(a);
   }
 }
