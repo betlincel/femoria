@@ -14,6 +14,7 @@
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { corsHeaders, json } from "../_shared/cors.ts";
 import { iyzico, iyzicoConfigured, price } from "../_shared/iyzico.ts";
+import { approveOrder, refundOrder, releaseCheckoutStock } from "../_shared/orders.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -108,7 +109,7 @@ async function checkout(req: Request, user: { id: string; email?: string; create
   const db = admin();
   const ids = [...new Set(items.map((i) => i.product_id))];
   const { data: products, error: pe } = await db.from("products")
-    .select("id,title,price,category,delivery,status,seller_id").in("id", ids);
+    .select("id,title,price,category,delivery,status,seller_id,stock").in("id", ids);
   if (pe) throw pe;
   const sellers = [...new Set((products ?? []).map((p) => p.seller_id))];
   const [{ data: accounts }, { data: offers }, { data: cats }] = await Promise.all([
@@ -130,6 +131,7 @@ async function checkout(req: Request, user: { id: string; email?: string; create
     if (blocked === true) return fail(`"${p.title}" satıcısıyla alışveriş yapamazsınız.`);
     const offer = (offers ?? []).find((o) => o.product_id === p.id && (!o.expires_at || new Date(o.expires_at) > new Date()));
     if (offer && item.qty !== 1) return fail(`"${p.title}" teklif fiyatıyla yalnız 1 adet alınabilir.`);
+    if (Number(p.stock ?? 1) < item.qty) return fail(`"${p.title}" için stokta ${p.stock ?? 0} adet kaldı. Sepetteki adedi azaltın.`);
     lines.push({ item, p, unit: offer ? Number(offer.amount) : Number(p.price), offerId: offer?.id ?? null });
   }
   if (lines.some((l) => l.unit <= 0)) return fail("Ücretsiz ürünler online ödemeyle alınamaz; satıcıya yazın.");
@@ -144,8 +146,17 @@ async function checkout(req: Request, user: { id: string; email?: string; create
     .insert({ buyer_id: user.id, total, shipping_address: shipping, return_url: returnUrl }).select("id").single();
   if (ce) throw ce;
 
+  // Stok ayır (hepsi ya da hiçbiri): aynı ürün iki kişiye satılmasın
+  const { error: se } = await db.rpc("reserve_stock", { p_items: lines.map((l) => ({ product_id: l.p.id, qty: l.item.qty })) });
+  if (se) {
+    await db.from("checkouts").update({ status: "basarisiz", error: String(se.message).slice(0, 300) }).eq("id", co.id);
+    return fail(String(se.message).replace(/^STOK:\s*/, "") + ". Sepetinizi yenileyin.", 409);
+  }
+  await db.from("checkouts").update({ stock_reserved: true }).eq("id", co.id);
+
   // Her ürün için sohbet (satıcıyla yazışma) ve "ödeme bekliyor" siparişi
   const basketItems = [];
+  try {
   for (const l of lines) {
     const { data: conv, error: cvErr } = await db.from("conversations")
       .upsert({ product_id: l.p.id, buyer_id: user.id, seller_id: l.p.seller_id }, { onConflict: "product_id,buyer_id" })
@@ -164,6 +175,13 @@ async function checkout(req: Request, user: { id: string; email?: string; create
       itemType: "PHYSICAL", price: price(linePrice),
       subMerchantKey: keyOf[l.p.seller_id], subMerchantPrice: price(round2(linePrice * (1 - COMMISSION))),
     });
+  }
+  } catch (e) {
+    await db.from("checkouts").update({ status: "basarisiz", error: String((e as Error).message).slice(0, 300) }).eq("id", co.id);
+    await db.from("orders").update({ status: "iptal", payment_status: "basarisiz" }).eq("checkout_id", co.id);
+    await db.rpc("release_stock", { p_items: lines.map((l) => ({ product_id: l.p.id, qty: l.item.qty })) });
+    await db.from("checkouts").update({ stock_released: true }).eq("id", co.id);
+    throw e;
   }
 
   const fullAddress = `${addr.line}, ${addr.district}/${addr.city}`;
@@ -185,6 +203,7 @@ async function checkout(req: Request, user: { id: string; email?: string; create
   } catch (e) {
     await db.from("checkouts").update({ status: "basarisiz", error: String((e as Error).message).slice(0, 300) }).eq("id", co.id);
     await db.from("orders").update({ status: "iptal", payment_status: "basarisiz" }).eq("checkout_id", co.id);
+    await releaseCheckoutStock(db, co.id);
     throw e;
   }
 }
@@ -195,13 +214,7 @@ async function confirm(user: { id: string }, body: Record<string, unknown>) {
   const { data: o } = await db.from("orders").select("*").eq("id", String(body.order_id ?? "")).maybeSingle();
   if (!o || o.buyer_id !== user.id) return fail("Sipariş bulunamadı.", 404);
   if (o.payment_status !== "odendi" || o.payout_status !== "bekliyor" || o.status === "iptal") return fail("Bu sipariş onaylanamaz.");
-  await iyzico("POST", "/payment/iyzipos/item/approve", { conversationId: o.id, paymentTransactionId: o.iyzico_tx_id });
-  const now = new Date().toISOString();
-  await db.from("orders").update({
-    status: "teslim_edildi", shipping_status: "teslim_edildi", payout_status: "onaylandi", delivered_at: now, confirmed_at: now,
-  }).eq("id", o.id);
-  await db.rpc("post_system_note", { p_conversation_id: o.conversation_id, p_body: "Alıcı ürünü teslim aldığını onayladı. Ödeme satıcıya aktarılıyor." });
-  await db.rpc("refresh_badges", { p_user: o.seller_id }).then(() => {}, () => {});
+  await approveOrder(db, o);
   return json({ ok: true });
 }
 
@@ -212,15 +225,7 @@ async function cancel(req: Request, user: { id: string }, body: Record<string, u
   if (!o || (o.buyer_id !== user.id && o.seller_id !== user.id)) return fail("Sipariş bulunamadı.", 404);
   if (o.payment_status !== "odendi" || o.payout_status !== "bekliyor" || o.status === "iptal") return fail("Bu sipariş iptal edilemez.");
   if (o.buyer_id === user.id && o.shipping_status === "kargoda") return fail("Ürün kargoya verildi; iptal için satıcıya yazın.");
-  await iyzico("POST", "/payment/refund", {
-    conversationId: o.id, paymentTransactionId: o.iyzico_tx_id, price: price(Number(o.unit_price) * o.quantity),
-    ip: clientIp(req), currency: "TRY",
-  });
-  await db.from("orders").update({ status: "iptal", payment_status: "iade", payout_status: "iade" }).eq("id", o.id);
-  await db.rpc("post_system_note", {
-    p_conversation_id: o.conversation_id,
-    p_body: o.buyer_id === user.id ? "Alıcı siparişi iptal etti. Ödeme iade edildi." : "Satıcı siparişi iptal etti. Ödeme iade edildi.",
-  });
+  await refundOrder(db, o, { by: o.buyer_id === user.id ? "buyer" : "seller", ip: clientIp(req) });
   return json({ ok: true });
 }
 

@@ -68,3 +68,7 @@ verify_jwt = true
 # iyzico ödeme dönüşü: iyzico çağırır (JWT yok); sonuç iyzico'dan kayıtlı token ile yeniden sorgulanır
 [functions.odeme-sonuc]
 verify_jwt = false
+
+# Zamanlayıcı: pg_cron çağırır, x-cron-secret başlığıyla korunur (JWT yok)
+[functions.zamanlayici]
+verify_jwt = false
