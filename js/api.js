@@ -99,6 +99,22 @@ export async function getProduct(id) {
   return { ...product, seller, sellerBadges: badges };
 }
 
+/** Sepetteki ürünlerin güncel hali (satılan/kaldırılan ürünler dönmez ya da durumuyla döner). */
+export async function getProductsByIds(ids) {
+  need();
+  if (!ids.length) return [];
+  const rows = await supabase.from("products").select(PRODUCT_COLS).in("id", ids).then(ok);
+  return (rows || []).filter((r) => ids.includes(r.id));
+}
+
+/** Satıcı adları (sepette satıcıya göre gruplamak için) */
+export async function sellerNames(ids) {
+  need();
+  if (!ids.length) return {};
+  const rows = await supabase.from("public_profiles").select("id,full_name").in("id", ids).then(ok);
+  return Object.fromEntries((rows || []).map((r) => [r.id, r.full_name]));
+}
+
 export async function myProducts() {
   need();
   return supabase.from("products").select(PRODUCT_COLS).eq("seller_id", state.user.id)

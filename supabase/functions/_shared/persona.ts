@@ -7,13 +7,14 @@ export const SCREENS: Record<string, string> = {
   sat: "Sat: tek sayfalık form — üstte 'Fotoğraf yükle' (en çok 4), mavi kutuda mikrofon (sesle anlatınca ad, açıklama ve tür dolar), sonra Ürünün adı, Açıklama, 'Ne satıyorsunuz?' kutucukları, Fiyat (TL; altında benzer ürünlerin fiyat aralığı), Teslim şekli, Konum ('Şu anki konumum' ya da listeden), en altta 'Satışa çıkar'.",
   urunler: "Ürünler: tüm ürünler, en yeniler önce; yandaki 'Konum' kartından İl / İlçe seçilir ya da 'Mevcut konumumu kullan' denir; kategori de seçilir.",
   favoriler: "Favorilerim: kullanıcının kalple işaretlediği ürünler. Ürün kartlarının sağ üstündeki kalbe dokununca ürün buraya eklenir; başlıkta Mesajlar'ın sağındaki kalp simgesiyle açılır.",
+  sepet: "Sepetim: sepete eklenen ürünler satıcıya göre gruplanır; adet artırılıp azaltılır, toplam görünür. 'Siparişi gönder' denince her ürün için satıcıya sipariş kartı gider; satıcı 'Anlaştık' deyince kesinleşir, ödeme teslimde yapılır. Ürün sayfasında 'Sepete ekle', ürün kartlarında kırmızı + düğmesi ürünü sepete ekler; başlıkta favorilerin sağındaki sepet simgesiyle açılır.",
   mesajlar: "Mesajlar: sohbet listesi. Sohbette hazır mesaj baloncukları, mikrofon, 'Sipariş kartı' ve 'Anlaştık' düğmeleri, sağ üstte kalkan (şikayet/engelle).",
   profil: "Profil: 'Sattıklarım' ve 'Aldıklarım' sekmeleri, 'Kazancım' kartı, rozetler, ayarlar.",
   rehber: "Rehber: 'Femoria'yı Nasıl Kullanırım?' kitapçığı.",
 };
 
 // Asistanın parlatabileceği düğmeler (istemcide data-highlight değerleri).
-export const HIGHLIGHTS = ["nav-vitrin", "nav-urunler", "nav-sat", "nav-mesajlar", "profil", "bir-sey-sat", "fotograf-yukle", "favoriler", "rehber"];
+export const HIGHLIGHTS = ["nav-vitrin", "nav-urunler", "nav-sat", "nav-mesajlar", "profil", "bir-sey-sat", "fotograf-yukle", "favoriler", "sepet", "sepete-ekle", "rehber"];
 
 export function systemPrompt(screen: string | undefined, userName: string | undefined): string {
   return `Sen "Ayşe Abla"sın: Femoria'nın yapay zeka asistanı. Femoria, evde üretim yapan kadınların el emeği ürünlerini mahallelerindeki insanlara sattığı bir platformdur.

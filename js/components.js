@@ -5,6 +5,7 @@ import { photoUrl, getLocations } from "./api.js";
 import { state, hasLocationConsent, recordLocationConsent } from "./store.js";
 import { LOCATION_SUMMARY } from "./kvkk.js";
 import { isFavorite, toggleFavorite } from "./favorites.js";
+import { addToCart, inCart } from "./cart.js";
 import { requireAuth } from "./router.js";
 import { loadProvinces, loadNeighbourhoods, normalizeTr, locateSelection, nearestProvince } from "./tr-locations.js";
 
@@ -56,6 +57,54 @@ export function favButton(productId, { cls = "", withText = false } = {}) {
   return btn;
 }
 
+// ---------- Sepete ekle ----------
+/** Ürünü sepete ekler; sepette olduğunu bildirir ve "Sepete git" kısayolu verir. */
+export function addProductToCart(p) {
+  if (state.user?.id && state.user.id === p.seller_id) { toast("Kendi ürününüzü sepete ekleyemezsiniz."); return false; }
+  if (p.status && p.status !== "satista") { toast("Bu ürün satışta değil."); return false; }
+  try {
+    const qty = addToCart(p);
+    toast(qty > 1 ? `Sepette ${qty} adet oldu.` : "Sepete eklendi.");
+    return true;
+  } catch (e) {
+    toast(e.code === "full" ? "Sepetiniz dolu. Önce sepetteki siparişleri gönderin." : "Sepete eklenemedi.");
+    return false;
+  }
+}
+
+/** Kartlardaki yuvarlak "+" düğmesi */
+function cartPlusButton(p) {
+  return h("button", {
+    type: "button", class: "pcard-cart", "aria-label": `${p.title}: sepete ekle`, title: "Sepete ekle",
+    onclick: (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (addProductToCart(p)) {
+        e.currentTarget.classList.add("added");
+        setTimeout(() => e.currentTarget?.classList.remove("added"), 600);
+      }
+    },
+  }, icon("plus", 18));
+}
+
+/** Ürün sayfasındaki büyük "Sepete ekle" düğmesi; sepetteyse "Sepette (n) · Sepete git" */
+export function cartButton(p) {
+  const btn = h("button", { type: "button", class: "btn btn-primary btn-xl cart-btn", "data-highlight": "sepete-ekle" });
+  const paint = () => {
+    const it = inCart(p.id);
+    btn.replaceChildren(icon("cart"), it ? `Sepette (${it.qty}) · Sepete git` : "Sepete ekle");
+    btn.classList.toggle("in-cart", !!it);
+  };
+  btn.onclick = () => {
+    if (inCart(p.id)) { location.hash = "#/sepet"; return; }
+    if (addProductToCart(p)) paint();
+  };
+  const onCart = () => btn.isConnected ? paint() : window.removeEventListener("femoria:cart", onCart);
+  window.addEventListener("femoria:cart", onCart);
+  paint();
+  return btn;
+}
+
 export function productCard(p) {
   const url = photoUrl(p.photos?.[0]);
   const own = state.user?.id && state.user.id === p.seller_id;
@@ -69,10 +118,11 @@ export function productCard(p) {
       h("div", { class: "pcard-title" }, p.title),
       h("div", { class: "pcard-row" },
         h("div", { class: "price" }, formatPrice(p.price)),
-        h("span", { class: "pcard-go", "aria-hidden": "true" }, icon("arrow-right", 16))),
+        own || (p.status && p.status !== "satista") ? h("span", { class: "pcard-go", "aria-hidden": "true" }, icon("arrow-right", 16)) : h("span", { class: "pcard-cart-space", "aria-hidden": "true" })),
       h("div", { class: "meta" }), // ürün listelerinde mahalle gösterilmez (Profil'de durum rozeti buraya eklenir)
     )),
     own ? null : favButton(p.id, { cls: "pcard-fav" }),
+    own || (p.status && p.status !== "satista") ? null : cartPlusButton(p),
   );
 }
 
