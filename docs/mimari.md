@@ -19,6 +19,7 @@ Supabase
   ├─ PostgREST ....... tablolar (RLS ile korunur) + RPC fonksiyonları
   ├─ Realtime ........ messages, orders, conversations
   ├─ Storage ......... product-photos (açık), avatars (açık), voice-messages (yalnız katılımcılar)
+  ├─ Edge Function ... odeme (iyzico: satıcı hesabı, ödeme başlatma, teslim onayı, iade), odeme-sonuc (iyzico dönüşü)
   └─ Edge Function ... ayse-abla → Google Gemini (sohbet, ürün tarifi, ses→yazı, sesli okuma; OpenAI isteğe bağlı yedek)
 ```
 
@@ -33,6 +34,11 @@ Supabase
 | `conversations`, `messages` | Ürün başına alıcı–satıcı sohbeti. Mesaj türleri: metin, hazır, ses, sipariş, sistem. |
 | `orders` | Sipariş kartı: adet, fiyat, teslim, tarih, iki tarafın "Anlaştık" onayı. Sepetten "Siparişi gönder" her ürün için sohbet açıp sipariş kartı oluşturur (sepetin kendisi yalnız cihazda, `js/cart.js`). |
 | `favorites` | Favoriler: kullanıcının kalple işaretlediği ürünler (yalnız kendisi görür; ürün ya da hesap silinince silinir). |
+| `checkouts` | Bir iyzico ödemesi (sepet): tutar, adres, durum, iyzico token / ödeme no. Yalnız sunucu yazar. |
+| `offers` | Teklifler (pazarlık): tutar, karşı teklif, durum; kabul edilen fiyat 48 saat geçerli. `make_offer`, `respond_offer`. |
+| `follows` | Satıcı takibi (yalnız takip eden görür; sayı `seller_stats` ile). |
+| `reviews` | Puan ve yorum: yalnız teslim edilmiş siparişin alıcısı, sipariş başına bir kez; herkes okur. |
+| `payout_accounts` | Satıcının iyzico alt üye işyeri anahtarı, IBAN'ın son 4 hanesi (T.C. ve IBAN saklanmaz). |
 | `blocks`, `reports` | Engelleme ve tek dokunuşla şikayet. |
 | `user_badges` | Komşu Rozetleri. |
 | `announcements` | Kooperatif / buluşma günü duyuruları (şu an arayüzde gösterilmiyor). |
@@ -86,6 +92,6 @@ Supabase
 | Mahallende Aranıyor panosu | ⏸ Talepler kaydediliyor; ana sayfa kartı kaldırıldı | Gerekirse yeniden açılabilir |
 | Mahalle Buluşma Günleri | ⏸ Ana sayfa duyuru kartı kaldırıldı (`announcements` tablosu duruyor) | Saha işi |
 | Abla–Kardeş mentorluk | ⏳ Veri alanı (`mentor_id`) + "Yol Gösteren" rozeti | Eşleştirme ekranı (Femoria 2.0) |
-| Güvenli ödeme (emanet) | ⏳ Prototipte "elden ödeme" | iyzico / PayTR entegrasyonu (Femoria 2.0) |
+| Güvenli ödeme (emanet) | ✅ iyzico Pazaryeri (sandbox); online ödeme almayan satıcılarda elden ödeme | Şirket + iyzico canlı sözleşme, otomatik onay süresi |
 | Fotoğrafta arka plan temizleme | ⏳ Otomatik ışık/kontrast düzeltme var | Arka plan silme modeli |
 | Anlık bildirim (push) | ⏳ Uygulama içi kırmızı nokta + Realtime | Web Push / FCM |

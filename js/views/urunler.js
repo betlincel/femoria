@@ -2,7 +2,7 @@
 // Belirli bir yere bakmak için yandaki panelden İl → İlçe seçilir ya da "Mevcut konumumu kullan" denir
 // (cihaz konumundan il/ilçe bulunur; konumun kendisi saklanmaz). Kategori ve arama da süzer.
 // Seçimler adres çubuğuna yazılır (#/urunler?il=…&ilce=…&konum=mevcut&kategori=…&q=…), paylaşılabilir.
-import { h, loading, emptyState, micButton, toast, icon } from "../ui.js";
+import { h, loading, emptyState, micButton, toast, icon, withIcon } from "../ui.js";
 import { getCategories, listProducts, logSearchRequest, track } from "../api.js";
 import { productGrid, breadcrumb, setBrowsePlace, useCurrentPlace } from "../components.js";
 import { loadProvinces } from "../tr-locations.js";
@@ -16,7 +16,12 @@ export default async function render(root, { query }) {
     current: query.konum === "mevcut", // il/ilçe cihaz konumundan bulundu
     category: query.kategori || null,
     q: query.q || "",
+    min: /^\d+$/.test(query.min || "") ? query.min : "",
+    max: /^\d+$/.test(query.max || "") ? query.max : "",
+    teslim: ["kargo", "elden"].includes(query.teslim) ? query.teslim : null,
+    sort: ["ucuz", "pahali", "begenilen"].includes(query.sirala) ? query.sirala : "yeni",
   };
+  const SORT_LABELS = [["yeni", "En yeniler"], ["ucuz", "Fiyat: düşükten yükseğe"], ["pahali", "Fiyat: yüksekten düşüğe"], ["begenilen", "En çok beğenilenler"]];
   let rows = [];
   let hasMore = false;
   let loadSeq = 0;
@@ -34,11 +39,13 @@ export default async function render(root, { query }) {
   const filtersBox = h("details", { class: "filters-box", open: isDesktop }, filterSummary, filtersEl);
   const filtersAside = h("aside", { "aria-label": "Filtreler" }, filtersBox);
   const resultsEl = h("div");
+  const sortSel = h("select", { class: "input sort-select", "aria-label": "Sırala", onchange: (e) => { f.sort = e.target.value; update(); } },
+    SORT_LABELS.map(([v, l]) => h("option", { value: v, selected: f.sort === v }, l)));
   const moreEl = h("div", { class: "center section" });
 
   root.append(
     crumbs,
-    h("div", { class: "catalog-head" }, h("div", {}, titleEl, countEl)),
+    h("div", { class: "catalog-head" }, h("div", {}, titleEl, countEl), h("label", { class: "sort-wrap" }, h("span", { class: "small muted" }, "Sırala"), sortSel)),
     h("div", { class: "catalog" }, filtersAside, h("section", { "aria-label": "Ürünler" }, resultsEl, moreEl)),
   );
 
@@ -52,6 +59,10 @@ export default async function render(root, { query }) {
     if (f.current && f.city) params.set("konum", "mevcut");
     if (f.category) params.set("kategori", f.category);
     if (f.q) params.set("q", f.q);
+    if (f.min) params.set("min", f.min);
+    if (f.max) params.set("max", f.max);
+    if (f.teslim) params.set("teslim", f.teslim);
+    if (f.sort !== "yeni") params.set("sirala", f.sort);
     const qs = params.toString();
     history.replaceState(null, "", `#/urunler${qs ? "?" + qs : ""}`);
     setBrowsePlace(f.city ? { city: f.city, district: f.district, current: f.current } : {});
@@ -68,8 +79,9 @@ export default async function render(root, { query }) {
       ...(cat ? [[cat.name]] : []),
       ...(place ? [[place]] : []),
     ));
-    const active = [f.current && f.city ? "Mevcut konum" : f.district || f.city, cat?.name].filter(Boolean).join(" · ");
-    filterSummary.replaceChildren(icon("settings"), h("span", {}, active ? `Filtrele: ${active}` : "Filtrele (konum, kategori)"));
+    const price = f.min || f.max ? `${f.min || 0}–${f.max || "∞"} TL` : null;
+    const active = [f.current && f.city ? "Mevcut konum" : f.district || f.city, cat?.name, price, f.teslim === "kargo" ? "Kargo" : f.teslim === "elden" ? "Elden" : null].filter(Boolean).join(" · ");
+    filterSummary.replaceChildren(icon("settings"), h("span", {}, active ? `Filtrele: ${active}` : "Filtrele (konum, kategori, fiyat)"));
   }
 
   // ---------- Filtre paneli ----------
@@ -139,6 +151,41 @@ export default async function render(root, { query }) {
           ...categories.map((c) => btn(f.category === c.slug, () => { f.category = c.slug; update(); }, c.name)),
         ),
       ),
+
+      priceGroup(),
+
+      h("div", { class: "filter-group" },
+        h("h3", {}, "Teslimat"),
+        h("div", { class: "filter-list filter-list-3" },
+          btn(!f.teslim, () => { f.teslim = null; update(); }, "Tümü"),
+          btn(f.teslim === "kargo", () => { f.teslim = "kargo"; update(); }, "Kargo"),
+          btn(f.teslim === "elden", () => { f.teslim = "elden"; update(); }, "Elden"),
+        ),
+      ),
+
+      f.min || f.max || f.teslim || f.category || f.city || f.sort !== "yeni"
+        ? h("button", { type: "button", class: "btn btn-ghost", onclick: () => {
+            Object.assign(f, { city: null, district: null, current: false, category: null, min: "", max: "", teslim: null, sort: "yeni" });
+            sortSel.value = "yeni"; update();
+          } }, ...withIcon("x", "Tüm filtreleri temizle"))
+        : null,
+    );
+  }
+
+  // Fiyat aralığı: en az – en çok (TL)
+  function priceGroup() {
+    let min = f.min, max = f.max;
+    const num = (label, val, set) => h("input", { class: "input", inputmode: "numeric", placeholder: label, "aria-label": `${label} fiyat (TL)`, value: val,
+      oninput: (e) => { e.target.value = e.target.value.replace(/\D/g, "").slice(0, 7); set(e.target.value); },
+      onkeydown: (e) => e.key === "Enter" && apply() });
+    const apply = () => {
+      if (min && max && Number(min) > Number(max)) [min, max] = [max, min];
+      f.min = min; f.max = max; update();
+    };
+    return h("div", { class: "filter-group" },
+      h("h3", {}, "Fiyat (TL)"),
+      h("div", { class: "price-range" }, num("En az", min, (v) => (min = v)), h("span", { "aria-hidden": "true" }, "–"), num("En çok", max, (v) => (max = v)),
+        h("button", { type: "button", class: "btn btn-secondary", onclick: apply }, "Uygula")),
     );
   }
 
@@ -155,7 +202,7 @@ export default async function render(root, { query }) {
     if (!append) { resultsEl.replaceChildren(loading()); moreEl.replaceChildren(); }
     let res;
     try {
-      res = await listProducts({ city: f.city, district: f.district, category: f.category, q: f.q, limit: PAGE, offset: append ? rows.length : 0 });
+      res = await listProducts({ city: f.city, district: f.district, category: f.category, q: f.q, priceMin: f.min, priceMax: f.max, delivery: f.teslim, sort: f.sort, limit: PAGE, offset: append ? rows.length : 0 });
     } catch {
       if (seq !== loadSeq) return;
       resultsEl.replaceChildren(h("div", { class: "card" }, emptyState("alert", "Ürünler yüklenemedi", "İnternet bağlantınızı kontrol edip tekrar deneyin.",
@@ -180,12 +227,12 @@ export default async function render(root, { query }) {
 
   // Bulunamayan aramalar kaydedilir (hangi ürünlerin arandığını görmek için)
   function notFound() {
-    const anyFilter = f.city || f.category || f.q;
+    const anyFilter = f.city || f.category || f.q || f.min || f.max || f.teslim;
     const input = h("input", { class: "input", placeholder: "Ne arıyordunuz?", value: f.q, "aria-label": "Ne arıyordunuz?" });
     return h("div", { class: "card stack" },
       emptyState("search", "Bu seçimde ürün yok",
         anyFilter ? "Filtreleri değiştirebilir ya da ne aradığınızı bize yazabilirsiniz." : "Henüz satışta ürün yok. İlk ürünü siz koyun!"),
-      anyFilter ? h("button", { class: "btn btn-secondary", onclick: () => { f.city = f.district = f.category = null; f.current = false; f.q = ""; if (headerSearch) headerSearch.value = ""; update(); } }, "Tüm ürünleri göster") : null,
+      anyFilter ? h("button", { class: "btn btn-secondary", onclick: () => { f.city = f.district = f.category = f.teslim = null; f.current = false; f.q = f.min = f.max = ""; f.sort = "yeni"; sortSel.value = "yeni"; if (headerSearch) headerSearch.value = ""; update(); } }, "Tüm ürünleri göster") : null,
       h("div", { class: "input-row" }, input, micButton({ size: "sm", onText: (t) => (input.value = t) })),
       h("button", { class: "btn btn-primary", onclick: async () => {
         const q = input.value.trim();

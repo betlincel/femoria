@@ -1306,3 +1306,32 @@ select.place-select:disabled { background-color: var(--surface-2); }
 .seller-chip-text .small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tabs { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); }
 .tabs button { padding: 0 8px; }
+
+/* Ürünler: sıralama ve fiyat aralığı */
+.sort-wrap { display: flex; align-items: center; gap: 8px; margin: 0; font-weight: 500; }
+.sort-select { width: auto; min-height: 44px; padding: 8px 36px 8px 14px; border-radius: 999px; font-size: .9rem; }
+.price-range { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 6px; align-items: center; }
+.price-range .input { min-height: 44px; padding: 8px 12px; font-size: .92rem; }
+.price-range .btn { grid-column: 1 / -1; min-height: 44px; }
+@media (max-width: 599px) { .catalog-head { align-items: flex-start; } .sort-wrap > span { display: none; } }
+
+/* Satış: adım göstergesi ve gezinme */
+.wiz-steps { list-style: none; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin: 0 0 4px; padding: 0; }
+.wiz-steps button {
+  width: 100%; display: grid; justify-items: center; gap: 6px; padding: 10px 4px 0; border: 0; background: none; cursor: pointer;
+  color: var(--text-faint); font-weight: 600; font-size: .8rem; border-top: 4px solid var(--line);
+}
+.wiz-steps button:disabled { cursor: default; }
+.wiz-steps .n { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 50%; background: var(--surface-2); color: var(--text-soft); font-weight: 700; }
+.wiz-steps li.done button { border-top-color: var(--primary); color: var(--primary-hover); }
+.wiz-steps li.done .n { background: var(--primary-soft); color: var(--primary); }
+.wiz-steps li.current button { border-top-color: var(--primary); color: var(--text); }
+.wiz-steps li.current .n { background: var(--primary); color: #fff; }
+.wiz-steps .l { text-align: center; line-height: 1.2; }
+.wiz-panel[hidden] { display: none; }
+.wiz-panel > .sell-section:first-child { margin-top: 0; }
+.wiz-panel > .sell-section:first-child > h2 { border-top: 0; padding-top: 0; }
+.wiz-nav { display: grid; grid-template-columns: auto 1fr; gap: 10px; }
+.wiz-nav .wiz-back { width: auto; min-height: 64px; padding: 0 20px; }
+.wiz-nav .wiz-back[hidden] { display: none; }
+.wiz-nav .wiz-back[hidden] + .wiz-next { grid-column: 1 / -1; }

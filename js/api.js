@@ -63,7 +63,15 @@ const likeEscape = (v) => String(v).replace(/[\\%_]/g, (c) => "\\" + c);
  * Konum adları büyük/küçük harf duyarsız eşleşir (il, ilçe, mahalle).
  * Döner: { rows, hasMore }
  */
-export async function listProducts({ city = null, district = null, neighborhood = null, category = null, q = "", limit = 48, offset = 0 } = {}) {
+// Sıralama seçenekleri: yeni (varsayılan), ucuz, pahali, begenilen
+const SORTS = {
+  yeni: [["published_at", false]],
+  ucuz: [["price", true], ["published_at", false]],
+  pahali: [["price", false], ["published_at", false]],
+  begenilen: [["favorite_count", false], ["published_at", false]],
+};
+
+export async function listProducts({ city = null, district = null, neighborhood = null, category = null, q = "", priceMin = null, priceMax = null, delivery = null, sort = "yeni", limit = 48, offset = 0 } = {}) {
   if (!isConfigured) return { rows: [], hasMore: false };
   let query = supabase.from("products").select(PRODUCT_COLS).eq("status", "satista");
   if (category) query = query.eq("category", category);
@@ -72,8 +80,12 @@ export async function listProducts({ city = null, district = null, neighborhood 
   if (neighborhood) query = query.ilike("neighborhood", likeEscape(neighborhood));
   const words = String(q || "").trim().split(/\s+/).filter((w) => w.length > 1).slice(0, 4);
   for (const w of words) query = query.ilike("title", `%${likeEscape(w)}%`);
+  if (priceMin != null && priceMin !== "") query = query.gte("price", Number(priceMin));
+  if (priceMax != null && priceMax !== "") query = query.lte("price", Number(priceMax));
+  if (delivery === "kargo") query = query.in("delivery", ["kargo", "ikisi"]);
+  if (delivery === "elden") query = query.in("delivery", ["elden", "ikisi"]);
+  for (const [col, asc] of SORTS[sort] || SORTS.yeni) query = query.order(col, { ascending: asc });
   const rows = await query
-    .order("published_at", { ascending: false })
     .range(offset, offset + limit) // bir fazlasını iste: devamı var mı?
     .then(ok);
   return { rows: rows.slice(0, limit), hasMore: rows.length > limit };

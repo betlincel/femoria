@@ -3,7 +3,7 @@
 import { h, toast, ask, speak, sheet, icon, withIcon, canSpeak, stopSpeaking, GENDERS, hitap } from "../ui.js";
 import { state, saveSettings, updateProfile, signOut } from "../store.js";
 import { pageTitle } from "../components.js";
-import { deleteMyAccount } from "../api.js";
+import { deleteMyAccount, askAssistant, updateBio } from "../api.js";
 import { navigate } from "../router.js";
 
 /** Liste satırı: ikon + başlık/açıklama + sağda anahtar ya da düğme */
@@ -54,6 +54,9 @@ export default async function render(root, { query }) {
             icon("user"), h("div", { class: "body" }, h("strong", {}, "Giriş yap / Üye ol")), icon("chevron-right")),
     ),
 
+    loggedIn ? h("div", { class: "group-title", id: "magaza" }, "Mağazam") : null,
+    loggedIn ? storeBlock() : null,
+
     h("div", { class: "group-title", id: "guvenlik" }, "Güvenlik ve gizlilik"),
     h("div", { class: "list" },
       item("moon", "Gece sessizliği", "22:00–08:00 arası mesajlar sessize alınır; karşı tarafa \"sabah dönecek\" notu gider.",
@@ -75,10 +78,45 @@ export default async function render(root, { query }) {
 
   if (query.guvenlik) document.getElementById("guvenlik")?.scrollIntoView({ behavior: "smooth" });
   if (query.hitap) document.getElementById("hitap")?.scrollIntoView({ behavior: "smooth", block: "center" });
+  if (query.bolum === "magaza") setTimeout(() => { document.getElementById("magaza")?.scrollIntoView({ behavior: "smooth" }); document.getElementById("bio")?.focus({ preventScroll: true }); }, 100);
   if (query.kvkk) navigate("/aydinlatma", { replace: true });
 }
 
 // Hitap: "Hanım" / "Bey" / yalnız ad. Cinsiyet başkalarına gösterilmez.
+// Mağaza tanıtımı (Hakkımda) + online ödeme hesabı. Ayşe Abla kısa notlardan tanıtım yazar.
+function storeBlock() {
+  const p = state.profile || {};
+  const ta = h("textarea", { class: "input", id: "bio", rows: 4, maxlength: 600, placeholder: "Örn. Trabzon'da 20 yıldır reçel ve tarhana yapıyorum, katkısız." }, p.bio || "");
+  const count = h("span", { class: "counter" }, `${ta.value.length}/600`);
+  ta.addEventListener("input", () => (count.textContent = `${ta.value.length}/600`));
+  const aiBtn = h("button", { type: "button", class: "btn btn-secondary", onclick: async () => {
+    const notes = ta.value.trim();
+    if (notes.length < 3) { toast("Önce birkaç kelimeyle ne yaptığınızı yazın; Ayşe Abla güzelleştirsin."); ta.focus(); return; }
+    aiBtn.disabled = true; aiBtn.replaceChildren("Ayşe Abla yazıyor…");
+    const ai = await askAssistant({ mode: "bio", notes });
+    aiBtn.disabled = false; aiBtn.replaceChildren(...withIcon("sparkles", "Ayşe Abla güzelleştirsin"));
+    if (ai?.bio) { ta.value = ai.bio; ta.dispatchEvent(new Event("input")); toast("Yazdım. Beğenmezseniz düzeltebilirsiniz, sonra Kaydet'e basın."); }
+    else toast("Ayşe Abla şu an yazamadı; kendiniz yazıp kaydedebilirsiniz.");
+  } }, ...withIcon("sparkles", "Ayşe Abla güzelleştirsin"));
+  const save = h("button", { type: "button", class: "btn btn-primary", onclick: async () => {
+    save.disabled = true;
+    try { await updateBio(ta.value.trim()); state.profile && (state.profile.bio = ta.value.trim()); toast("Mağaza tanıtımınız kaydedildi."); }
+    catch (e) { toast(e.message || "Kaydedilemedi."); }
+    save.disabled = false;
+  } }, "Kaydet");
+  return h("div", { class: "list" },
+    h("div", { class: "list-block stack" },
+      h("div", { class: "row", style: { gap: "14px" } }, icon("bag"), h("strong", { style: { flex: 1 } }, "Mağaza tanıtımı")),
+      h("p", { class: "small muted", style: { margin: 0 } }, "Mağaza sayfanızda görünür. Kendinizi birkaç kelimeyle anlatın; Ayşe Abla güzel bir yazıya çevirsin."),
+      ta, h("div", { class: "field-help" }, h("span", {}, "İletişim bilgisi (telefon, adres) yazmayın."), count),
+      h("div", { class: "btn-row" }, aiBtn, save),
+      h("a", { class: "link-btn", href: `#/magaza/${state.user.id}` }, ...withIcon("arrow-right", "Mağazamı gör"))),
+    h("a", { class: "list-item", href: "#/odeme-hesabi" }, icon("wallet"),
+      h("div", { class: "body" }, h("strong", {}, "Ödeme hesabım"), h("div", { class: "small" }, p.payout_ready ? "Online ödeme alabiliyorsunuz." : "Online ödeme almak için iyzico'ya bağlanın.")),
+      icon("chevron-right")),
+  );
+}
+
 function hitapBlock() {
   const p = state.profile || {};
   const preview = h("div", { class: "small muted" });
