@@ -1,7 +1,7 @@
 // Vitrin (Ana sayfa) — geçişli afiş (ilk slayt: nasıl çalışır), yeni ürünler, güven, rehber.
 import { h, loading, emptyState, icon } from "../ui.js";
 import { state } from "../store.js";
-import { latestProducts } from "../api.js";
+import { latestProducts, followedProducts } from "../api.js";
 import { productCard } from "../components.js";
 import { ayseAvatarSVG } from "../icons.js";
 
@@ -206,6 +206,7 @@ export default async function render(root) {
   const newArrivals = h("div", {}, loading());
   const arrowSlot = h("div", { class: "row-arrows-slot" });
   const extras = h("div", { class: "stack" });
+  const followedSlot = h("div");
 
   const promo = promoCarousel();
   root.append(
@@ -214,6 +215,7 @@ export default async function render(root) {
 
 
     extras,
+    followedSlot,
 
     h("section", { class: "section" },
       h("div", { class: "section-title" },
@@ -247,6 +249,16 @@ export default async function render(root) {
     newArrivals.replaceChildren(h("div", { class: "card" }, emptyState("bag", "Henüz ürün yok", "İlk ürünü siz koyun.", h("a", { class: "btn btn-primary", href: "#/sat" }, "İlk ürünü koy"))));
   }
 
+  // Takip ettiğim satıcılardan yeni ürünler (yalnız takip eden kullanıcıya)
+  let followRow = null;
+  const followed = await followedProducts().catch(() => []);
+  if (followed.length) {
+    followRow = productRow(followed);
+    followedSlot.replaceChildren(h("section", { class: "section" },
+      h("div", { class: "section-title" }, h("h2", {}, "Takip ettiklerinden"), h("div", { class: "section-actions" }, followRow.arrows)),
+      followRow.rail));
+  }
+
   // Cinsiyet seçmemiş (eski) hesaplara bir kerelik hatırlatma
   if (state.user && state.profile && !state.profile.gender) {
     extras.append(h("div", { class: "section" }, featureCard({
@@ -256,5 +268,5 @@ export default async function render(root) {
     })));
   }
 
-  return () => { promo.stop(); row?.stop(); };
+  return () => { promo.stop(); row?.stop(); followRow?.stop(); };
 }

@@ -114,7 +114,12 @@ export default async function render(root, { params: [id] }) {
     const iAgreed = role === "buyer" ? o.buyer_agreed : o.seller_agreed;
     const statusText = { teklif: "Onay bekliyor", anlasildi: "Anlaşıldı", teslim_edildi: "Teslim edildi", iptal: "İptal edildi" }[o.status];
     const actions = h("div", { class: "stack" });
-    if (o.status === "teklif") {
+    if (o.payment_status === "odendi" || o.payment_status === "iade") {
+      // Online ödenmiş sipariş: kargo, teslim onayı ve iade "Siparişlerim"den yönetilir
+      actions.append(
+        h("p", { class: "small", style: { margin: 0 } }, icon("lock", 16), o.payment_status === "iade" ? " Ödeme iade edildi." : " Online ödendi (iyzico güvencesinde)."),
+        h("a", { class: "btn btn-secondary", href: `#/siparislerim${role === "seller" ? "?sekme=satislarim" : ""}` }, "Siparişlerim'de takip et"));
+    } else if (o.status === "teklif") {
       if (!iAgreed) actions.append(h("button", { class: "btn btn-success", onclick: () => act(agreeOrder, o.id, "order_agreed") }, withIcon("check", "Anlaştık")));
       else actions.append(h("p", { class: "muted small center" }, "Karşı tarafın \"Anlaştık\" demesi bekleniyor."));
       actions.append(h("button", { class: "btn btn-ghost", onclick: async () => (await ask("Siparişi iptal edelim mi?", null, "Evet, iptal")) && act(cancelOrder, o.id) }, "İptal et"));
