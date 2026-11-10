@@ -8,6 +8,7 @@ import { esc, toast, h } from "./ui.js";
 import { iconSVG, ayseAvatarSVG } from "./icons.js";
 import { ensureKvkkConsent } from "./consent.js";
 import { loadFavorites, favoriteCount } from "./favorites.js";
+import { cartCount } from "./cart.js";
 import { pickBrowsePlace, getBrowsePlace, placeLabel } from "./components.js";
 
 route(/^\/$/, "vitrin", () => import("./views/vitrin.js"));
@@ -22,6 +23,7 @@ route(/^\/yakinimda$/, "urunler", async () => ({
 route(/^\/sat$/, "sat", () => import("./views/sat.js"), "medium");
 route(/^\/mesajlar$/, "mesajlar", () => import("./views/mesajlar.js"), "medium");
 route(/^\/favoriler$/, "favoriler", () => import("./views/favoriler.js"));
+route(/^\/sepet$/, "sepet", () => import("./views/sepet.js"));
 route(/^\/sohbet\/([\w-]+)$/, "mesajlar", () => import("./views/sohbet.js"), "medium");
 route(/^\/urun\/([\w-]+)$/, "urun", () => import("./views/urun.js"));
 route(/^\/profil$/, "profil", () => import("./views/profil.js"));
@@ -160,6 +162,16 @@ function paintFavCount() {
 }
 window.addEventListener("femoria:fav", paintFavCount);
 
+// Başlıktaki sepet sayısı (sepet bu cihazda tutulur)
+function paintCartCount() {
+  const n = cartCount();
+  const el = document.getElementById("cart-count");
+  el.hidden = !n;
+  el.textContent = n > 99 ? "99+" : String(n);
+}
+window.addEventListener("femoria:cart", paintCartCount);
+window.addEventListener("storage", (e) => e.key === "femoria:cart" && paintCartCount()); // başka sekmede değişirse
+
 async function main() {
   paintShell();
   paintPlace();
@@ -168,6 +180,7 @@ async function main() {
   await initAuth();
   renderAvatar();
   loadFavorites();
+  paintCartCount();
   initAssistant();
   startRouter();
   if (state.authLinkError) toast("Bağlantının süresi dolmuş ya da daha önce kullanılmış. Lütfen yeni bir bağlantı isteyin.", 6000);

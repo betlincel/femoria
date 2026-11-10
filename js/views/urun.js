@@ -3,7 +3,7 @@ import { h, formatPrice, formatDistance, monthsSince, toast, loading, emptyState
 import { categoryIconName } from "../icons.js";
 import { state } from "../store.js";
 import { getProduct, photoUrl, categoryOf, startConversation, setProductStatus, removeProduct, track, DELIVERY_LABEL } from "../api.js";
-import { badgeChips, breadcrumb, favButton } from "../components.js";
+import { badgeChips, breadcrumb, favButton, cartButton } from "../components.js";
 import { navigate, requireAuth } from "../router.js";
 
 export default async function render(root, { params: [id] }) {
@@ -75,7 +75,7 @@ export default async function render(root, { params: [id] }) {
 
 function buyerActions(p) {
   if (p.status !== "satista") return null;
-  return h("button", { class: "btn btn-primary btn-xl", onclick: async () => {
+  return h("div", { class: "stack" }, cartButton(p), h("button", { class: "btn btn-secondary", onclick: async () => {
     if (!requireAuth(`/urun/${p.id}`)) return;
     try {
       const convId = await startConversation(p.id);
@@ -84,7 +84,7 @@ function buyerActions(p) {
     } catch (e) {
       toast(e.message || "Şu an mesaj gönderilemiyor.");
     }
-  } }, withIcon("message", "Satıcıya yaz"));
+  } }, withIcon("message", "Satıcıya yaz")));
 }
 
 

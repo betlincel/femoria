@@ -31,7 +31,7 @@ Supabase
 | `categories`, `locations`, `badges` | Sözlükler. `locations`: il/ilçe/mahalle + mahalle merkezi. |
 | `products` | Ürünler. Konum her ürün için satıcı tarafından girilir (cihazdan ya da listeden), kaydedilirken ~500 m kaydırılır. |
 | `conversations`, `messages` | Ürün başına alıcı–satıcı sohbeti. Mesaj türleri: metin, hazır, ses, sipariş, sistem. |
-| `orders` | Sipariş kartı: adet, fiyat, teslim, tarih, iki tarafın "Anlaştık" onayı. |
+| `orders` | Sipariş kartı: adet, fiyat, teslim, tarih, iki tarafın "Anlaştık" onayı. Sepetten "Siparişi gönder" her ürün için sohbet açıp sipariş kartı oluşturur (sepetin kendisi yalnız cihazda, `js/cart.js`). |
 | `favorites` | Favoriler: kullanıcının kalple işaretlediği ürünler (yalnız kendisi görür; ürün ya da hesap silinince silinir). |
 | `blocks`, `reports` | Engelleme ve tek dokunuşla şikayet. |
 | `user_badges` | Komşu Rozetleri. |
