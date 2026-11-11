@@ -34,6 +34,13 @@
         </span>
       </a>
 
+      <nav class="category-bar" aria-label="Kategoriler">
+        <div class="category-inner" id="category-bar">
+          <button type="button" class="all-cats" id="all-cats-btn" aria-expanded="false" aria-controls="cat-mega"><span data-icon="grid" aria-hidden="true"></span>Tüm Kategoriler<span data-icon="chevron-down" class="all-cats-caret" aria-hidden="true"></span></button>
+        </div>
+        <div class="cat-mega" id="cat-mega" role="region" aria-label="Tüm kategoriler" hidden></div>
+      </nav>
+
       <form class="header-search" role="search" id="header-search">
         <label for="q" class="sr-only">Ürün ara</label>
         <span class="search-ico" data-icon="search" aria-hidden="true"></span>
@@ -48,6 +55,9 @@
       </button>
 
       <nav class="header-actions" aria-label="Hesap">
+        <button type="button" id="search-toggle" class="header-link icon-only" aria-label="Ara" aria-expanded="false" aria-controls="header-search" title="Ara">
+          <span class="hl-ico" data-icon="search" aria-hidden="true"></span>
+        </button>
         <a href="#/mesajlar" class="header-link icon-only" data-route="mesajlar" data-highlight="nav-mesajlar-top" aria-label="Mesajlar" title="Mesajlar">
           <span class="hl-ico" data-icon="message" aria-hidden="true"><span id="unread-dot-top" class="dot" hidden></span></span>
         </a>
@@ -67,12 +77,6 @@
         </a>
       </nav>
     </div>
-    <nav class="category-bar" aria-label="Kategoriler">
-      <div class="category-inner" id="category-bar">
-        <button type="button" class="all-cats" id="all-cats-btn" aria-expanded="false" aria-controls="cat-mega"><span data-icon="grid" aria-hidden="true"></span>Tüm Kategoriler<span data-icon="chevron-down" class="all-cats-caret" aria-hidden="true"></span></button>
-      </div>
-      <div class="cat-mega" id="cat-mega" role="region" aria-label="Tüm kategoriler" hidden></div>
-    </nav>
   </header>
 
   <main id="app" class="app" tabindex="-1" aria-live="polite"></main>

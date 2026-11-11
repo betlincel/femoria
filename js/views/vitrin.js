@@ -85,33 +85,29 @@ const W = "rgba(255,255,255,", ART = {
 
 const SLIDES = [
   {
-    cls: "s-how", kicker: "Nasıl çalışır?", title: "3 adımda satışa çık",
-    steps: [
-      ["Fotoğrafını çek", "Pencere kenarında çek; ışığını biz düzeltelim."],
-      ["Sesle anlat", "Konuş, Ayşe Abla yazsın; fiyat önerisini de söylesin."],
-      ["Satışa çıkar", "Alıcılar sana yazar; anlaşınca sipariş kartı oluşur."],
-    ],
-    cta: "Hemen başla", href: "#/sat", highlight: "bir-sey-sat", art: "how",
+    cls: "s-how", kicker: "Yeni · Mahallenin el emeği", title: "Elinden çıkan, evine yakışan.",
+    text: "Fotoğrafını çek, sesle anlat; Ayşe Abla ilanı yazsın. Komşuların el emeğini keşfet, güvenle satın al.",
+    cta: "Alışverişe başla", href: "#/urunler", cta2: { label: "Nasıl çalışır?", scroll: "nasil" }, art: "how",
   },
   {
-    cls: "s-sat", kicker: "Ücretsiz ilan", title: "Elinle yaptığını sat, emeğin kazandırsın!",
+    cls: "s-sat", kicker: "Ücretsiz ilan", title: "Elinle yaptığını sat, emeğin kazandırsın.",
     text: "Reçelin, örgün, mantın… El emeğin alıcısını bulsun.",
-    cta: "Ürün sat", href: "#/sat", art: "sat",
+    cta: "Ürün sat", href: "#/sat", highlight: "bir-sey-sat", cta2: { label: "Ürünlere bak", href: "#/urunler" }, art: "sat",
   },
   {
-    cls: "s-yemek", kicker: "Ev yapımı", title: "Komşunun elinden ev yapımı lezzetler",
+    cls: "s-yemek", kicker: "Ev yapımı", title: "Komşunun elinden ev yapımı lezzetler.",
     text: "Tarhana, erişte, reçel, salça… Kadın üreticilerden.",
-    cta: "Ev yemeklerine bak", href: "#/urunler?kategori=yemek", art: "yemek",
+    cta: "Ev yemeklerine bak", href: "#/urunler?kategori=yemek", cta2: { label: "Tüm kategoriler", href: "#/urunler" }, art: "yemek",
   },
   {
-    cls: "s-ayse", kicker: "Yapay zeka yardımcın", title: "Yazmakla uğraşma, konuş — Ayşe Abla yazsın",
-    text: "Ürününü sesle anlat; adını, açıklamasını ve fiyat önerisini o hazırlasın.",
-    cta: "Ayşe Abla ile tanış", action: () => document.getElementById("assistant-fab")?.click(), art: "ayse",
+    cls: "s-ayse", kicker: "Yapay zeka yardımcın", title: "Yazmakla uğraşma, konuş.",
+    text: "Ürününü sesle anlat; adını, açıklamasını ve fiyat önerisini Ayşe Abla hazırlasın.",
+    cta: "Ayşe Abla ile tanış", action: () => document.getElementById("assistant-fab")?.click(), cta2: { label: "Rehbere bak", href: "#/rehber" }, art: "ayse",
   },
   {
-    cls: "s-guven", kicker: "Güvenli alışveriş", title: "Güvenle al, güvenle sat",
+    cls: "s-guven", kicker: "Güvenli alışveriş", title: "Güvenle al, güvenle sat.",
     text: "Ev adresin gizli, mesajların korumalı. Rahatsız eden olursa tek dokunuşla engelle.",
-    cta: "Güvenlik ipuçları", href: "#/rehber#mesajlasmak", art: "guven",
+    cta: "Güvenlik ipuçları", href: "#/rehber#mesajlasmak", cta2: { label: "Ürünlere bak", href: "#/urunler" }, art: "guven",
   },
 ];
 const AUTO_MS = 6000;
@@ -127,12 +123,14 @@ function promoCarousel() {
     h("div", { class: "copy" },
       h("span", { class: "kicker" }, icon("sparkles", 14), sl.kicker),
       h("h2", {}, sl.title),
-      sl.steps
-        ? h("ol", { class: "promo-steps" }, sl.steps.map(([t, d], k) => h("li", {}, h("span", { class: "n" }, k + 1), h("div", {}, h("strong", {}, t), h("span", {}, d)))))
-        : h("p", {}, sl.text),
-      sl.href
-        ? h("a", { class: "btn promo-cta", href: sl.href, "data-highlight": sl.highlight || null, tabindex: i ? "-1" : null }, sl.cta, icon("arrow-right", 20))
-        : h("button", { type: "button", class: "btn promo-cta", onclick: sl.action, tabindex: i ? "-1" : null }, sl.cta, icon("arrow-right", 20)),
+      h("p", {}, sl.text),
+      h("div", { class: "hero-btns" },
+        sl.href
+          ? h("a", { class: "btn promo-cta", href: sl.href, "data-highlight": sl.highlight || null, tabindex: i ? "-1" : null }, sl.cta, icon("arrow-right", 20))
+          : h("button", { type: "button", class: "btn promo-cta", onclick: sl.action, tabindex: i ? "-1" : null }, sl.cta, icon("arrow-right", 20)),
+        sl.cta2.href
+          ? h("a", { class: "hero-link", href: sl.cta2.href, tabindex: i ? "-1" : null }, h("span", { class: "hero-play", "aria-hidden": "true" }, icon("arrow-right", 16)), sl.cta2.label)
+          : h("button", { type: "button", class: "hero-link", tabindex: i ? "-1" : null, onclick: () => document.getElementById(sl.cta2.scroll)?.scrollIntoView({ behavior: "smooth", block: "start" }) }, h("span", { class: "hero-play", "aria-hidden": "true" }, icon("chevron-down", 16)), sl.cta2.label)),
     ),
     h("div", { class: "promo-art", "aria-hidden": "true", html: typeof ART[sl.art] === "function" ? ART[sl.art]() : ART[sl.art] }),
   ));
@@ -149,7 +147,7 @@ function promoCarousel() {
     track.style.transform = `translateX(-${index * 100}%)`;
     slides.forEach((el, k) => {
       el.setAttribute("aria-hidden", String(k !== index));
-      el.querySelector(".promo-cta").tabIndex = k === index ? 0 : -1;
+      el.querySelectorAll(".promo-cta, .hero-link").forEach((c) => (c.tabIndex = k === index ? 0 : -1));
     });
     [...dots.children].forEach((d, k) => d.setAttribute("aria-current", String(k === index)));
     if (byUser) restart();
@@ -206,6 +204,13 @@ export default async function render(root) {
         trustItem("truck", "Kargo / elden", "Siz seçersiniz"),
         trustItem("lock", "Gizli adres", "Yalnız mahalle")),
       circlesSlot),
+    h("section", { class: "section steps-sec", id: "nasil", "aria-labelledby": "how-t" },
+      h("div", { class: "section-title" }, h("div", {}, h("small", { class: "eyebrow-s" }, "Satıcı olmak kolay"), h("h2", { id: "how-t" }, "3 adımda satışa çık")), h("div", { class: "section-actions" }, h("a", { href: "#/rehber#satmak" }, "Rehberi aç"))),
+      h("ol", { class: "how-steps" }, [
+        ["camera", "Fotoğrafını çek", "Pencere kenarında çek; ışığını biz düzeltelim."],
+        ["mic", "Sesle anlat", "Konuş, Ayşe Abla yazsın; fiyat önerisini de söylesin."],
+        ["bag", "Satışa çıkar", "Alıcılar sana yazar; anlaşınca sipariş kartı oluşur."],
+      ].map(([ico, t, d], n) => h("li", { class: "how-step" }, h("span", { class: "how-num" }, String(n + 1).padStart(2, "0")), h("span", { class: "how-ico", "aria-hidden": "true" }, icon(ico, 28)), h("strong", {}, t), h("span", { class: "muted" }, d))))),
     extras,
     catsSlot,
     h("div", { class: "promo-duo" },
@@ -250,12 +255,13 @@ export default async function render(root) {
       groups.map((g) => h("a", { class: "circle-item", role: "listitem", href: `#/urunler?kategori=${g.slug}` },
         h("span", { class: "circle-ico", "aria-hidden": "true" }, icon(categoryIconName(g.slug), 30)), h("span", {}, g.name))),
       h("a", { class: "circle-item circle-all", role: "listitem", href: "#/urunler" }, h("span", { class: "circle-ico", "aria-hidden": "true" }, icon("grid", 28)), h("span", {}, "Tümü"))));
+    const tones = ["#E6D9C6", "#DACDBB", "#E9DDCF", "#D5CDBF", "#E4D5C4", "#DCD1C0", "#EADFD0", "#D3C7B5"];
     catsSlot.replaceChildren(h("section", { class: "section" },
       h("div", { class: "section-title" }, h("div", {}, h("small", { class: "eyebrow-s" }, "Kategoriye göre alışveriş"), h("h2", {}, "Sana özel kategoriler")), h("div", { class: "section-actions" }, h("a", { href: "#/urunler" }, "Tüm kategoriler"))),
-      h("div", { class: "cat-grid", role: "list" }, groups.slice(0, 8).map((g) => {
+      h("div", { class: "cat-grid", role: "list" }, groups.slice(0, 8).map((g, gi) => {
         const ph = photoOf[g.slug];
-        return h("a", { class: `cat-card ${ph ? "has-photo" : ""}`, role: "listitem", href: `#/urunler?kategori=${g.slug}`, style: ph ? { backgroundImage: `url("${ph}")` } : {} },
-          ph ? null : h("span", { class: "cat-card-ico", "aria-hidden": "true" }, icon(categoryIconName(g.slug), 56)),
+        return h("a", { class: `cat-card ${ph ? "has-photo" : ""}`, role: "listitem", href: `#/urunler?kategori=${g.slug}`, style: ph ? { backgroundImage: `url("${ph}")` } : { "--tone": tones[gi % tones.length] } },
+          ph ? null : h("span", { class: "cat-card-ico", "aria-hidden": "true" }, h("span", { class: "cat-card-disc" }, icon(categoryIconName(g.slug), 44))),
           h("span", { class: "cat-card-name" }, g.name, h("small", {}, "Keşfet →")));
       }))));
   };
