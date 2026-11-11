@@ -2,8 +2,9 @@
 import { h, formatPrice, formatDistance, monthsSince, toast, loading, emptyState, ask, icon, withIcon } from "../ui.js";
 import { categoryIconName } from "../icons.js";
 import { state } from "../store.js";
-import { getProduct, photoUrl, categoryOf, categoryPath, startConversation, setProductStatus, removeProduct, track, DELIVERY_LABEL } from "../api.js";
-import { badgeChips, breadcrumb, favButton, cartButton } from "../components.js";
+import { getProduct, similarProducts, photoUrl, categoryOf, categoryPath, startConversation, setProductStatus, removeProduct, track, DELIVERY_LABEL } from "../api.js";
+import { badgeChips, breadcrumb, favButton, cartButton, productRow } from "../components.js";
+import { rememberProduct } from "../recent.js";
 import { navigate, requireAuth } from "../router.js";
 import { offerSheet } from "./siparislerim.js";
 import { starsText } from "./magaza.js";
@@ -18,6 +19,8 @@ export default async function render(root, { params: [id] }) {
     return;
   }
 
+  rememberProduct(p.id);
+  document.title = `${p.title} — Femoria`;
   const mine = state.user?.id === p.seller_id;
   const cat = categoryOf(p.category);
   const photos = p.photos.map(photoUrl).filter(Boolean);
@@ -55,6 +58,7 @@ export default async function render(root, { params: [id] }) {
           p.status === "satildi" ? h("p", { class: "notice" }, icon("alert", 20), "Bu ürün satıldı.") : null,
           mine ? ownerActions(p) : buyerActions(p),
           mine ? null : favButton(p.id, { cls: "btn btn-secondary fav-wide", withText: true }),
+          h("button", { type: "button", class: "btn btn-secondary", onclick: () => shareProduct(p) }, ...withIcon("share", "Paylaş")),
           h("div", { class: "small muted row", style: { gap: "8px" } }, icon("shield-check", 18),
             h("span", { style: { flex: "1" } }, "Ödemeyi teslimde yapın; ev adresi ve banka bilgisi paylaşmayın.")),
         ),
@@ -78,6 +82,26 @@ export default async function render(root, { params: [id] }) {
       ),
     ),
   );
+
+  similarProducts(p).then((items) => {
+    if (!items.length) return;
+    const row = productRow(items, "Benzer ürünler");
+    root.append(h("section", { class: "section" },
+      h("div", { class: "section-title" }, h("h2", {}, "Benzer ürünler"), h("div", { class: "section-actions" }, row.arrows)), row.rail));
+  }).catch(() => {});
+
+}
+
+// Paylaş: telefonda paylaşım menüsü, olmazsa bağlantıyı panoya kopyalar
+async function shareProduct(p) {
+  const url = `${location.origin}${location.pathname}#/urun/${p.id}`;
+  const data = { title: p.title, text: `${p.title} — ${formatPrice(p.price)} · Femoria`, url };
+  try {
+    if (navigator.share) { await navigator.share(data); track("product_shared", { how: "native" }); return; }
+    await navigator.clipboard.writeText(url);
+    toast("Bağlantı kopyalandı.");
+    track("product_shared", { how: "copy" });
+  } catch (e) { if (e?.name !== "AbortError") toast("Paylaşılamadı; adres çubuğundaki bağlantıyı kopyalayabilirsiniz."); }
 }
 
 function buyerActions(p) {

@@ -11,3 +11,6 @@
 // Secret key (sb_secret_...) ASLA buraya yazılmaz.
 export const SUPABASE_URL = "https://hxikkkdimeykmwzhrvjt.supabase.co";
 export const SUPABASE_ANON_KEY = "sb_publishable_KdeZVXQMZAmgrOrOIvzpKA_4aPnrdaq";
+
+// Yasal metinlerde görünen işletme bilgileri (boş bırakılanlar köşeli parantezle görünür; yayından önce doldurun).
+export const LEGAL = { company: "", address: "", email: "", taxNo: "" };
