@@ -2,7 +2,7 @@
 import { isConfigured } from "./supabase.js";
 import { state, initAuth, onChange, LS } from "./store.js";
 import { route, startRouter, onRoute, navigate } from "./router.js";
-import { subscribeIncoming, track, getCategories, categoryTree } from "./api.js";
+import { subscribeIncoming, track, resetAdminCache, getCategories, categoryTree } from "./api.js";
 import { initAssistant, assistantEvent } from "./assistant.js";
 import { esc, toast, h } from "./ui.js";
 import { iconSVG, ayseAvatarSVG } from "./icons.js";
@@ -35,6 +35,8 @@ route(/^\/ayarlar$/, "profil", () => import("./views/ayarlar.js"), "narrow");
 route(/^\/rehber$/, "rehber", () => import("./views/rehber.js"), "medium");
 route(/^\/giris$/, "giris", () => import("./views/giris.js"), "narrow");
 route(/^\/sifre-yenile$/, "giris", () => import("./views/sifre.js"), "narrow");
+route(/^\/kazanc$/, "profil", () => import("./views/kazanc.js"), "narrow");
+route(/^\/yonetim$/, "urunler", () => import("./views/yonetim.js"), "medium");
 route(/^\/yasal\/([\w-]+)$/, "aydinlatma", () => import("./views/yasal.js"), "medium");
 route(/^\/aydinlatma$/, "aydinlatma", () => import("./views/aydinlatma.js"), "medium");
 
@@ -75,6 +77,7 @@ onChange(() => {
   }
   if (state.user?.id !== lastUserId) {
     lastUserId = state.user?.id ?? null;
+    resetAdminCache();
     loadFavorites();
     stopInbox();
     stopInbox = subscribeIncoming((msg) => {

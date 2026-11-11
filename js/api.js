@@ -634,3 +634,21 @@ export async function myFollowedSellers() {
 }
 
 export const updateBio = (bio) => supabase.from("profiles").update({ bio: bio || null }).eq("id", state.user.id).then(ok);
+
+// ---------- Kazanç ekranı ve yönetici paneli ----------
+export const myEarningsDetail = () => (need(), supabase.rpc("my_earnings_detail").then(ok));
+let adminPromise = null;
+/** Giriş yapan kullanıcı yönetici mi? (SQL'de public.admins tablosuna eklenir) */
+export const isAdmin = () => {
+  if (!isConfigured || !state.user) return Promise.resolve(false);
+  return (adminPromise ??= supabase.rpc("is_admin").then(({ data, error }) => !error && data === true, () => false));
+};
+export const resetAdminCache = () => { adminPromise = null; };
+export const adminOverview = () => supabase.rpc("admin_overview").then(ok);
+export const adminDisputes = (status = "acik") => supabase.rpc("admin_disputes", { p_status: status }).then(ok);
+export const adminCloseDispute = (orderId, note = null) => supabase.rpc("admin_close_dispute", { p_order_id: orderId, p_note: note }).then(ok);
+export const adminReports = () => supabase.rpc("admin_reports").then(ok);
+export const adminDismissReport = (id) => supabase.rpc("admin_dismiss_report", { p_report_id: id }).then(ok);
+export const adminProducts = (q = "") => supabase.rpc("admin_products", { p_q: q }).then(ok);
+export const adminRemoveProduct = (id, reason = null) => supabase.rpc("admin_remove_product", { p_product_id: id, p_reason: reason }).then(ok);
+export const adminOrders = () => supabase.rpc("admin_orders").then(ok);
