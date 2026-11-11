@@ -1,11 +1,12 @@
 // Ayşe Abla persona kartı — taslak Bölüm 3.1'den sistem talimatına çevrildi.
 
-export const CATEGORY_SLUGS = ["yemek", "orgu", "taki", "ev-susu", "kurutmalik", "diger"] as const;
+import { CATEGORY_PROMPT_LIST, CATEGORY_SLUGS } from "./categories.ts";
+export { CATEGORY_SLUGS };
 
 export const SCREENS: Record<string, string> = {
   vitrin: "Vitrin (ana sayfa): selamlama, 'Bir şey sat' düğmesi, ürün türü kutucukları, 'Mahallenizden yeni gelenler'.",
-  sat: "Sat: adım adım ürün ekleme — 1 Fotoğraf ('Fotoğraf yükle', en çok 4), 2 Ürün bilgisi (mavi kutuda mikrofon: sesle anlatınca ad, açıklama ve tür dolar; ürünün adı, açıklama, 'Ne satıyorsunuz?'), 3 Fiyat (benzer ürünlerin fiyat aralığı) ve 'Kaç adet var?' (stok; bitince ürün kendiliğinden 'Satıldı' olur), 4 Teslimat (elden/kargo, konum) ve 'Satışa çıkar'. Altta 'Devam' ve 'Geri'.",
-  urunler: "Ürünler: tüm ürünler; sağ üstte 'Sırala' (en yeniler, fiyat artan/azalan, en çok beğenilenler); yandaki filtrelerde 'Konum' (İl / İlçe ya da 'Mevcut konumumu kullan'), kategori, fiyat aralığı ve teslimat (kargo/elden). Telefonda filtreler 'Filtrele' düğmesinde.",
+  sat: "Sat: adım adım ürün ekleme — 1 Fotoğraf ('Fotoğraf yükle', en çok 4), 2 Ürün bilgisi (mavi kutuda mikrofon: sesle anlatınca ad, açıklama ve tür (alt tür dahil) dolar; ürünün adı, açıklama, 'Ne satıyorsunuz?' ana kategori düğmeleri — birine dokununca altında 'tam olarak ne?' alt türleri açılır, örn. Örgü > Örgü Çanta & File, Yemek > Reçel & Marmelat), 3 Fiyat (benzer ürünlerin fiyat aralığı) ve 'Kaç adet var?' (stok; bitince ürün kendiliğinden 'Satıldı' olur), 4 Teslimat (elden/kargo, konum) ve 'Satışa çıkar'. Altta 'Devam' ve 'Geri'.",
+  urunler: "Ürünler: tüm ürünler. Sağ üstte 'Sırala' listesi (önerilen, en düşük fiyat, en yüksek fiyat, en yeniler, en çok satan, en favoriler, en çok değerlendirilen). Yandaki açılır kapanır bölümler: 'Kategori' (ana kategori ve alt türleri onay kutularıyla, birden çok seçilebilir; örn. Yemek > Reçel & Marmelat, Örgü > Örgü Çanta & File), 'Konum' (İl / İlçe ya da 'Mevcut konumumu kullan'), 'Fiyat', 'Teslimat' (kargo / elden) ve 'Satıcı' (güvenli ödeme, doğrulanmış satıcı, puan 4+). Seçilen filtreler listenin üstünde etiket olarak görünür, tek tek kaldırılır. Üstteki 'Tüm Kategoriler' düğmesi bütün alt türleri bir panelde gösterir. Telefonda filtreler 'Filtrele' düğmesinde.",
   urun: "Ürün sayfası: fiyat, stok ('Son 1 adet'), 'Sepete ekle', 'Teklif ver' (fiyatın en az yarısı; satıcı kabul, red ya da karşı teklif verir), 'Satıcıya yaz', kalp (favori), satıcının puanı ve 'Mağazayı gör'. Kendi ürününde 'Ürünü düzenle' (fotoğraf, ad, açıklama, fiyat, stok, teslimat değiştirilir), 'Satıldı olarak işaretle', 'Vitrinden kaldır'.",
   favoriler: "Favorilerim: kullanıcının kalple işaretlediği ürünler. Ürün kartlarının sağ üstündeki kalbe dokununca ürün buraya eklenir; başlıkta Mesajlar'ın sağındaki kalp simgesiyle açılır.",
   sepet: "Sepetim: sepete eklenen ürünler satıcıya göre gruplanır; adet artırılıp azaltılır, toplam görünür. 'Siparişi gönder' denince her ürün için satıcıya sipariş kartı gider; satıcı 'Anlaştık' deyince kesinleşir, ödeme teslimde yapılır. Ürün sayfasında 'Sepete ekle', ürün kartlarında kırmızı + düğmesi ürünü sepete ekler; başlıkta favorilerin sağındaki sepet simgesiyle açılır.",
@@ -13,7 +14,7 @@ export const SCREENS: Record<string, string> = {
   siparislerim: "Siparişlerim: 'Alışlarım' (kargo takip no, 'Teslim aldım' ile ödemeyi satıcıya aktarma, sorun varsa 'Sorun bildir' — açık sorunda ödeme satıcıya geçmez, kargodan önce iptal ve iade, 'Satıcıyı puanla'; kargodan 7 gün sonra sorun bildirilmediyse sipariş kendiliğinden onaylanır), 'Satışlarım' (alıcının adresi, kargo firması ve takip numarası girme — ödeme alındıktan 5 gün içinde gönderilmeyen sipariş iptal edilip iade edilir, elden teslimde 'Teslime hazır', iptal) ve 'Teklifler' (kabul et, karşı teklif ver, reddet, 'Bu fiyattan satın al').",
   magaza: "Mağaza: satıcının sayfası — tanıtım yazısı, puan ve yorumlar, takipçi/satış/ürün sayıları, 'Takip et' düğmesi, ürünleri. Kendi mağaza tanıtımını Ayarlar > Mağazam bölümünde yazar; Ayşe Abla güzelleştirebilir. Online ödeme almak için Ayarlar > 'Ödeme hesabım' (iyzico: ad, telefon, adres, IBAN, T.C. kimlik no).",
   mesajlar: "Mesajlar: sohbet listesi. Sohbette hazır mesaj baloncukları, mikrofon, 'Sipariş kartı' ve 'Anlaştık' düğmeleri, sağ üstte kalkan (şikayet/engelle).",
-  profil: "Profil: 'Sattıklarım' ve 'Aldıklarım' sekmeleri, 'Kazancım' kartı, rozetler, ayarlar.",
+  profil: "Profil: 'Sattıklarım' ve 'Aldıklarım' sekmeleri, 'Kazancım' kartı, rozetler, ayarlar; en altta 'Çıkış yap'. Ayarlar'da da 'Hesap' bölümünde 'Çıkış yap' ve 'Hesabımı ve verilerimi sil' var.",
   rehber: "Rehber: 'Femoria'yı Nasıl Kullanırım?' kitapçığı.",
 };
 
@@ -59,4 +60,5 @@ export const DESCRIBE_PROMPT = `Kullanıcı el emeği ürününü sesle anlattı
 Yalnızca JSON döndür: {"title": "...", "description": "...", "category": "..."}
 - title: en fazla 6 kelime, her kelimenin baş harfi büyük, miktar varsa sona ekle (ör. "Köy Yumurtalı Ev Eriştesi – 500 g").
 - description: 1-3 kısa, sıcak cümle; kullanıcının söylediklerine sadık kal, bilgi uydurma.
-- category: şunlardan biri: ${CATEGORY_SLUGS.join(", ")} (yemek: reçel, salça, mantı, erişte, tarhana, turşu vb.; orgu: patik, atkı, bere, yelek; taki: kolye, bileklik, küpe; ev-susu: dantel, vazo, örtü, süs; kurutmalik: kurutulmuş sebze/meyve, biber, domates, nane).`;
+- category: aşağıdaki listeden TEK bir slug yaz. Ürüne en uyan ALT TÜRÜN slug'ını seç (ör. vişne reçeli → recel, örgü çanta → orgu-canta, doğal sabun → sabun). Alt tür bulamazsan ana kategorinin slug'ını yaz; hiçbirine uymuyorsa diger.
+${CATEGORY_PROMPT_LIST}`;

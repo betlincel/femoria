@@ -196,6 +196,17 @@ Kurulum:
 
 Stok: her üründe "Kaç adet var?" (varsayılan 1). Online ödeme başlarken stok ayrılır; aynı son ürün iki kişiye satılamaz. Stok biterse ürün kendiliğinden "Satıldı" olur; ödeme başarısız olur ya da sipariş iptal edilirse stok geri eklenir. Satıcı ürününü "Ürünü düzenle" ile değiştirebilir.
 
+## Kategoriler, filtre ve sıralama
+
+**Kategoriler** iki kademelidir: 11 ana kategori (Yemek, Örgü, Takı, Ev süsü, Kurutmalık, Giyim, Bebek & Çocuk, Doğal Bakım, Hediyelik, Bahçe, Diğer) ve evde yapılan ürünlere göre 55 alt kategori (örn. Yemek → Reçel & Marmelat, Salça & Sos, Turşu & Zeytin; Örgü → Bebek Örgüleri, Örgü Çanta & File, Amigurumi). Ürün, alt kategoriye ya da (alt tür seçilmediyse) ana kategoriye bağlanır; ana kategori seçilince alt türleri de listelenir.
+
+- **Tek kaynak:** `js/categories-data.js`. Kategori eklemek / adını değiştirmek için bu dosyayı düzenleyin, sonra `node scripts/build-categories.mjs` çalıştırın; veritabanı SQL'ini (`supabase/migrations/20261116000017_categories.sql`), `seed.sql` bloğunu ve Ayşe Abla'nın listesini (`supabase/functions/_shared/categories.ts`) o üretir. `npm run check` bu dosyaların güncel olup olmadığını denetler. Üretilen SQL'i SQL Editor'de çalıştırıp `ayse-abla` fonksiyonunu yeniden yayınlayın.
+- Yapay zeka kapalıyken "sesle anlat" alt türü kelimelerden bulur (`words` listeleri).
+
+**Ürünler sayfası** açılır kapanır bölümlerden oluşur: Kategori (onay kutulu ağaç, çoklu seçim), Konum, Fiyat (hazır aralıklar + en az/en çok), Teslimat (kargo/elden) ve Satıcı (güvenli ödeme, doğrulanmış satıcı, puan 4+). Seçilen filtreler etiket olarak listelenir ve adres çubuğuna yazılır. **Sıralama:** önerilen (satış > beğeni > yorum), en düşük / en yüksek fiyat, en yeniler, en çok satan, en favoriler, en çok değerlendirilen.
+
+Satış/yorum/beğeni sayaçları ve satıcı süzgeçleri için SQL Editor'de `supabase/migrations/20261117000018_ranking_listing.sql` dosyasını çalıştırın (`product_listing` görünümü). Çalıştırılmadıysa site eski haliyle çalışır: yalnız "en yeniler / fiyat" sıralamaları görünür, Satıcı bölümü çıkmaz.
+
 ## Kaldırılan ürünler ve gece temizliği
 
 "Vitrinden kaldır" denince ürün, fotoğrafları ve konumu hemen veritabanından silinir; geri alınamaz. Ürünle ilgili sohbetler ve sipariş kartları silinmez, sohbette ürünün adı ve fiyatı görünmeye devam eder. Her gece çalışan `purge-removed-photos` Edge Function'ı, silinirken kalmış olabilecek sahipsiz fotoğrafları ve sohbeti silinmiş sesli mesajları temizler.

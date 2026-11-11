@@ -2,18 +2,13 @@
 import { supabase, isConfigured, NOT_CONFIGURED } from "./supabase.js";
 import { state } from "./store.js";
 import { dataUrlToBlob } from "./ui.js";
+import { FLAT_CATEGORIES } from "./categories-data.js";
 
 const need = () => { if (!isConfigured) throw new Error(NOT_CONFIGURED); };
 const ok = ({ data, error }) => { if (error) throw error; return data; };
 
-export const FALLBACK_CATEGORIES = [
-  { slug: "yemek", name: "Yemek" },
-  { slug: "orgu", name: "Örgü" },
-  { slug: "taki", name: "Takı" },
-  { slug: "ev-susu", name: "Ev süsü" },
-  { slug: "kurutmalik", name: "Kurutmalık" },
-  { slug: "diger", name: "Diğer" },
-];
+// Veritabanı boşsa / bağlantı yoksa kullanılan liste (kaynak: js/categories-data.js)
+export const FALLBACK_CATEGORIES = FLAT_CATEGORIES.map(({ slug, name, icon, sort, parent }) => ({ slug, name, icon, sort, parent }));
 
 // Kategori adları sade gösterilir: veritabanında emoji kalmışsa ayıklanır
 const cleanName = (s) => String(s ?? "").replace(/[\p{Extended_Pictographic}\u{FE0F}\u{200D}]/gu, "").replace(/\s+/g, " ").trim();
@@ -37,9 +32,26 @@ export async function getCategories() {
   return state.categories;
 }
 
-export const categoryOf = (slug) =>
-  (state.categories.length ? state.categories : FALLBACK_CATEGORIES).find((c) => c.slug === slug) ||
-  FALLBACK_CATEGORIES.at(-1);
+const catList = () => (state.categories.length ? state.categories : FALLBACK_CATEGORIES);
+
+export const categoryOf = (slug) => catList().find((c) => c.slug === slug) || FALLBACK_CATEGORIES.at(-1);
+
+/** Ana kategoriler ve altlarındaki alt kategoriler: [{ ...grup, children: [...] }]. (Migration çalıştırılmadıysa altlar boş.) */
+export function categoryTree(list = catList()) {
+  return list.filter((c) => !c.parent).map((g) => ({ ...g, children: list.filter((c) => c.parent === g.slug) }));
+}
+
+/** Bir kategori seçilince süzülecek kategoriler: kendisi + (ana kategoriyse) alt kategorileri */
+export function categoryScope(slug, list = catList()) {
+  return [slug, ...list.filter((c) => c.parent === slug).map((c) => c.slug)];
+}
+
+/** Gezinti yolu: [ana kategori, alt kategori] (alt kategori yoksa yalnız ana kategori) */
+export function categoryPath(slug) {
+  const c = categoryOf(slug);
+  const parent = c.parent ? categoryOf(c.parent) : null;
+  return parent ? [parent, c] : [c];
+}
 
 export async function getLocations() {
   if (!isConfigured) return [];
@@ -69,18 +81,41 @@ const likeEscape = (v) => String(v).replace(/[\\%_]/g, (c) => "\\" + c);
  * Konum adları büyük/küçük harf duyarsız eşleşir (il, ilçe, mahalle).
  * Döner: { rows, hasMore }
  */
-// Sıralama seçenekleri: yeni (varsayılan), ucuz, pahali, begenilen
+// Sıralama: onerilen (satış > beğeni > yorum), yeni, ucuz, pahali, satan, favori, degerlendirilen.
+// Satış / yorum sayaçları ve satıcı süzgeçleri "product_listing" görünümünden gelir (20261117000018 migration'ı);
+// yüklenmediyse yalnız yeni / ucuz / pahali çalışır.
 const SORTS = {
+  onerilen: [["rank_score", false], ["published_at", false]],
   yeni: [["published_at", false]],
   ucuz: [["price", true], ["published_at", false]],
   pahali: [["price", false], ["published_at", false]],
-  begenilen: [["favorite_count", false], ["published_at", false]],
+  satan: [["sold_count", false], ["published_at", false]],
+  favori: [["favorite_count", false], ["published_at", false]],
+  degerlendirilen: [["review_count", false], ["published_at", false]],
 };
+export const LISTING_SORTS = new Set(["onerilen", "satan", "favori", "degerlendirilen"]);
 
-export async function listProducts({ city = null, district = null, neighborhood = null, category = null, q = "", priceMin = null, priceMax = null, delivery = null, sort = "yeni", limit = 48, offset = 0 } = {}) {
+let listingPromise = null;
+/** product_listing görünümü (sıralama sayaçları + satıcı süzgeçleri) kurulu mu? */
+export const hasListing = () => (listingPromise ??= isConfigured
+  ? supabase.from("product_listing").select("id").limit(1).then(({ error }) => !error, () => false)
+  : Promise.resolve(false));
+
+export async function listProducts({ city = null, district = null, neighborhood = null, category = null, q = "", priceMin = null, priceMax = null, delivery = null,
+  sellerPay = false, sellerVerified = false, minRating = 0, sort = "yeni", limit = 48, offset = 0 } = {}) {
   if (!isConfigured) return { rows: [], hasMore: false };
-  let query = supabase.from("products").select(await productCols()).eq("status", "satista");
-  if (category) query = query.eq("category", category);
+  const listing = await hasListing();
+  let query = supabase.from(listing ? "product_listing" : "products").select(await productCols()).eq("status", "satista");
+  if (listing) {
+    if (sellerPay) query = query.eq("seller_payout_ready", true);
+    if (sellerVerified) query = query.eq("seller_verified", true);
+    if (minRating) query = query.gte("seller_rating", Number(minRating));
+  }
+  const cats = [].concat(category || []).filter(Boolean); // tek slug ya da birden çok (çoklu seçim)
+  if (cats.length) {
+    const scope = [...new Set(cats.flatMap((s) => categoryScope(s)))];
+    query = scope.length === 1 ? query.eq("category", scope[0]) : query.in("category", scope);
+  }
   if (city) query = query.ilike("city", likeEscape(city));
   if (district) query = query.ilike("district", likeEscape(district));
   if (neighborhood) query = query.ilike("neighborhood", likeEscape(neighborhood));
@@ -90,7 +125,8 @@ export async function listProducts({ city = null, district = null, neighborhood 
   if (priceMax != null && priceMax !== "") query = query.lte("price", Number(priceMax));
   if (delivery === "kargo") query = query.in("delivery", ["kargo", "ikisi"]);
   if (delivery === "elden") query = query.in("delivery", ["elden", "ikisi"]);
-  for (const [col, asc] of SORTS[sort] || SORTS.yeni) query = query.order(col, { ascending: asc });
+  const sortKey = SORTS[sort] && (listing || !LISTING_SORTS.has(sort)) ? sort : "yeni";
+  for (const [col, asc] of SORTS[sortKey]) query = query.order(col, { ascending: asc });
   const rows = await query
     .range(offset, offset + limit) // bir fazlasını iste: devamı var mı?
     .then(ok);

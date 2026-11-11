@@ -2,7 +2,7 @@
 import { h, formatPrice, formatDistance, monthsSince, toast, loading, emptyState, ask, icon, withIcon } from "../ui.js";
 import { categoryIconName } from "../icons.js";
 import { state } from "../store.js";
-import { getProduct, photoUrl, categoryOf, startConversation, setProductStatus, removeProduct, track, DELIVERY_LABEL } from "../api.js";
+import { getProduct, photoUrl, categoryOf, categoryPath, startConversation, setProductStatus, removeProduct, track, DELIVERY_LABEL } from "../api.js";
 import { badgeChips, breadcrumb, favButton, cartButton } from "../components.js";
 import { navigate, requireAuth } from "../router.js";
 import { offerSheet } from "./siparislerim.js";
@@ -29,7 +29,7 @@ export default async function render(root, { params: [id] }) {
   const verified = seller.email_verified || seller.phone_verified;
 
   root.append(
-    breadcrumb(["Ana sayfa", "#/"], [cat.name, `#/urunler?kategori=${p.category}`], [p.title]),
+    breadcrumb(["Ana sayfa", "#/"], ...categoryPath(p.category).map((c) => [c.name, `#/urunler?kategori=${c.slug}`]), [p.title]),
     h("div", { class: "product-layout" },
       // ----- Galeri -----
       h("div", { class: "product-gallery stack" },

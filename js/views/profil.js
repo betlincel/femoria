@@ -1,9 +1,9 @@
 // Profil — tek hesap: alıcı ve satıcı. "Sattıklarım" / "Aldıklarım" + "Kazancım".
 import { h, loading, emptyState, formatPrice, monthsSince, toast, prepareImage, icon, withIcon } from "../ui.js";
-import { state, updateProfile } from "../store.js";
+import { state, updateProfile, signOut } from "../store.js";
 import { myEarnings, myProducts, myPurchases, userBadges, uploadAvatar } from "../api.js";
 import { productCard, badgeChips, productPhoto } from "../components.js";
-import { requireAuth } from "../router.js";
+import { requireAuth, navigate } from "../router.js";
 
 const STATUS = { satista: "Satışta", satildi: "Satıldı", taslak: "Taslak" };
 const ORDER_STATUS = { teklif: "Onay bekliyor", anlasildi: "Anlaşıldı", teslim_edildi: "Teslim alındı" };
@@ -15,6 +15,8 @@ function linkList() {
     row("#/odeme-hesabi", "wallet", "Ödeme hesabım (online satış)"),
     state.user ? row(`#/magaza/${state.user.id}`, "bag", "Mağazamı gör") : null,
     row("#/ayarlar", "settings", "Ayarlar"),
+    state.user ? h("button", { class: "list-item", onclick: async () => { await signOut(); toast("Çıkış yaptınız."); navigate("/"); } },
+      icon("logout"), h("div", { class: "body" }, h("strong", {}, "Çıkış yap"))) : null,
     row("#/rehber", "book", "Femoria'yı nasıl kullanırım?"),
   );
 }

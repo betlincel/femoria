@@ -6,6 +6,12 @@ import { pageTitle } from "../components.js";
 import { deleteMyAccount, askAssistant, updateBio } from "../api.js";
 import { navigate } from "../router.js";
 
+async function logout() {
+  await signOut();
+  toast("Çıkış yaptınız.");
+  navigate("/");
+}
+
 /** Liste satırı: ikon + başlık/açıklama + sağda anahtar ya da düğme */
 function item(ico, title, help, trailing, { danger = false } = {}) {
   return h("div", { class: `list-item ${danger ? "danger" : ""}` },
@@ -47,11 +53,8 @@ export default async function render(root, { query }) {
         toggle("Sesli okuma", s.tts_enabled === true, (v) => { saveSettings({ tts_enabled: v }); if (v) speak("Sesli okuma açık.", { force: true }); else stopSpeaking(); })) : null,
       item("bell", "E-posta bildirimleri", "Yeni sipariş, kargo, teklif ve mesajlarda e-posta göndeririz. Kapatırsanız yalnızca sitede görürsünüz.",
         toggle("Bildirimler", s.notifications_enabled !== false, (v) => saveSettings({ notifications_enabled: v }))),
-      loggedIn
-        ? h("button", { class: "list-item", onclick: async () => { await signOut(); toast("Çıkış yaptınız."); navigate("/"); } },
-            icon("logout"), h("div", { class: "body" }, h("strong", {}, "Çıkış yap")))
-        : h("a", { class: "list-item", href: "#/giris" },
-            icon("user"), h("div", { class: "body" }, h("strong", {}, "Giriş yap / Üye ol")), icon("chevron-right")),
+      loggedIn ? null : h("a", { class: "list-item", href: "#/giris" },
+        icon("user"), h("div", { class: "body" }, h("strong", {}, "Giriş yap / Üye ol")), icon("chevron-right")),
     ),
 
     loggedIn ? h("div", { class: "group-title", id: "magaza" }, "Mağazam") : null,
@@ -67,7 +70,10 @@ export default async function render(root, { query }) {
         state.profile?.kvkk_accepted_at ? h("div", { class: "small" }, `${new Date(state.profile.kvkk_accepted_at).toLocaleDateString("tr-TR")} tarihinde onayladınız`) : null), icon("chevron-right")),
     ),
 
-    loggedIn ? h("div", { class: "list section" },
+    loggedIn ? h("div", { class: "group-title", id: "hesap" }, "Hesap") : null,
+    loggedIn ? h("div", { class: "list" },
+      h("button", { class: "list-item", onclick: logout },
+        icon("logout"), h("div", { class: "body" }, h("strong", {}, "Çıkış yap"), h("div", { class: "small" }, "Bu cihazdaki oturumunuz kapanır; bilgileriniz silinmez."))),
       h("button", { class: "list-item danger", onclick: async () => {
         if (!(await ask("Hesabınızı silelim mi?", "Ürünleriniz, mesajlarınız ve tüm bilgileriniz kalıcı olarak silinir. Bu geri alınamaz.", "Evet, her şeyi sil", "Vazgeç"))) return;
         try { await deleteMyAccount(); toast("Hesabınız ve bilgileriniz silindi."); navigate("/"); }

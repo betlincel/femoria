@@ -60,5 +60,9 @@ for (const f of files) {
   }
 }
 
+// 3) Kategori verisinden üretilen dosyalar (SQL, Ayşe Abla listesi, seed) güncel mi?
+try { execFileSync(process.execPath, ["scripts/build-categories.mjs", "--check"], { stdio: "pipe" }); }
+catch (e) { failed++; console.error(String(e.stderr || e)); }
+
 console.log(failed ? `${failed} hata` : `✓ ${files.length} dosya temiz, ${importCount} içe aktarım eşleşiyor`);
 process.exit(failed ? 1 : 0);

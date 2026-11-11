@@ -6,7 +6,8 @@
 // Düzenleme: #/sat?duzenle=<ürün kimliği> aynı formu ürünün bilgileriyle açar ("Değişiklikleri kaydet").
 import { h, toast, micButton, prepareImage, formatPrice, canListen, ask, sheet, icon, withIcon, iconCircle, statusScreen, speak } from "../ui.js";
 import { state, LS } from "../store.js";
-import { getCategories, priceSuggestion, publishProduct, updateProduct, getProduct, hasStock, photoUrl, askAssistant, track } from "../api.js";
+import { matchCategory, groupSlugOf } from "../categories-data.js";
+import { getCategories, categoryTree, priceSuggestion, publishProduct, updateProduct, getProduct, hasStock, photoUrl, askAssistant, track } from "../api.js";
 import { pageTitle, categoryTiles, askLocation, pickLocation } from "../components.js";
 import { navigate, requireAuth } from "../router.js";
 import { assistantEvent } from "../assistant.js";
@@ -152,11 +153,20 @@ export default async function render(root, { query = {} } = {}) {
     const priceField = floatField({ id: "f-price", label: "Fiyat (TL)", required: true, control: price });
     priceField.querySelector(".field-help").replaceChildren(priceHelp);
 
-    // Tür
-    const tilesWrap = h("div");
-    const drawTiles = () => tilesWrap.replaceChildren(categoryTiles(categories, { selected: draft.category, onSelect: (c) => {
-      draft.category = c.slug; draft.suggestion = null; save(); setError("category", null); drawTiles(); refreshSuggestion();
-    } }));
+    // Tür: önce ana kategori, sonra (varsa) tam olarak ne olduğu
+    const tilesWrap = h("div", { class: "stack" });
+    const groupOfDraft = () => { const c = categories.find((x) => x.slug === draft.category); return c ? (c.parent || c.slug) : null; };
+    const drawTiles = () => {
+      const tree = categoryTree(categories);
+      const g = tree.find((x) => x.slug === groupOfDraft());
+      const chosen = (slug) => { draft.category = slug; draft.suggestion = null; save(); setError("category", null); drawTiles(); refreshSuggestion(); };
+      tilesWrap.replaceChildren(
+        categoryTiles(tree, { selected: g?.slug ?? null, onSelect: (c) => chosen(c.slug === g?.slug ? draft.category : c.slug) }),
+        g?.children.length ? h("div", { class: "subcat" },
+          h("div", { class: "field-label" }, `${g.name} içinde tam olarak ne?`, h("span", { class: "muted small" }, " (isteğe bağlı)")),
+          categoryTiles([{ slug: g.slug, name: "Genel / diğer" }, ...g.children], { selected: draft.category, onSelect: (c) => chosen(c.slug) })) : null,
+      );
+    };
     drawTiles();
 
     // Teslim
@@ -297,7 +307,10 @@ export default async function render(root, { query = {} } = {}) {
     if (banner) banner.textContent = "Yazıyorum…";
     const ai = await askAssistant({ mode: "describe", transcript });
     const out = ai?.title ? ai : localDescribe(transcript);
-    Object.assign(draft, { title: out.title.slice(0, TITLE_MAX), description: (out.description || "").slice(0, DESC_MAX), category: out.category, suggestion: null });
+    // Veritabanında olmayan tür gelirse (kategori güncellemesi henüz yüklenmediyse) ana kategoriye, o da yoksa "diger"e düş
+    const known = new Set(categories.map((c) => c.slug));
+    const category = known.has(out.category) ? out.category : known.has(groupSlugOf(out.category)) ? groupSlugOf(out.category) : "diger";
+    Object.assign(draft, { title: out.title.slice(0, TITLE_MAX), description: (out.description || "").slice(0, DESC_MAX), category, suggestion: null });
     save();
     draw();
     toast("Doldurdum. Kontrol edip düzeltebilirsiniz.");
@@ -426,18 +439,8 @@ function publishErrorText(e) {
 }
 
 // ---------- Yapay zeka yokken: basit anlama ----------
-const KEYWORDS = {
-  yemek: ["reçel", "salça", "mantı", "erişte", "tarhana", "turşu", "börek", "pekmez", "bal", "yufka", "kek", "kurabiye", "sos", "yemek", "baklava", "sarma", "yaprak"],
-  orgu: ["örgü", "patik", "atkı", "bere", "yelek", "kazak", "yün", "şal", "hırka", "bebek"],
-  taki: ["kolye", "bileklik", "küpe", "yüzük", "takı", "boncuk", "tesbih"],
-  "ev-susu": ["dantel", "vazo", "örtü", "süs", "yastık", "seramik", "mum", "tablo", "sepet", "çeyiz"],
-  kurutmalik: ["kuru", "kurutulmuş", "kurutmalık", "biber", "patlıcan", "nane", "kekik", "pestil", "kuşburnu"],
-};
-
 export function localDescribe(text) {
-  const t = text.toLocaleLowerCase("tr-TR");
-  let category = "diger";
-  for (const [slug, words] of Object.entries(KEYWORDS)) if (words.some((w) => t.includes(w))) { category = slug; break; }
+  const category = matchCategory(text);
   const clean = text.replace(/^(bu|bunlar|şu)\s+/i, "").replace(/\s+/g, " ").trim();
   const first = clean.split(/[.,;!?]/)[0];
   const qty = clean.match(/(\d+[.,]?\d*)\s*(gram|gr|g|kilo|kg|litre|lt|adet|tane)/i);
