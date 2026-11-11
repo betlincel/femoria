@@ -4,6 +4,7 @@
 //   { mode: "chat",       messages: [{role, content}], screen?, userName? (hitap: "Ayşe Hanım", "Erdem Bey" ya da yalnız ad) }
 //       -> { reply, buttons, highlight, search }
 //   { mode: "describe",   transcript }                -> { title, description, category }
+//   { mode: "bio",        notes }                     -> { bio }  (mağaza tanıtımı / profil tamamlama)
 //   { mode: "transcribe", path }  (voice-messages kovası) -> { text }
 //   { mode: "speak",      text }  -> ses dosyası (application/octet-stream; Gemini'de WAV, OpenAI'da MP3) — Ayşe Abla'nın kadın sesi
 //
@@ -23,7 +24,7 @@
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { encodeBase64 } from "jsr:@std/encoding@1/base64";
 import { corsHeaders, json } from "../_shared/cors.ts";
-import { CATEGORY_SLUGS, DESCRIBE_PROMPT, HIGHLIGHTS, systemPrompt } from "../_shared/persona.ts";
+import { BIO_PROMPT, CATEGORY_SLUGS, DESCRIBE_PROMPT, HIGHLIGHTS, systemPrompt } from "../_shared/persona.ts";
 
 const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
 const GEMINI_MODEL = Deno.env.get("GEMINI_MODEL") ?? "gemini-3.8-flash";
@@ -135,6 +136,13 @@ async function chat(body: Record<string, unknown>) {
     highlight: HIGHLIGHTS.includes(out.highlight) ? out.highlight : null,
     search: out.search ? String(out.search).slice(0, 80) : null,
   });
+}
+
+async function bio(body: Record<string, unknown>) {
+  const notes = String(body.notes ?? "").trim().slice(0, 600);
+  if (notes.length < 3) return json({ error: "notes boş" }, 400);
+  const out = await askJSON(BIO_PROMPT, [{ role: "user", content: notes }], 250);
+  return json({ bio: String(out.bio ?? "").replace(/\s+/g, " ").trim().slice(0, 600) });
 }
 
 async function describe(body: Record<string, unknown>) {
@@ -253,6 +261,8 @@ Deno.serve(async (req) => {
         return await chat(body);
       case "describe":
         return await describe(body);
+      case "bio":
+        return await bio(body);
       case "transcribe":
         return await transcribe(req, body);
       case "speak":

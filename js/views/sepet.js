@@ -4,11 +4,11 @@
 import { h, loading, emptyState, toast, icon, withIcon, formatPrice, ask, iconCircle } from "../ui.js";
 import { categoryIconName } from "../icons.js";
 import { state } from "../store.js";
-import { getProductsByIds, sellerNames, photoUrl, startConversation, proposeOrder, track } from "../api.js";
+import { getProductsByIds, sellerInfo, acceptedOffers, photoUrl, startConversation, proposeOrder, track } from "../api.js";
 import { isConfigured } from "../supabase.js";
 import { breadcrumb } from "../components.js";
-import { cartItems, setQty, setDeliveryChoice, removeFromCart, refreshItem, clearCart, MAX_QTY } from "../cart.js";
-import { requireAuth } from "../router.js";
+import { cartItems, setQty, setDeliveryChoice, removeFromCart, refreshItem, clearCart, maxQtyOf } from "../cart.js";
+import { requireAuth, navigate } from "../router.js";
 
 export default async function render(root) {
   const countEl = h("span", { class: "result-count" });
@@ -20,7 +20,8 @@ export default async function render(root) {
   );
 
   let fresh = {};        // ürün kimliği → güncel ürün (null: artık yok)
-  let names = {};        // satıcı kimliği → ad
+  let info = {};         // satıcı kimliği → { full_name, payout_ready }
+  let offers = {};       // ürün kimliği → kabul edilmiş teklif (alıcının)
   const priceChanged = new Set();
   let busy = false;
 
@@ -37,7 +38,11 @@ export default async function render(root) {
           if (f && Number(f.price) !== Number(it.price)) priceChanged.add(it.id);
           if (f) refreshItem(f);
         }
-        names = await sellerNames([...new Set(items.map((i) => i.seller_id).filter(Boolean))]).catch(() => ({}));
+        [info, offers] = await Promise.all([
+          sellerInfo([...new Set(items.map((i) => i.seller_id).filter(Boolean))]).catch(() => ({})),
+          acceptedOffers(ids),
+        ]);
+        for (const it of items) if (offers[it.id] && it.qty > 1) setQty(it.id, 1); // teklif fiyatı tek adet için
       } catch (e) {
         console.warn("[Sepet] güncel bilgiler alınamadı:", e);
       }
@@ -54,6 +59,9 @@ export default async function render(root) {
     return null;
   }
   const deliveryOf = (it) => (it.delivery === "ikisi" ? it.choice || "elden" : it.delivery || "elden");
+  const unitOf = (it) => (offers[it.id] ? Number(offers[it.id].amount) : Number(it.price));
+  // Online ödenebilir mi? (satıcı iyzico hesabını bağladıysa)
+  const payable = (it) => !problemOf(it) && !!info[it.seller_id]?.payout_ready;
 
   function itemRow(it) {
     const problem = problemOf(it);
@@ -61,7 +69,7 @@ export default async function render(root) {
     const qtyCtl = h("div", { class: "qty", role: "group", "aria-label": "Adet" },
       h("button", { type: "button", "aria-label": "Bir azalt", disabled: !!problem || it.qty <= 1, onclick: () => setQty(it.id, it.qty - 1) }, icon("minus", 16)),
       h("output", { "aria-live": "polite" }, it.qty),
-      h("button", { type: "button", "aria-label": "Bir artır", disabled: !!problem || it.qty >= MAX_QTY, onclick: () => setQty(it.id, it.qty + 1) }, icon("plus", 16)),
+      h("button", { type: "button", "aria-label": "Bir artır", disabled: !!problem || it.qty >= maxQtyOf(it) || !!offers[it.id], title: it.stock != null && it.qty >= it.stock ? `Stokta ${it.stock} adet var` : null, onclick: () => setQty(it.id, it.qty + 1) }, icon("plus", 16)),
     );
     const delivery = it.delivery === "ikisi" && !problem
       ? h("div", { class: "cart-del", role: "radiogroup", "aria-label": "Teslim şekli" },
@@ -74,13 +82,17 @@ export default async function render(root) {
       h("a", { class: "cart-img", href: `#/urun/${it.id}`, tabindex: "-1", "aria-hidden": "true" }, img),
       h("div", { class: "cart-info" },
         h("a", { class: "cart-title", href: `#/urun/${it.id}` }, it.title),
-        h("div", { class: "small muted" }, `Birim fiyat: ${formatPrice(it.price)}`),
+        h("div", { class: "small muted" }, offers[it.id]
+          ? h("span", {}, h("s", {}, formatPrice(it.price)), " ", h("strong", { style: { color: "var(--primary)" } }, `Teklif fiyatı: ${formatPrice(unitOf(it))}`))
+          : `Birim fiyat: ${formatPrice(it.price)}`),
+        !problem && !payable(it) && Object.keys(info).length
+          ? h("span", { class: "small muted" }, "Bu satıcı henüz online ödeme almıyor; sipariş kartıyla elden ödenir.") : null,
         problem ? h("span", { class: "chip" }, icon("alert"), problem)
           : priceChanged.has(it.id) ? h("span", { class: "chip chip-brand" }, "Fiyat güncellendi") : null,
         delivery,
       ),
       h("div", { class: "cart-side" },
-        h("div", { class: "price" }, problem ? "—" : formatPrice(it.price * it.qty)),
+        h("div", { class: "price" }, problem ? "—" : formatPrice(unitOf(it) * it.qty)),
         problem ? null : qtyCtl,
         h("button", { type: "button", class: "link-btn cart-remove", onclick: () => { removeFromCart(it.id); toast("Sepetten çıkarıldı."); } }, ...withIcon("trash", "Kaldır")),
       ),
@@ -90,8 +102,10 @@ export default async function render(root) {
   function draw() {
     const items = cartItems();
     const ok = items.filter((i) => !problemOf(i));
+    const online = ok.filter(payable);
+    const offline = ok.filter((i) => !payable(i));
     const qty = ok.reduce((n, i) => n + i.qty, 0);
-    const total = ok.reduce((n, i) => n + i.price * i.qty, 0);
+    const total = ok.reduce((n, i) => n + unitOf(i) * i.qty, 0);
     countEl.textContent = items.length ? `${items.reduce((n, i) => n + i.qty, 0)} ürün` : "";
 
     if (!items.length) {
@@ -112,7 +126,7 @@ export default async function render(root) {
     body.replaceChildren(h("div", { class: "cart-layout" },
       h("div", { class: "stack" },
         [...groups].map(([sellerId, list]) => h("section", { class: "card cart-group" },
-          h("div", { class: "cart-seller" }, icon("user", 18), h("span", {}, "Satıcı: ", h("strong", {}, names[sellerId] || "Komşu"))),
+          h("div", { class: "cart-seller" }, icon("user", 18), h("span", {}, "Satıcı: ", h("strong", {}, info[sellerId]?.full_name || "Komşu"))),
           h("div", { role: "list" }, list.map(itemRow)),
         )),
       ),
@@ -121,10 +135,15 @@ export default async function render(root) {
         h("div", { class: "sum-row" }, h("span", {}, `Ürünler (${qty} adet)`), h("strong", {}, formatPrice(total))),
         h("div", { class: "sum-row muted" }, h("span", {}, "Teslim"), h("span", {}, "Satıcıyla anlaşılır")),
         h("div", { class: "sum-row sum-total" }, h("span", {}, "Toplam"), h("strong", {}, formatPrice(total))),
-        h("button", { type: "button", class: "btn btn-primary btn-xl", disabled: !ok.length || busy, onclick: checkout },
-          ...withIcon("arrow-right", busy ? "Gönderiliyor…" : `Siparişi gönder`)),
-        h("p", { class: "small muted", style: { margin: 0 } },
-          "Her ürün için satıcıya sipariş kartı gider. Satıcı \"Anlaştık\" deyince sipariş kesinleşir; ödeme teslimde yapılır."),
+        online.length ? h("button", { type: "button", class: "btn btn-primary btn-xl", disabled: busy, "data-highlight": "odemeye-gec",
+          onclick: () => requireAuth("/odeme") && navigate("/odeme") },
+          ...withIcon("lock", `Ödemeye geç${offline.length ? ` (${online.reduce((n, i) => n + i.qty, 0)} ürün)` : ""}`)) : null,
+        online.length ? h("p", { class: "small muted", style: { margin: 0 } },
+          "Ödeme iyzico güvencesiyle yapılır. Paranız, ürünü teslim aldığınızı onaylayana kadar satıcıya geçmez.") : null,
+        offline.length ? h("button", { type: "button", class: `btn ${online.length ? "btn-secondary" : "btn-primary btn-xl"}`, disabled: busy, onclick: checkout },
+          ...withIcon("message", busy ? "Gönderiliyor…" : online.length ? "Diğerlerini satıcıya sor (elden ödeme)" : "Siparişi satıcıya gönder")) : null,
+        offline.length ? h("p", { class: "small muted", style: { margin: 0 } },
+          "Online ödeme almayan satıcılara sipariş kartı gider; satıcı \"Anlaştık\" deyince kesinleşir, ödeme teslimde yapılır.") : null,
         h("div", { class: "small row", style: { gap: "8px" } }, icon("shield-check", 18),
           h("span", { style: { flex: "1" } }, "Önceden kapora istenirse göndermeyin.")),
         h("button", { type: "button", class: "link-btn", onclick: async () => {
@@ -136,14 +155,14 @@ export default async function render(root) {
 
   async function checkout() {
     if (!requireAuth("/sepet")) return;
-    const list = cartItems().filter((i) => !problemOf(i));
+    const list = cartItems().filter((i) => !problemOf(i) && !payable(i));
     if (!list.length) return;
     busy = true; draw();
     const sent = [], failed = [];
     for (const it of list) {
       try {
         const convId = await startConversation(it.id);
-        await proposeOrder(convId, { quantity: it.qty, unitPrice: it.price, delivery: deliveryOf(it) });
+        await proposeOrder(convId, { quantity: it.qty, unitPrice: unitOf(it), delivery: deliveryOf(it) });
         removeFromCart(it.id);
         sent.push({ it, convId });
       } catch (e) {

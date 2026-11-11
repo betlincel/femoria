@@ -11,6 +11,9 @@ const ORDER_STATUS = { teklif: "Onay bekliyor", anlasildi: "Anlaşıldı", tesli
 function linkList() {
   const row = (href, ico, label) => h("a", { class: "list-item", href }, icon(ico), h("div", { class: "body" }, h("strong", {}, label)), icon("chevron-right"));
   return h("div", { class: "list" },
+    row("#/siparislerim", "package", "Siparişlerim ve tekliflerim"),
+    row("#/odeme-hesabi", "wallet", "Ödeme hesabım (online satış)"),
+    state.user ? row(`#/magaza/${state.user.id}`, "bag", "Mağazamı gör") : null,
     row("#/ayarlar", "settings", "Ayarlar"),
     row("#/rehber", "book", "Femoria'yı nasıl kullanırım?"),
   );

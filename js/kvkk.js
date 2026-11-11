@@ -5,7 +5,7 @@
 //
 // ⚠️ Yayına çıkmadan önce bir hukukçuya kontrol ettirin ve iletişim adresini doldurun.
 
-export const KVKK_VERSION = "2026-11-18";
+export const KVKK_VERSION = "2026-11-20";
 
 // Başvuru ve sorular için iletişim adresi (yayından önce doldurun).
 export const KVKK_CONTACT = "[iletişim e-posta adresi]";
@@ -37,7 +37,11 @@ export const KVKK_SECTIONS = [
       "Ürün bilgileri: ürün fotoğrafları, ad, açıklama, fiyat ve sesle anlattığınızın yazıya dökülmüş hali.",
       "Mesajlar: alıcı ve satıcıların birbirine yazdığı mesajlar, sesli mesajlar ve sipariş kartları.",
       "Favoriler: kalple işaretlediğiniz ürünler. Yalnızca siz görürsünüz; satıcıya ya da başkalarına gösterilmez.",
-      "Sepet: sepete eklediğiniz ürünler yalnızca cihazınızda tutulur, bize gönderilmez. \"Siparişi gönder\" dediğinizde her ürün için satıcıyla sohbet açılır ve sipariş kartı oluşur (Mesajlar maddesi).",
+      "Sepet: sepete eklediğiniz ürünler yalnızca cihazınızda tutulur, bize gönderilmez. Sipariş verdiğinizde her ürün için satıcıyla sohbet açılır ve sipariş kartı oluşur (Mesajlar maddesi).",
+      "Online ödeme ve sipariş: ödemede girdiğiniz ad, soyad, cep telefonu ve adres; sipariş tutarı, kargo firması ve takip numarası. Kargo ile gönderilecek ürünlerde adresiniz ve telefonunuz yalnızca o ürünün satıcısına gösterilir. Kart bilgileriniz Femoria'ya gelmez; iyzico'nun sayfasında girilir. Son girdiğiniz adres, bir dahaki ödemede tekrar yazmamanız için yalnızca cihazınızda hatırlanır.",
+      "Satıcı ödeme hesabı: online ödeme almak isteyen satıcının adı, soyadı, telefonu, adresi, IBAN'ı ve T.C. kimlik numarası yalnızca iyzico'ya iletilir. Femoria T.C. kimlik numarasını ve IBAN'ı saklamaz; yalnızca iyzico'nun verdiği hesap anahtarını ve IBAN'ın son 4 hanesini saklar.",
+      "Teklifler, puanlar ve takip: verdiğiniz ve aldığınız fiyat teklifleri (yalnızca alıcı ve satıcı görür); satıcıya verdiğiniz puan ve yorum (adınızla birlikte mağaza sayfasında herkese görünür); takip ettiğiniz satıcılar (yalnızca siz görürsünüz; satıcı yalnızca toplam takipçi sayısını görür). Mağaza tanıtımı yazarsanız mağaza sayfanızda herkese görünür.",
+      "Bildirimler ve sorun bildirimleri: size gönderdiğimiz e-posta bildirimlerinin konusu ve içeriği (yeni sipariş, kargo, teklif, mesaj); bir sipariş için bildirdiğiniz sorun ve açıklaması (satıcı ve Femoria ekibi görür).",
       "Güvenlik bilgileri: engellediğiniz kişiler ve şikayetler.",
       "Kullanım bilgileri: hangi ekranların ne sıklıkla kullanıldığı (ör. \"ürün yükleme tamamlandı\"). Bunlar uygulamayı geliştirmek için sayılır.",
     ],
@@ -58,7 +62,8 @@ export const KVKK_SECTIONS = [
     title: "Bilgilerinizi neden işliyoruz?",
     list: [
       "Hesabınızı açmak ve güvenle giriş yapmanızı sağlamak (sözleşmenin kurulması ve ifası, KVKK m. 5/2-c).",
-      "Ürünlerinizi satışa çıkarmak, alıcılarla mesajlaşmanızı ve sipariş kartlarını sağlamak (sözleşmenin ifası).",
+      "Ürünlerinizi satışa çıkarmak, alıcılarla mesajlaşmanızı, sipariş kartlarını, online ödemeyi, kargo takibini, teklifleri ve puanlamayı sağlamak (sözleşmenin ifası).",
+      "Ödeme ve faturalandırmaya ilişkin yasal yükümlülükler (ödeme hizmetleri ve vergi mevzuatı, KVKK m. 5/2-ç).",
       "Dolandırıcılığa ve rahatsız edici davranışlara karşı sizi korumak: mesaj kalkanı, engelleme, şikayet (meşru menfaat, KVKK m. 5/2-f).",
       "Ayşe Abla'nın size yardım edebilmesi ve ürününüzü sesle anlatabilmeniz.",
       "Uygulamayı geliştirmek ve proje başarı ölçütlerini raporlamak (isimsiz, toplu sayılar).",
@@ -71,6 +76,9 @@ export const KVKK_SECTIONS = [
       "Diğer kullanıcılar: adınız, ürünleriniz ve ürünlerinizin mahallesi, doğrulama rozetleriniz. E-postanız ve cinsiyetiniz gösterilmez.",
       "Supabase (veritabanı ve dosya barındırma): bilgileriniz Avrupa Birliği'ndeki (Frankfurt) sunucularda saklanır.",
       "Google (Gemini API — Ayşe Abla): Ayşe Abla'ya yazdıklarınız ve sesle anlattığınız ürün tarifi cevap üretmek için gönderilir. Sesli okumayı kullandığınızda okunacak metin (Ayşe Abla'nın cevapları, rehber, bu metin) ses üretmek için gönderilir. Bir sesli mesajı \"yazıya çevir\" dediğinizde o ses kaydı yazıya dökülmek için gönderilir. E-posta adresiniz ve konumunuz gönderilmez. Google'a ulaşılamadığında aynı bilgiler yedek olarak OpenAI'a gönderilebilir.",
+      "iyzico (İyzi Ödeme ve Elektronik Para Hizmetleri A.Ş., lisanslı ödeme kuruluşu): online ödemede ad, soyad, e-posta, cep telefonu, adres ve sepet tutarı; satıcılar için ödeme hesabı bilgileri (T.C. kimlik no, IBAN dahil). Kart bilgilerini doğrudan iyzico alır. iyzico bu bilgileri kendi aydınlatma metni ve yasal saklama süreleri kapsamında işler.",
+      "Satıcı ve alıcı: siparişin karşı tarafı, sipariş için gereken bilgileri görür (satıcı: kargo adresi ve telefon; alıcı: kargo takip numarası).",
+      "Resend (e-posta gönderimi): bildirim e-postası gönderebilmek için e-posta adresiniz ve bildirimin içeriği. Ayarlar'dan e-posta bildirimlerini kapatabilirsiniz.",
       "OpenStreetMap Vakfı (Nominatim): yalnızca yuvarlanmış konum (mahalle adını bulmak için) ya da listeden seçtiğiniz il, ilçe, mahalle adı (konumunu bulmak için).",
       "Yurt dışına aktarım: Yukarıdaki hizmet sağlayıcıların sunucuları Türkiye dışındadır; aktarım KVKK m. 9 kapsamında yapılır.",
       "Kanunen yetkili kurumlar: yalnızca yasal bir talep olduğunda.",
@@ -82,6 +90,8 @@ export const KVKK_SECTIONS = [
       "Hesabınız açık olduğu sürece. Hesabınızı sildiğinizde ürünleriniz, fotoğraflarınız, mesajlarınız, sesli mesajlarınız, konumunuz ve tüm bilgileriniz kalıcı olarak silinir.",
       "Vitrinden kaldırdığınız ürün: ürün, fotoğrafları ve konumu hemen kalıcı olarak silinir. Ürünle ilgili sohbetleriniz silinmez; sohbette yalnızca ürünün adı ve fiyatı görünmeye devam eder.",
       "Sohbetin karşı tarafı hesabını silerse, o sohbete ait sesli mesajlar da en geç bir gün içinde silinir.",
+      "Online ödemelerin kayıtları, mevzuatın öngördüğü süre boyunca iyzico tarafından saklanır.",
+      "Bildirim kayıtları (gönderilen e-postaların konusu ve içeriği) hesabınız açık olduğu sürece saklanır; hesabınızı sildiğinizde silinir.",
       "Kullanım sayıları isimsiz olarak proje süresince saklanabilir.",
     ],
   },

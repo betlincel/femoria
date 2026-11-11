@@ -5,6 +5,9 @@ import { state } from "../store.js";
 import { getProduct, photoUrl, categoryOf, startConversation, setProductStatus, removeProduct, track, DELIVERY_LABEL } from "../api.js";
 import { badgeChips, breadcrumb, favButton, cartButton } from "../components.js";
 import { navigate, requireAuth } from "../router.js";
+import { offerSheet } from "./siparislerim.js";
+import { starsText } from "./magaza.js";
+import { sellerStats } from "../api.js";
 
 export default async function render(root, { params: [id] }) {
   root.append(loading());
@@ -43,6 +46,8 @@ export default async function render(root, { params: [id] }) {
         h("h1", {}, p.title),
         h("div", { class: "card buy-box stack" },
           h("div", { class: "price", style: { fontSize: "2rem", letterSpacing: "-.02em" } }, formatPrice(p.price)),
+          p.status === "satista" && p.stock != null ? h("div", { class: `stock-note ${p.stock <= 2 ? "low" : ""}` },
+            p.stock === 1 ? "Son 1 adet" : p.stock <= 3 ? `Son ${p.stock} adet` : `Stokta ${p.stock} adet`) : null,
           h("div", { class: "badges" },
             h("span", { class: "chip" }, icon("truck"), DELIVERY_LABEL[p.delivery]),
             p.neighborhood || p.district ? h("span", { class: "chip" }, icon("map-pin"), [p.neighborhood, p.district, p.city].filter(Boolean).join(", ")) : null,
@@ -67,6 +72,8 @@ export default async function render(root, { params: [id] }) {
           ),
           verified ? h("div", { class: "badges" }, h("span", { class: "chip chip-ok" }, icon("check"), "E-postası doğrulanmış")) : null,
           badgeChips(p.sellerBadges),
+          sellerRating(p.seller_id),
+          h("a", { class: "btn btn-secondary", href: `#/magaza/${p.seller_id}` }, ...withIcon("bag", "Mağazayı gör")),
         ),
       ),
     ),
@@ -75,7 +82,14 @@ export default async function render(root, { params: [id] }) {
 
 function buyerActions(p) {
   if (p.status !== "satista") return null;
-  return h("div", { class: "stack" }, cartButton(p), h("button", { class: "btn btn-secondary", onclick: async () => {
+  const online = !!p.seller?.payout_ready;
+  return h("div", { class: "stack" }, cartButton(p),
+    online
+      ? h("p", { class: "small muted pay-note" }, icon("lock", 16), " Kartla güvenli ödeme · para, ürünü teslim aldığınızı onaylayınca satıcıya geçer.")
+      : h("p", { class: "small muted pay-note" }, "Bu satıcı henüz online ödeme almıyor; sepetten sipariş kartı gönderip teslimde ödersiniz."),
+    h("div", { class: "btn-row" },
+      h("button", { type: "button", class: "btn btn-secondary", "data-highlight": "teklif-ver", onclick: () => offerSheet(p) }, ...withIcon("tag", "Teklif ver")),
+      h("button", { class: "btn btn-secondary", onclick: async () => {
     if (!requireAuth(`/urun/${p.id}`)) return;
     try {
       const convId = await startConversation(p.id);
@@ -84,13 +98,26 @@ function buyerActions(p) {
     } catch (e) {
       toast(e.message || "Şu an mesaj gönderilemiyor.");
     }
-  } }, withIcon("message", "Satıcıya yaz")));
+  } }, withIcon("message", "Satıcıya yaz"))));
+}
+
+// Satıcının ortalama puanı (mağaza özetinden)
+function sellerRating(sellerId) {
+  const el = h("div", { class: "small muted" });
+  sellerStats(sellerId).then((st) => {
+    const s = st || {};
+    el.replaceChildren(...(s.rating
+      ? [starsText(s.rating), ` ${String(s.rating).replace(".", ",")} · ${s.review_count} yorum · ${s.sold || 0} satış · ${s.followers || 0} takipçi`]
+      : [`${s.sold || 0} satış · ${s.followers || 0} takipçi`]));
+  }).catch(() => el.remove());
+  return el;
 }
 
 
 function ownerActions(p) {
   return h("div", { class: "stack" },
     h("p", { class: "notice" }, icon("user", 20), "Bu sizin ürününüz."),
+    h("a", { class: "btn btn-primary", href: `#/sat?duzenle=${p.id}`, "data-highlight": "urunu-duzenle" }, ...withIcon("pencil", "Ürünü düzenle")),
     p.status === "satista" ? h("button", { class: "btn btn-success", onclick: async () => {
       await setProductStatus(p.id, "satildi"); toast("Satıldı olarak işaretlendi. Hayırlı olsun!"); navigate("/profil");
     } }, withIcon("check", "Satıldı olarak işaretle")) : null,

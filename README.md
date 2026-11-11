@@ -24,6 +24,7 @@ mobil öncelikli web uygulaması + Supabase altyapısı + "Ayşe Abla" yapay zek
 
 - **Ön yüz:** HTML5, CSS3, Vanilla JavaScript (ES modülleri) — derleme adımı yok.
 - **Arka uç:** [Supabase](https://supabase.com) — PostgreSQL, e-posta + şifreyle giriş, dosya depolama, canlı mesajlaşma (Realtime), Edge Functions.
+- **Ödeme:** iyzico Pazaryeri (emanet; `odeme`, `odeme-sonuc` Edge Function'ları). Kart bilgisi siteye gelmez.
 - **Yapay zeka:** Google Gemini API (sohbet, ürün tarifi, sesli mesajı yazıya çevirme, sesli okuma); OpenAI isteğe bağlı yedek. Anahtarlar yalnızca Edge Function'da durur.
 - **Harita:** OpenStreetMap + Leaflet (ücretsiz, anahtarsız).
 - **Ses:** Tarayıcının kendi konuşma tanıma (tr-TR) ve sesli okuma özellikleri.
@@ -150,6 +151,50 @@ npm run db:start
 ```
 
 Çıktıdaki `API URL` ve `anon key` değerlerini `js/config.js`'e yazın. Yerelde gönderilen onay ve şifre yenileme e-postaları gerçek adrese gitmez; `http://127.0.0.1:54324` adresindeki test gelen kutusunda (Inbucket) görünür. Yapay zekayı yerelde denemek için `supabase/.env.example` dosyasını `supabase/.env` olarak kopyalayıp `npm run functions:serve` çalıştırın.
+
+## Online ödeme (iyzico Pazaryeri)
+
+Femoria, Dolap/Gardrops'taki gibi **emanet** modeliyle çalışır: alıcı kartla öder, para iyzico'da bekler; alıcı ürünü teslim aldığını onaylayınca hizmet bedeli düşülerek satıcının IBAN'ına geçer. Kargodan önce iptalde para iade edilir.
+
+1. **Test (sandbox) hesabı:** [sandbox-merchant.iyzipay.com](https://sandbox-merchant.iyzipay.com) adresinden üye olun; *Ayarlar → Firma Ayarları*'ndan **API anahtarı** ve **güvenlik anahtarını** alın. Pazaryeri özelliği sandbox hesabında açık değilse iyzico destekten açılmasını isteyin.
+2. **Veritabanı:** SQL Editor'de `supabase/migrations/20261114000015_commerce.sql` dosyasını çalıştırın.
+3. **Gizli değerler:**
+   ```bash
+   supabase secrets set IYZICO_API_KEY=sandbox-... IYZICO_SECRET_KEY=sandbox-... IYZICO_BASE_URL=https://sandbox-api.iyzipay.com PLATFORM_COMMISSION=0.10 SITE_URL=https://siteniz.netlify.app
+   ```
+   `PLATFORM_COMMISSION`: Femoria'nın her satıştan aldığı pay (0.10 = %10). `SITE_URL`: ödeme sonrası dönülecek site adresi (yedek; normalde ödemeyi başlatan sayfanın adresi kullanılır).
+4. **Fonksiyonlar:**
+   ```bash
+   supabase functions deploy odeme
+   supabase functions deploy odeme-sonuc --no-verify-jwt
+   supabase functions deploy ayse-abla
+   ```
+5. **Deneme:** Bir hesapla *Ayarlar → Ödeme hesabım*'dan satıcı bilgilerini girin (sandbox'ta test T.C. no ve IBAN kullanılabilir), ürün ekleyin; başka bir hesapla sepete ekleyip ödeyin. Ödemede iyzico'nun **test kartlarından** birini kullanın (listesi iyzico belgelerinde "Test Kartları" başlığında; gerçek kartla sandbox'ta ödeme yapılmaz).
+6. **Canlıya geçiş:** Şirket kuruluşu ve iyzico Pazaryeri sözleşmesi tamamlanınca canlı anahtarları girip `IYZICO_BASE_URL=https://api.iyzipay.com` yapmanız yeterli; kod değişmez.
+
+Akış: Sepet → *Ödemeye geç* (`#/odeme`, adres) → iyzico ödeme sayfası → `odeme-sonuc` sonucu iyzico'dan yeniden sorgular → *Siparişlerim*. Satıcı kargo firması ve takip numarasını girer; alıcı *Teslim aldım* deyince `odeme` fonksiyonu iyzico'ya onay gönderir ve para satıcıya geçer. Online ödeme hesabı olmayan satıcıların ürünleri için eski "sipariş kartı + teslimde ödeme" yolu sürer.
+
+## Zamanlayıcı: e-posta bildirimleri, otomatik onay, kargo süresi, stok
+
+`zamanlayici` Edge Function'ı pg_cron ile 5 dakikada bir çalışır:
+
+- **E-posta bildirimleri** ([Resend](https://resend.com) ile): yeni sipariş, kargoya verildi, ödeme onaylandı, iptal/iade, sorun bildirimi, teklifler ve yeni mesaj (sohbet başına 30 dakikada en fazla bir). Ayarlar'da "E-posta bildirimleri"ni kapatan kullanıcıya gönderilmez.
+- **Kargo süresi:** ödeme alındıktan `SHIP_DAYS` (5) gün içinde kargoya verilmeyen sipariş iptal edilir, ödeme iade edilir, stok geri eklenir; bir gün önce satıcıya hatırlatma gider.
+- **Otomatik onay:** kargoya verildikten `CONFIRM_DAYS` (7) gün sonra, alıcı "Sorun bildir" demediyse ödeme satıcıya aktarılır; iki gün önce alıcıya hatırlatma gider. Açık sorun bildiriminde onay yapılmaz; sorun `ADMIN_EMAIL` adresine de bildirilir.
+- **Yarım kalan ödemeler:** iyzico sayfasında bırakılan ödemeler 45 dakika sonra iyzico'dan sorgulanır; ödenmediyse ayrılan stok geri eklenir.
+
+Kurulum:
+
+1. SQL Editor'de `supabase/migrations/20261115000016_stock_disputes_notifications.sql` dosyasını çalıştırın.
+2. Resend'e üye olun, API anahtarı alın. Kendi alan adınızı doğrulayana kadar Resend yalnızca hesabınızın e-posta adresine gönderir.
+3. Gizli değerler:
+   ```bash
+   supabase secrets set ZAMANLAYICI_SECRET=<uzun-rastgele-değer> RESEND_API_KEY=re_... MAIL_FROM="Femoria <bildirim@alanadiniz.com>" ADMIN_EMAIL=<yönetici e-postası> SITE_URL=https://siteniz.netlify.app SHIP_DAYS=5 CONFIRM_DAYS=7
+   ```
+4. Yayınlayın: `supabase functions deploy zamanlayici --no-verify-jwt` (ve güncellenen `odeme`, `odeme-sonuc`).
+5. `supabase/cron/zamanlayici-schedule.sql` dosyasındaki `<...>` alanlarını doldurup SQL Editor'de bir kez çalıştırın.
+
+Stok: her üründe "Kaç adet var?" (varsayılan 1). Online ödeme başlarken stok ayrılır; aynı son ürün iki kişiye satılamaz. Stok biterse ürün kendiliğinden "Satıldı" olur; ödeme başarısız olur ya da sipariş iptal edilirse stok geri eklenir. Satıcı ürününü "Ürünü düzenle" ile değiştirebilir.
 
 ## Kaldırılan ürünler ve gece temizliği
 
