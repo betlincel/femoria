@@ -121,6 +121,8 @@ export function productCard(p) {
       h("div", { class: "pcard-row" },
         h("div", { class: "price" }, formatPrice(p.price)),
         own || (p.status && p.status !== "satista") ? h("span", { class: "pcard-go", "aria-hidden": "true" }, icon("arrow-right", 16)) : h("span", { class: "pcard-cart-space", "aria-hidden": "true" })),
+      Number(p.review_count) > 0 && Number(p.seller_rating) > 0
+        ? h("div", { class: "pcard-stars", "aria-label": `${p.seller_rating} puan, ${p.review_count} yorum` }, "★".repeat(Math.round(p.seller_rating)) + "☆".repeat(5 - Math.round(p.seller_rating)), h("span", {}, ` (${p.review_count})`)) : null,
       h("div", { class: "meta" }), // ürün listelerinde mahalle gösterilmez (Profil'de durum rozeti buraya eklenir)
     )),
     own ? null : favButton(p.id, { cls: "pcard-fav" }),
