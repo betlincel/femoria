@@ -1454,3 +1454,8 @@ button.all-cats.open .all-cats-caret { transform: rotate(180deg); }
 .admin-product .btn { flex: 0 0 auto; }
 .admin-tabs { grid-template-columns: repeat(5, 1fr); }
 .admin-tabs button { min-height: 44px; font-size: .85rem; padding: 0 4px; }
+.admin-product { display: flex; align-items: center; gap: 12px; flex-wrap: nowrap; }
+.admin-product .cart-img { flex: 0 0 44px; }
+.admin-product > div { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+.admin-product .btn { width: auto; flex: 0 0 auto; min-height: 44px; padding: 8px 18px; }
+@media (max-width: 480px) { .admin-product { flex-wrap: wrap; } .admin-product > div { flex-basis: calc(100% - 60px); } .admin-product .btn { width: 100%; } }
