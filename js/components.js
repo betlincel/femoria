@@ -113,7 +113,7 @@ export function productCard(p) {
   return h("div", { class: "pcard" },
     h("a", { class: "pcard-link", href: `#/urun/${p.id}` },
     h("div", { class: "pcard-img" },
-      url ? h("img", { src: url, alt: p.title, loading: "lazy" }) : icon(categoryIconName(p.category)),
+      url ? h("img", { src: url, alt: p.title, loading: "lazy" }) : h("span", { class: "ph-badge", "aria-hidden": "true" }, icon(categoryIconName(p.category), 40)),
       p.status === "satildi" ? h("span", { class: "chip pcard-badge" }, "Satıldı") : null,
     ),
     h("div", { class: "pcard-body" },

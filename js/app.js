@@ -125,6 +125,21 @@ document.getElementById("header-search").addEventListener("submit", (e) => {
   navigate(q ? `/urunler?q=${encodeURIComponent(q)}` : "/urunler");
 });
 
+// Masaüstünde arama simgeyle açılan şeride dönüşür (telefonda hep görünür)
+{
+  const header = document.querySelector(".site-header");
+  const toggle = document.getElementById("search-toggle");
+  const setOpen = (open) => {
+    header.classList.toggle("search-open", open);
+    toggle.setAttribute("aria-expanded", String(open));
+    if (open) document.getElementById("q").focus();
+  };
+  toggle.addEventListener("click", () => setOpen(!header.classList.contains("search-open")));
+  document.getElementById("header-search").addEventListener("submit", () => setOpen(false));
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && header.classList.contains("search-open")) { setOpen(false); toggle.focus(); } });
+  onRoute(() => setOpen(false));
+}
+
 // Başlıktaki konum düğmesi: il / ilçe seç → o yerin ürünleri
 function paintPlace(place = getBrowsePlace()) {
   const label = document.getElementById("place-label");
@@ -171,6 +186,8 @@ async function fillCategoryBar() {
     links.forEach((a) => { if (a.offsetTop > firstTop + 4) a.hidden = true; });
   };
   fit();
+  document.fonts?.ready.then(fit);
+  window.addEventListener("load", fit);
   let fitTimer;
   window.addEventListener("resize", () => { clearTimeout(fitTimer); fitTimer = setTimeout(fit, 120); });
 

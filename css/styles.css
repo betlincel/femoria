@@ -1611,3 +1611,78 @@ button.all-cats.open .all-cats-caret { transform: rotate(180deg); }
 .hero-badges .trust-ico .icon { width: 20px; height: 20px; }
 .hero-badges .trust-item strong { font-size: .85rem; white-space: nowrap; }
 .hero-badges .trust-item span:not(.trust-ico) { font-size: .74rem; white-space: nowrap; }
+
+/* =====================================================================
+   Lunora 2 — tek satırlı başlık, sade giriş bölümü, kemer görselli kartlar
+   ===================================================================== */
+#search-toggle { display: none; }
+.how-steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: 1fr; gap: 14px; }
+.how-step { position: relative; display: grid; gap: 6px; padding: 26px 24px; border-radius: 14px; background: var(--surface-2); }
+.how-num { position: absolute; top: 14px; right: 20px; font-family: var(--font-serif); font-size: 2.4rem; color: rgba(26, 26, 26, .14); line-height: 1; }
+.how-ico { display: grid; place-items: center; width: 52px; height: 52px; border-radius: 50%; background: #fff; margin-bottom: 8px; color: var(--text); }
+.how-step strong { font-size: 1.05rem; }
+@media (min-width: 800px) { .how-steps { grid-template-columns: repeat(3, 1fr); } }
+
+.hero-btns { display: flex; align-items: center; gap: 12px 24px; flex-wrap: wrap; margin-top: 4px; }
+.hero-link { display: inline-flex; align-items: center; gap: 10px; background: none; border: 0; padding: 4px 0; font: inherit; font-weight: 600; color: var(--text); cursor: pointer; text-decoration: none; }
+.hero-play { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 50%; border: 1px solid var(--line-strong); background: #fff; transition: transform .15s ease; }
+.hero-link:hover .hero-play { transform: scale(1.08); }
+.promo-slide p { margin-bottom: 26px; }
+
+/* Giriş bölümü görseli: aydınlık kemer + zemin gölgesi */
+.promo-art { position: relative; }
+.promo-art::before { content: ""; position: absolute; left: 50%; bottom: 0; width: 68%; height: 88%; transform: translateX(-50%); border-radius: 999px 999px 0 0; background: linear-gradient(180deg, rgba(255, 255, 255, .34), rgba(255, 255, 255, .06)); }
+.promo-art::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 20%; background: linear-gradient(180deg, transparent, rgba(0, 0, 0, .26)); }
+.promo-art svg { left: 50%; top: auto; bottom: 5%; transform: translateX(-50%); width: 86%; height: 78%; z-index: 2; filter: drop-shadow(0 18px 24px rgba(30, 20, 10, .28)); }
+.promo-slide.s-how .promo-art   { background: radial-gradient(120% 90% at 70% 12%, #E1D2BC 0%, #A58D74 42%, #4B3F33 100%); }
+.promo-slide.s-sat .promo-art   { background: radial-gradient(120% 90% at 30% 12%, #DCCBB4 0%, #8F7A66 45%, #3B332B 100%); }
+.promo-slide.s-yemek .promo-art { background: radial-gradient(120% 90% at 70% 12%, #E8D3BB 0%, #B08A68 45%, #52392A 100%); }
+.promo-slide.s-ayse .promo-art  { background: radial-gradient(120% 90% at 30% 12%, #D9CCBC 0%, #7D6E5F 45%, #26221E 100%); }
+.promo-slide.s-guven .promo-art { background: radial-gradient(120% 90% at 70% 12%, #D8DCCB 0%, #8A9279 45%, #333A2E 100%); }
+.promo-art.art-collage::before, .promo-art.art-collage::after { content: none; }
+
+/* Kategori kartı (fotoğrafsız): kemer + yuvarlak simge */
+.cat-card:not(.has-photo) { background: linear-gradient(165deg, var(--tone, #E6D9C6), #F7F2EB 130%); }
+.cat-card:not(.has-photo)::before { content: ""; position: absolute; left: 50%; bottom: 0; width: 72%; height: 70%; transform: translateX(-50%); border-radius: 999px 999px 0 0; background: rgba(255, 255, 255, .42); }
+.cat-card-ico { top: 16%; }
+.cat-card-disc { display: grid; place-items: center; width: 112px; height: 112px; border-radius: 50%; background: #fff; box-shadow: 0 12px 30px rgba(60, 40, 20, .12); color: var(--text); }
+.cat-card-ico .icon { width: 48px; height: 48px; }
+.cat-card-name { z-index: 1; }
+
+/* Ürün kartı (fotoğrafsız) */
+.pcard-img { position: relative; display: grid; place-items: center; }
+.pcard-img:has(.ph-badge) { background: linear-gradient(165deg, #EADFCF, #F7F2EB 130%) !important; }
+.pcard-img:has(.ph-badge)::before { content: ""; position: absolute; left: 50%; bottom: 0; width: 70%; height: 66%; transform: translateX(-50%); border-radius: 999px 999px 0 0; background: rgba(255, 255, 255, .45); }
+.ph-badge { position: relative; z-index: 1; display: grid; place-items: center; width: 84px; height: 84px; border-radius: 50%; background: #fff; box-shadow: 0 10px 24px rgba(60, 40, 20, .12); color: var(--text); }
+.ph-badge .icon { opacity: 1; width: 38px; height: 38px; }
+@media (min-width: 1100px) { .prow { --per: 5; } }
+@media (min-width: 1360px) { .prow { --per: 6; } }
+
+/* Masaüstü başlığı: logo | kategoriler | konum | simgeler */
+@media (min-width: 900px) {
+  #search-toggle { display: grid; }
+  .header-inner { grid-template-columns: auto minmax(0, 1fr) auto auto; grid-template-areas: "brand nav place actions"; gap: 12px 28px; padding: 14px 24px; }
+  .brand-tag { display: none; }
+  .category-bar { grid-area: nav; display: block !important; position: static; min-width: 0; border: 0; background: transparent; }
+  .category-inner { max-width: none; margin: 0; padding: 0; justify-content: center; height: 44px; overflow: hidden; gap: 2px 6px; }
+  .category-inner a:not(.all-cats) { font-weight: 500; color: var(--text); padding: 0 12px; min-height: 44px; border-bottom: 0; position: relative; }
+  .category-inner a:not(.all-cats)::after { content: ""; position: absolute; left: 12px; right: 12px; bottom: 6px; height: 1.5px; background: var(--text); transform: scaleX(0); transition: transform .2s ease; }
+  .category-inner a:not(.all-cats):hover::after { transform: scaleX(1); }
+  .category-inner a:hover { color: var(--text); border-bottom-color: transparent; }
+  button.all-cats, .category-inner button.all-cats { min-height: 44px; margin: 0; background: transparent; padding: 0 12px; font-weight: 600; color: var(--text); }
+  button.all-cats:hover, button.all-cats.open { background: var(--surface-2); }
+  .place-pill { border: 0; background: transparent; min-height: 44px; padding: 0 8px; box-shadow: none; }
+  .header-search { position: absolute; top: calc(100% + 10px); left: 50%; transform: translateX(-50%); width: min(720px, calc(100% - 32px)); max-width: none; display: none; z-index: 25; filter: drop-shadow(0 14px 28px rgba(30, 20, 10, .16)); }
+  .site-header.search-open .header-search { display: flex; }
+  .site-header { border-bottom-color: var(--line); }
+  .promo-slide { min-height: 580px; }
+  .promo-art { min-height: 580px; }
+  .promo-slide .copy { padding-top: 76px; }
+  .promo-slide h2 { font-size: clamp(3rem, 4.6vw, 4.8rem); max-width: 11ch; }
+}
+.site-header { background: rgba(251, 249, 246, .94); backdrop-filter: blur(10px); }
+@media (min-width: 900px) { .header-search { grid-area: auto; } }
+.section-title { flex-wrap: wrap; gap: 8px 12px; }
+.section-title > div:first-child { min-width: 0; flex: 1 1 auto; }
+.section-title .section-actions { flex: none; }
+@media (max-width: 520px) { .section-title h2 { font-size: 1.45rem; } .section-title a { padding: 6px 12px; font-size: .85rem; } }
