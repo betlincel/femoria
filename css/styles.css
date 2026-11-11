@@ -1444,3 +1444,13 @@ button.all-cats.open .all-cats-caret { transform: rotate(180deg); }
 .legal-links { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 24px 0; }
 .footer-inner { grid-template-columns: 1.4fr 1fr 1.4fr 1fr 1fr; }
 @media (max-width: 900px) { .footer-inner { grid-template-columns: 1fr 1fr; } }
+
+/* ---- Kazanç ve yönetim ---- */
+.earn-stats, .admin-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+.stat-ok .num { color: var(--ok, #1F7F4A); }
+.earn-amt { text-align: right; white-space: nowrap; }
+.chip-warn { background: #FFF1D6; color: #8A5A00; }
+.admin-product { display: flex; gap: 12px; align-items: center; }
+.admin-product .btn { flex: 0 0 auto; }
+.admin-tabs { grid-template-columns: repeat(5, 1fr); }
+.admin-tabs button { min-height: 44px; font-size: .85rem; padding: 0 4px; }

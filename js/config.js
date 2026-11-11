@@ -14,3 +14,7 @@ export const SUPABASE_ANON_KEY = "sb_publishable_KdeZVXQMZAmgrOrOIvzpKA_4aPnrdaq
 
 // Yasal metinlerde görünen işletme bilgileri (boş bırakılanlar köşeli parantezle görünür; yayından önce doldurun).
 export const LEGAL = { company: "", address: "", email: "", taxNo: "" };
+
+// Femoria'nın her online satıştan aldığı pay. Edge Function'daki PLATFORM_COMMISSION gizli değeriyle AYNI olmalı;
+// yalnız kazanç ekranında "kesinti" tahmini göstermek için kullanılır (ödeme tutarını etkilemez).
+export const COMMISSION_RATE = 0.10;

@@ -1,7 +1,7 @@
 // Profil — tek hesap: alıcı ve satıcı. "Sattıklarım" / "Aldıklarım" + "Kazancım".
 import { h, loading, emptyState, formatPrice, monthsSince, toast, prepareImage, icon, withIcon } from "../ui.js";
 import { state, updateProfile, signOut } from "../store.js";
-import { myEarnings, myProducts, myPurchases, userBadges, uploadAvatar } from "../api.js";
+import { isAdmin, myEarnings, myProducts, myPurchases, userBadges, uploadAvatar } from "../api.js";
 import { productCard, badgeChips, productPhoto } from "../components.js";
 import { requireAuth, navigate } from "../router.js";
 
@@ -9,10 +9,15 @@ const STATUS = { satista: "Satışta", satildi: "Satıldı", taslak: "Taslak" };
 const ORDER_STATUS = { teklif: "Onay bekliyor", anlasildi: "Anlaşıldı", teslim_edildi: "Teslim alındı" };
 
 function linkList() {
+  // Yönetici bağlantısı yalnız yöneticilere eklenir (yetki sunucuda denetlenir)
+  const adminSlot = h("span", { hidden: true });
+  isAdmin().then((yes) => { if (yes) { adminSlot.hidden = false; adminSlot.replaceChildren(h("a", { class: "list-item", href: "#/yonetim" }, icon("shield-check"), h("div", { class: "body" }, h("strong", {}, "Yönetim paneli")), icon("chevron-right"))); } });
   const row = (href, ico, label) => h("a", { class: "list-item", href }, icon(ico), h("div", { class: "body" }, h("strong", {}, label)), icon("chevron-right"));
   return h("div", { class: "list" },
     row("#/siparislerim", "package", "Siparişlerim ve tekliflerim"),
+    row("#/kazanc", "wallet", "Kazancım ve ödemelerim"),
     row("#/odeme-hesabi", "wallet", "Ödeme hesabım (online satış)"),
+    adminSlot,
     state.user ? row(`#/magaza/${state.user.id}`, "bag", "Mağazamı gör") : null,
     row("#/ayarlar", "settings", "Ayarlar"),
     state.user ? h("button", { class: "list-item", onclick: async () => { await signOut(); toast("Çıkış yaptınız."); navigate("/"); } },
@@ -85,6 +90,7 @@ export default async function render(root) {
         h("div", { class: "stat" }, h("div", { class: "num" }, e.items_sold), h("div", { class: "lbl" }, "ürün sattınız")),
         h("div", { class: "stat" }, h("div", { class: "num" }, formatPrice(e.total)), h("div", { class: "lbl" }, "toplam kazanç")),
       ),
+      h("a", { class: "btn btn-secondary", href: "#/kazanc", style: { marginTop: "12px" } }, "Ödemelerim ve ayrıntılar"),
       e.new_neighbors ? h("p", { class: "meta", style: { marginTop: "12px" } }, icon("users"), `Bu ay ${e.new_neighbors} yeni komşuya ulaştınız.`) : null,
     );
   }).catch(() => earningsEl.replaceChildren(h("p", { class: "muted" }, "Kazanç bilgisi şu an yüklenemedi.")));

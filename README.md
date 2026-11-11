@@ -287,3 +287,17 @@ from orders o where o.status in ('anlasildi', 'teslim_edildi');
 ## Lisans
 
 Henüz belirlenmedi.
+
+## Yönetici paneli ve kazanç ekranı
+
+`supabase/migrations/20261118000019_admin_earnings.sql` dosyasını SQL Editor'de (Database modu) çalıştırın.
+Kendinizi yönetici yapmak için (e-postanızı yazın), aynı yerde:
+
+```sql
+insert into public.admins (user_id) select id from auth.users where email = 'siz@ornek.com';
+```
+
+Profil sayfasında **Yönetim paneli** bağlantısı çıkar (`#/yonetim`): özet, sorun bildirimleri (kapatınca iki tarafa bildirim gider),
+şikayetler, ürün kaldırma ve siparişler. İade ve ödeme aktarımı iyzico panelinden yapılır. Her yönetici işlevi
+yetkiyi sunucuda yeniden denetler. Satıcılar için `#/kazanc` ekranı: emanette bekleyen, aktarılan, iade edilen tutarlar.
+`js/config.js` içindeki `COMMISSION_RATE`, Edge Function'daki `PLATFORM_COMMISSION` ile aynı olmalıdır.
