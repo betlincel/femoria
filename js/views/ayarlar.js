@@ -45,7 +45,7 @@ export default async function render(root, { query }) {
       canSpeak ? item("volume", "Ayşe Abla sesli okusun",
         "Kapalıyken de her mesajın yanındaki hoparlöre dokunarak dinleyebilirsiniz.",
         toggle("Sesli okuma", s.tts_enabled === true, (v) => { saveSettings({ tts_enabled: v }); if (v) speak("Sesli okuma açık.", { force: true }); else stopSpeaking(); })) : null,
-      item("bell", "Bildirimler", "Yeni mesaj gelince haber veririz.",
+      item("bell", "E-posta bildirimleri", "Yeni sipariş, kargo, teklif ve mesajlarda e-posta göndeririz. Kapatırsanız yalnızca sitede görürsünüz.",
         toggle("Bildirimler", s.notifications_enabled !== false, (v) => saveSettings({ notifications_enabled: v }))),
       loggedIn
         ? h("button", { class: "list-item", onclick: async () => { await signOut(); toast("Çıkış yaptınız."); navigate("/"); } },

@@ -47,7 +47,13 @@ export async function getLocations() {
 }
 
 // ---------- Ürünler ----------
-const PRODUCT_COLS = "id,title,description,price,category,delivery,photos,status,seller_id,neighborhood,district,city,approx_lat,approx_lng,published_at,created_at";
+const BASE_COLS = "id,title,description,price,category,delivery,photos,status,seller_id,neighborhood,district,city,approx_lat,approx_lng,published_at,created_at";
+// "stock" sütunu 20261115000016 migration'ıyla gelir. Henüz çalıştırılmadıysa site stoksuz çalışmaya devam eder.
+let colsPromise = null;
+const productCols = () => (colsPromise ??= isConfigured
+  ? supabase.from("products").select("stock").limit(1).then(({ error }) => (error ? BASE_COLS : `${BASE_COLS},stock`), () => BASE_COLS)
+  : Promise.resolve(BASE_COLS));
+export const hasStock = async () => (await productCols()).includes("stock");
 
 export function photoUrl(path) {
   if (!path) return null;
@@ -73,7 +79,7 @@ const SORTS = {
 
 export async function listProducts({ city = null, district = null, neighborhood = null, category = null, q = "", priceMin = null, priceMax = null, delivery = null, sort = "yeni", limit = 48, offset = 0 } = {}) {
   if (!isConfigured) return { rows: [], hasMore: false };
-  let query = supabase.from("products").select(PRODUCT_COLS).eq("status", "satista");
+  let query = supabase.from("products").select(await productCols()).eq("status", "satista");
   if (category) query = query.eq("category", category);
   if (city) query = query.ilike("city", likeEscape(city));
   if (district) query = query.ilike("district", likeEscape(district));
@@ -93,7 +99,7 @@ export async function listProducts({ city = null, district = null, neighborhood 
 
 export async function latestProducts({ city, district, limit = 6 } = {}) {
   if (!isConfigured) return [];
-  let q = supabase.from("products").select(PRODUCT_COLS).eq("status", "satista")
+  let q = supabase.from("products").select(await productCols()).eq("status", "satista")
     .order("published_at", { ascending: false }).limit(limit);
   if (district) q = q.eq("district", district);
   if (city) q = q.eq("city", city);
@@ -102,7 +108,7 @@ export async function latestProducts({ city, district, limit = 6 } = {}) {
 
 export async function getProduct(id) {
   need();
-  const product = await supabase.from("products").select(PRODUCT_COLS).eq("id", id).maybeSingle().then(ok);
+  const product = await supabase.from("products").select(await productCols()).eq("id", id).maybeSingle().then(ok);
   if (!product) return null;
   const [seller, badges] = await Promise.all([
     supabase.from("public_profiles").select("*").eq("id", product.seller_id).maybeSingle().then(ok),
@@ -115,7 +121,7 @@ export async function getProduct(id) {
 export async function getProductsByIds(ids) {
   need();
   if (!ids.length) return [];
-  const rows = await supabase.from("products").select(PRODUCT_COLS).in("id", ids).then(ok);
+  const rows = await supabase.from("products").select(await productCols()).in("id", ids).then(ok);
   return (rows || []).filter((r) => ids.includes(r.id));
 }
 
@@ -137,7 +143,7 @@ export async function sellerInfo(ids) {
 
 export async function myProducts() {
   need();
-  return supabase.from("products").select(PRODUCT_COLS).eq("seller_id", state.user.id)
+  return supabase.from("products").select(await productCols()).eq("seller_id", state.user.id)
     .neq("status", "kaldirildi").order("created_at", { ascending: false }).then(ok);
 }
 
@@ -194,7 +200,40 @@ export async function publishProduct(draft) {
     city: draft.location.city || null,
     district: draft.location.district || null,
     neighborhood: draft.location.neighborhood || null,
+    ...((await hasStock()) ? { stock: stockOf(draft) } : {}),
   }).select().single().then(ok);
+}
+
+const stockOf = (draft) => Math.min(999, Math.max(1, Math.round(Number(draft.stock) || 1)));
+
+/** Ürünü düzenle: yeni fotoğrafları yükler, kaldırılanları siler, bilgileri günceller. */
+export async function updateProduct(id, draft, originalPhotos = []) {
+  need();
+  const uid = state.user.id;
+  const paths = [];
+  for (const [i, ph] of draft.photos.entries()) {
+    if (!String(ph).startsWith("data:")) { paths.push(ph); continue; } // zaten yüklü
+    const blob = await dataUrlToBlob(ph);
+    const path = `${uid}/${Date.now()}-${i}.jpg`;
+    await supabase.storage.from("product-photos").upload(path, blob, { contentType: "image/jpeg", upsert: false }).then(ok);
+    paths.push(path);
+  }
+  const loc = draft.location || {};
+  const row = {
+    title: draft.title.trim(),
+    description: draft.description?.trim() || null,
+    category: draft.category,
+    price: draft.price,
+    delivery: draft.delivery,
+    photos: paths,
+    approx_lat: loc.lat, approx_lng: loc.lng,  // değişmediyse sunucu yeniden kaydırmaz
+    city: loc.city || null, district: loc.district || null, neighborhood: loc.neighborhood || null,
+    ...((await hasStock()) ? { stock: Math.min(999, Math.max(0, Math.round(Number(draft.stock) || 0))) } : {}),
+  };
+  const product = await supabase.from("products").update(row).eq("id", id).eq("seller_id", uid).select().single().then(ok);
+  const removed = originalPhotos.filter((p) => !paths.includes(p));
+  if (removed.length) await supabase.storage.from("product-photos").remove(removed).catch(() => {}); // yetişmezse gece temizliği siler
+  return product;
 }
 
 // ---------- Profil / rozet / kazanç ----------
@@ -456,6 +495,9 @@ export async function myPaidOrders(role) {
   return rows.map((o) => ({ ...o, other_name: names[role === "seller" ? o.buyer_id : o.seller_id] || "Komşu", review: revOf[o.id] || null }));
 }
 
+export const openDispute = (orderId, reason, note) =>
+  supabase.rpc("open_dispute", { p_order_id: orderId, p_reason: reason, p_note: note || null }).then(ok);
+
 export const writeReview = (orderId, rating, comment) =>
   supabase.from("reviews").insert({ order_id: orderId, rating, comment: comment || null }).then(ok);
 
@@ -487,7 +529,7 @@ export async function sellerStore(sellerId) {
   const [profile, stats, products] = await Promise.all([
     supabase.from("public_profiles").select("*").eq("id", sellerId).maybeSingle().then(ok),
     supabase.rpc("seller_stats", { p_seller: sellerId }).then(ok).catch(() => null),
-    supabase.from("products").select(PRODUCT_COLS).eq("seller_id", sellerId).eq("status", "satista")
+    supabase.from("products").select(await productCols()).eq("seller_id", sellerId).eq("status", "satista")
       .order("published_at", { ascending: false }).then(ok),
   ]);
   return profile ? { profile, stats: stats || {}, products } : null;
@@ -501,7 +543,7 @@ export async function followedProducts(limit = 16) {
   const follows = await supabase.from("follows").select("seller_id").then(ok).catch(() => []);
   const ids = (follows || []).map((f) => f.seller_id);
   if (!ids.length) return [];
-  return supabase.from("products").select(PRODUCT_COLS).in("seller_id", ids).eq("status", "satista")
+  return supabase.from("products").select(await productCols()).in("seller_id", ids).eq("status", "satista")
     .order("published_at", { ascending: false }).limit(limit).then(ok);
 }
 

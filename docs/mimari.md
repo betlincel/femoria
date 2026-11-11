@@ -19,7 +19,8 @@ Supabase
   ├─ PostgREST ....... tablolar (RLS ile korunur) + RPC fonksiyonları
   ├─ Realtime ........ messages, orders, conversations
   ├─ Storage ......... product-photos (açık), avatars (açık), voice-messages (yalnız katılımcılar)
-  ├─ Edge Function ... odeme (iyzico: satıcı hesabı, ödeme başlatma, teslim onayı, iade), odeme-sonuc (iyzico dönüşü)
+  ├─ Edge Function ... odeme (iyzico: satıcı hesabı, ödeme başlatma + stok ayırma, teslim onayı, iade), odeme-sonuc (iyzico dönüşü)
+  ├─ Edge Function ... zamanlayici (pg_cron 5 dk: e-posta, otomatik onay, kargo süresi, yarım ödemeler)
   └─ Edge Function ... ayse-abla → Google Gemini (sohbet, ürün tarifi, ses→yazı, sesli okuma; OpenAI isteğe bağlı yedek)
 ```
 
@@ -39,6 +40,7 @@ Supabase
 | `follows` | Satıcı takibi (yalnız takip eden görür; sayı `seller_stats` ile). |
 | `reviews` | Puan ve yorum: yalnız teslim edilmiş siparişin alıcısı, sipariş başına bir kez; herkes okur. |
 | `payout_accounts` | Satıcının iyzico alt üye işyeri anahtarı, IBAN'ın son 4 hanesi (T.C. ve IBAN saklanmaz). |
+| `notifications` | E-posta bildirim kuyruğu (tetikleyiciler doldurur, `zamanlayici` Resend ile gönderir). |
 | `blocks`, `reports` | Engelleme ve tek dokunuşla şikayet. |
 | `user_badges` | Komşu Rozetleri. |
 | `announcements` | Kooperatif / buluşma günü duyuruları (şu an arayüzde gösterilmiyor). |
@@ -94,4 +96,4 @@ Supabase
 | Abla–Kardeş mentorluk | ⏳ Veri alanı (`mentor_id`) + "Yol Gösteren" rozeti | Eşleştirme ekranı (Femoria 2.0) |
 | Güvenli ödeme (emanet) | ✅ iyzico Pazaryeri (sandbox); online ödeme almayan satıcılarda elden ödeme | Şirket + iyzico canlı sözleşme, otomatik onay süresi |
 | Fotoğrafta arka plan temizleme | ⏳ Otomatik ışık/kontrast düzeltme var | Arka plan silme modeli |
-| Anlık bildirim (push) | ⏳ Uygulama içi kırmızı nokta + Realtime | Web Push / FCM |
+| Anlık bildirim (push) | ✅ E-posta bildirimleri (Resend) + uygulama içi kırmızı nokta | Web Push / FCM |

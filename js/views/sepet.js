@@ -7,7 +7,7 @@ import { state } from "../store.js";
 import { getProductsByIds, sellerInfo, acceptedOffers, photoUrl, startConversation, proposeOrder, track } from "../api.js";
 import { isConfigured } from "../supabase.js";
 import { breadcrumb } from "../components.js";
-import { cartItems, setQty, setDeliveryChoice, removeFromCart, refreshItem, clearCart, MAX_QTY } from "../cart.js";
+import { cartItems, setQty, setDeliveryChoice, removeFromCart, refreshItem, clearCart, maxQtyOf } from "../cart.js";
 import { requireAuth, navigate } from "../router.js";
 
 export default async function render(root) {
@@ -69,7 +69,7 @@ export default async function render(root) {
     const qtyCtl = h("div", { class: "qty", role: "group", "aria-label": "Adet" },
       h("button", { type: "button", "aria-label": "Bir azalt", disabled: !!problem || it.qty <= 1, onclick: () => setQty(it.id, it.qty - 1) }, icon("minus", 16)),
       h("output", { "aria-live": "polite" }, it.qty),
-      h("button", { type: "button", "aria-label": "Bir artır", disabled: !!problem || it.qty >= MAX_QTY || !!offers[it.id], onclick: () => setQty(it.id, it.qty + 1) }, icon("plus", 16)),
+      h("button", { type: "button", "aria-label": "Bir artır", disabled: !!problem || it.qty >= maxQtyOf(it) || !!offers[it.id], title: it.stock != null && it.qty >= it.stock ? `Stokta ${it.stock} adet var` : null, onclick: () => setQty(it.id, it.qty + 1) }, icon("plus", 16)),
     );
     const delivery = it.delivery === "ikisi" && !problem
       ? h("div", { class: "cart-del", role: "radiogroup", "aria-label": "Teslim şekli" },

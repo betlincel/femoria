@@ -26,18 +26,24 @@ export const inCart = (productId) => read().find((i) => i.id === productId) || n
 const snapshot = (p) => ({
   id: p.id, title: p.title, price: Number(p.price) || 0, photo: p.photos?.[0] || null,
   category: p.category, seller_id: p.seller_id, delivery: p.delivery || "elden",
+  stock: p.stock == null ? null : Number(p.stock),
 });
+/** Sepete konabilecek en fazla adet (stok biliniyorsa stok kadar) */
+export const maxQtyOf = (it) => Math.min(MAX_QTY, it?.stock == null ? MAX_QTY : Math.max(0, it.stock));
 
 /** Sepete ekler; zaten varsa adedini artırır. Yeni adedi döndürür. */
 export function addToCart(product, qty = 1) {
   const items = read();
   const found = items.find((i) => i.id === product.id);
+  const max = maxQtyOf(snapshot(product));
+  if (max < 1) throw Object.assign(new Error("Stokta yok"), { code: "stock" });
   if (found) {
-    found.qty = Math.min(MAX_QTY, (Number(found.qty) || 1) + qty);
+    if ((Number(found.qty) || 1) >= max) throw Object.assign(new Error("Stok sınırı"), { code: "stock", max });
+    found.qty = Math.min(max, (Number(found.qty) || 1) + qty);
     Object.assign(found, snapshot(product), { qty: found.qty, choice: found.choice });
   } else {
     if (items.length >= MAX_ITEMS) throw Object.assign(new Error("Sepet dolu"), { code: "full" });
-    items.push({ ...snapshot(product), qty: Math.min(MAX_QTY, Math.max(1, qty)), addedAt: Date.now() });
+    items.push({ ...snapshot(product), qty: Math.min(max, Math.max(1, qty)), addedAt: Date.now() });
   }
   write(items);
   return (found || items.at(-1)).qty;
@@ -47,7 +53,7 @@ export function setQty(productId, qty) {
   const items = read();
   const it = items.find((i) => i.id === productId);
   if (!it) return;
-  it.qty = Math.min(MAX_QTY, Math.max(1, Math.round(qty) || 1));
+  it.qty = Math.min(Math.max(1, maxQtyOf(it)), Math.max(1, Math.round(qty) || 1));
   write(items);
 }
 
@@ -66,6 +72,7 @@ export function refreshItem(product) {
   const it = items.find((i) => i.id === product.id);
   if (!it) return;
   Object.assign(it, snapshot(product));
+  if (it.stock != null && it.stock > 0 && it.qty > it.stock) it.qty = it.stock;
   write(items);
 }
 

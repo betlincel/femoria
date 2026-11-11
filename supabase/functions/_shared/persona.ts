@@ -4,13 +4,13 @@ export const CATEGORY_SLUGS = ["yemek", "orgu", "taki", "ev-susu", "kurutmalik",
 
 export const SCREENS: Record<string, string> = {
   vitrin: "Vitrin (ana sayfa): selamlama, 'Bir şey sat' düğmesi, ürün türü kutucukları, 'Mahallenizden yeni gelenler'.",
-  sat: "Sat: adım adım ürün ekleme — 1 Fotoğraf ('Fotoğraf yükle', en çok 4), 2 Ürün bilgisi (mavi kutuda mikrofon: sesle anlatınca ad, açıklama ve tür dolar; ürünün adı, açıklama, 'Ne satıyorsunuz?'), 3 Fiyat (benzer ürünlerin fiyat aralığı), 4 Teslimat (elden/kargo, konum) ve 'Satışa çıkar'. Altta 'Devam' ve 'Geri'.",
+  sat: "Sat: adım adım ürün ekleme — 1 Fotoğraf ('Fotoğraf yükle', en çok 4), 2 Ürün bilgisi (mavi kutuda mikrofon: sesle anlatınca ad, açıklama ve tür dolar; ürünün adı, açıklama, 'Ne satıyorsunuz?'), 3 Fiyat (benzer ürünlerin fiyat aralığı) ve 'Kaç adet var?' (stok; bitince ürün kendiliğinden 'Satıldı' olur), 4 Teslimat (elden/kargo, konum) ve 'Satışa çıkar'. Altta 'Devam' ve 'Geri'.",
   urunler: "Ürünler: tüm ürünler; sağ üstte 'Sırala' (en yeniler, fiyat artan/azalan, en çok beğenilenler); yandaki filtrelerde 'Konum' (İl / İlçe ya da 'Mevcut konumumu kullan'), kategori, fiyat aralığı ve teslimat (kargo/elden). Telefonda filtreler 'Filtrele' düğmesinde.",
-  urun: "Ürün sayfası: fiyat, 'Sepete ekle', 'Teklif ver' (fiyatın en az yarısı; satıcı kabul, red ya da karşı teklif verir), 'Satıcıya yaz', kalp (favori), satıcının puanı ve 'Mağazayı gör'.",
+  urun: "Ürün sayfası: fiyat, stok ('Son 1 adet'), 'Sepete ekle', 'Teklif ver' (fiyatın en az yarısı; satıcı kabul, red ya da karşı teklif verir), 'Satıcıya yaz', kalp (favori), satıcının puanı ve 'Mağazayı gör'. Kendi ürününde 'Ürünü düzenle' (fotoğraf, ad, açıklama, fiyat, stok, teslimat değiştirilir), 'Satıldı olarak işaretle', 'Vitrinden kaldır'.",
   favoriler: "Favorilerim: kullanıcının kalple işaretlediği ürünler. Ürün kartlarının sağ üstündeki kalbe dokununca ürün buraya eklenir; başlıkta Mesajlar'ın sağındaki kalp simgesiyle açılır.",
   sepet: "Sepetim: sepete eklenen ürünler satıcıya göre gruplanır; adet artırılıp azaltılır, toplam görünür. 'Siparişi gönder' denince her ürün için satıcıya sipariş kartı gider; satıcı 'Anlaştık' deyince kesinleşir, ödeme teslimde yapılır. Ürün sayfasında 'Sepete ekle', ürün kartlarında kırmızı + düğmesi ürünü sepete ekler; başlıkta favorilerin sağındaki sepet simgesiyle açılır.",
   odeme: "Ödeme: sepetteki ürünler için ad, soyad, cep telefonu, il/ilçe ve açık adres girilir; 'iyzico ile güvenli öde' kart ödeme sayfasını açar. Kart bilgisi Femoria'ya gelmez; para, alıcı ürünü teslim aldığını onaylayınca satıcıya geçer.",
-  siparislerim: "Siparişlerim: 'Alışlarım' (kargo takip no, 'Teslim aldım' ile ödemeyi satıcıya aktarma, kargodan önce iptal ve iade, 'Satıcıyı puanla'), 'Satışlarım' (alıcının adresi, kargo firması ve takip numarası girme, elden teslimde 'Teslime hazır', iptal) ve 'Teklifler' (kabul et, karşı teklif ver, reddet, 'Bu fiyattan satın al').",
+  siparislerim: "Siparişlerim: 'Alışlarım' (kargo takip no, 'Teslim aldım' ile ödemeyi satıcıya aktarma, sorun varsa 'Sorun bildir' — açık sorunda ödeme satıcıya geçmez, kargodan önce iptal ve iade, 'Satıcıyı puanla'; kargodan 7 gün sonra sorun bildirilmediyse sipariş kendiliğinden onaylanır), 'Satışlarım' (alıcının adresi, kargo firması ve takip numarası girme — ödeme alındıktan 5 gün içinde gönderilmeyen sipariş iptal edilip iade edilir, elden teslimde 'Teslime hazır', iptal) ve 'Teklifler' (kabul et, karşı teklif ver, reddet, 'Bu fiyattan satın al').",
   magaza: "Mağaza: satıcının sayfası — tanıtım yazısı, puan ve yorumlar, takipçi/satış/ürün sayıları, 'Takip et' düğmesi, ürünleri. Kendi mağaza tanıtımını Ayarlar > Mağazam bölümünde yazar; Ayşe Abla güzelleştirebilir. Online ödeme almak için Ayarlar > 'Ödeme hesabım' (iyzico: ad, telefon, adres, IBAN, T.C. kimlik no).",
   mesajlar: "Mesajlar: sohbet listesi. Sohbette hazır mesaj baloncukları, mikrofon, 'Sipariş kartı' ve 'Anlaştık' düğmeleri, sağ üstte kalkan (şikayet/engelle).",
   profil: "Profil: 'Sattıklarım' ve 'Aldıklarım' sekmeleri, 'Kazancım' kartı, rozetler, ayarlar.",
@@ -18,7 +18,7 @@ export const SCREENS: Record<string, string> = {
 };
 
 // Asistanın parlatabileceği düğmeler (istemcide data-highlight değerleri).
-export const HIGHLIGHTS = ["nav-vitrin", "nav-urunler", "nav-sat", "nav-mesajlar", "profil", "bir-sey-sat", "fotograf-yukle", "favoriler", "sepet", "sepete-ekle", "teklif-ver", "odemeye-gec", "rehber"];
+export const HIGHLIGHTS = ["nav-vitrin", "nav-urunler", "nav-sat", "nav-mesajlar", "profil", "bir-sey-sat", "fotograf-yukle", "favoriler", "sepet", "sepete-ekle", "teklif-ver", "odemeye-gec", "urunu-duzenle", "rehber"];
 
 export function systemPrompt(screen: string | undefined, userName: string | undefined): string {
   return `Sen "Ayşe Abla"sın: Femoria'nın yapay zeka asistanı. Femoria, evde üretim yapan kadınların el emeği ürünlerini mahallelerindeki insanlara sattığı bir platformdur.

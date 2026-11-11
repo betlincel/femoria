@@ -5,13 +5,17 @@ import { h, loading, emptyState, toast, icon, withIcon, formatPrice, ask, sheet 
 import { categoryIconName } from "../icons.js";
 import { state, LS } from "../store.js";
 import {
-  myPaidOrders, confirmOrder, cancelPaidOrder, setShipment, writeReview, myOffers, respondOffer, makeOffer, photoUrl, track,
+  myPaidOrders, confirmOrder, cancelPaidOrder, setShipment, writeReview, openDispute, myOffers, respondOffer, makeOffer, photoUrl, track,
 } from "../api.js";
 import { breadcrumb, addProductToCart } from "../components.js";
 import { removeFromCart } from "../cart.js";
 import { requireAuth, navigate } from "../router.js";
 
 const CARGO = ["Yurtiçi Kargo", "Aras Kargo", "MNG Kargo", "PTT Kargo", "Sürat Kargo", "Hepsijet", "UPS", "Kolay Gelsin", "Diğer"];
+// Sunucudaki zamanlayıcıyla aynı süreler (SHIP_DAYS, CONFIRM_DAYS)
+const SHIP_DAYS = 5, CONFIRM_DAYS = 7;
+const DISPUTE_REASONS = ["Ürün gelmedi", "Ürün hasarlı geldi", "Ürün tarifinden farklı", "Eksik ürün geldi", "Diğer"];
+const daysLeft = (from, days) => Math.max(0, Math.ceil((new Date(from).getTime() + days * 864e5 - Date.now()) / 864e5));
 const dateTr = (d) => (d ? new Date(d).toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric" }) : "");
 
 export default async function render(root, { query }) {
@@ -94,6 +98,7 @@ export default async function render(root, { query }) {
           await confirmOrder(o.id); toast("Teşekkürler! Ödeme satıcıya aktarılıyor."); track("order_confirmed", {}); load();
         });
         actions.append(b);
+        if (o.dispute_status !== "acik") actions.append(h("button", { type: "button", class: "btn btn-secondary", onclick: () => disputeSheet(o) }, ...withIcon("alert", "Sorun bildir")));
       }
       const canCancel = asSeller || o.shipping_status !== "kargoda";
       if (canCancel) {
@@ -127,11 +132,56 @@ export default async function render(root, { query }) {
         h("li", { class: i < st.step ? "done" : "", "aria-current": i === st.step - 1 ? "step" : null }, s))) : null,
       o.tracking_no ? h("div", { class: "order-track small" }, icon("truck", 16), `${o.cargo_company || "Kargo"} · Takip no: `, h("strong", { class: "mono" }, o.tracking_no)) : null,
       addr,
+      o.dispute_status === "acik" ? h("div", { class: "notice" }, icon("alert", 20), h("span", {},
+        h("strong", {}, asSeller ? "Alıcı sorun bildirdi: " : "Sorun bildirdiniz: "), o.dispute_reason,
+        o.dispute_note ? ` — "${o.dispute_note}"` : "",
+        asSeller ? ". Ödeme, sorun çözülene kadar size aktarılmaz. Alıcıyla konuşun; gerekirse siparişi iptal edip iade edin."
+          : ". Satıcıyla sohbetten konuşun. Sorun çözüldüyse \"Teslim aldım\" diyebilirsiniz; ekibimiz de bilgilendirildi.")) : null,
+      timingNote(o, asSeller),
       asSeller && o.status !== "iptal" ? h("p", { class: "small muted", style: { margin: 0 } },
         o.payout_status === "onaylandi" ? "Ödemeniz onaylandı; iyzico hesabınıza aktarır." : "Ödeme iyzico'da güvende; alıcı teslim aldığını onaylayınca size geçer.") : null,
       actions.children.length ? actions : null,
       o.conversation_id ? h("a", { class: "link-btn", href: `#/sohbet/${o.conversation_id}` }, ...withIcon("message", asSeller ? "Alıcıyla konuş" : "Satıcıyla konuş")) : null,
     );
+  }
+
+  // Süre bilgisi: satıcıya kargo süresi, alıcıya otomatik onay süresi
+  function timingNote(o, asSeller) {
+    if (o.status === "iptal" || o.status === "teslim_edildi" || o.payment_status !== "odendi") return null;
+    if (o.shipping_status === "hazirlaniyor" && o.paid_at) {
+      const d = daysLeft(o.paid_at, SHIP_DAYS);
+      return h("p", { class: "small timing", style: { margin: 0 } }, icon("calendar", 16), asSeller
+        ? ` ${d ? `${d} gün içinde` : "Bugün"} ${o.delivery === "kargo" ? "kargoya verin" : "teslime hazırlayın"}; süresinde gönderilmezse sipariş iptal edilip iade edilir.`
+        : ` Satıcının göndermesi için ${d} gün var; gönderilmezse ödemeniz kendiliğinden iade edilir.`);
+    }
+    if (o.shipping_status === "kargoda" && o.shipped_at && o.dispute_status !== "acik") {
+      const d = daysLeft(o.shipped_at, CONFIRM_DAYS);
+      return h("p", { class: "small timing", style: { margin: 0 } }, icon("calendar", 16), asSeller
+        ? ` Alıcı onaylamazsa ödemeniz ${d} gün sonra kendiliğinden onaylanır.`
+        : ` Sorun bildirmezseniz sipariş ${d} gün sonra kendiliğinden onaylanır ve ödeme satıcıya geçer.`);
+    }
+    return null;
+  }
+
+  function disputeSheet(o) {
+    sheet("Sorun bildir", (close) => {
+      let reason = "", note = "";
+      const list = h("div", { class: "filter-list", role: "radiogroup", "aria-label": "Sorun" });
+      const paint = () => list.replaceChildren(...DISPUTE_REASONS.map((r) => h("button", {
+        type: "button", role: "radio", "aria-checked": String(reason === r), "aria-pressed": String(reason === r), onclick: () => { reason = r; paint(); } }, r)));
+      paint();
+      const send = h("button", { type: "button", class: "btn btn-primary", onclick: async () => {
+        if (!reason) return toast("Sorunu seçin.");
+        send.disabled = true;
+        try { await openDispute(o.id, reason, note.trim()); close(); toast("Sorun bildirildi. Ödeme satıcıya aktarılmayacak; satıcı ve ekibimiz bilgilendirildi."); load(); }
+        catch (e) { toast(e.message || "Gönderilemedi."); send.disabled = false; }
+      } }, "Bildir");
+      return h("div", { class: "stack" },
+        h("p", { class: "muted", style: { margin: 0 } }, "Sorun çözülene kadar ödeme satıcıya geçmez ve sipariş kendiliğinden onaylanmaz."),
+        list,
+        h("textarea", { class: "input", rows: 3, maxlength: 1000, placeholder: "Ne oldu? Kısaca yazın (isteğe bağlı)", "aria-label": "Açıklama", oninput: (e) => (note = e.target.value) }),
+        send);
+    });
   }
 
   function shipForm(o) {

@@ -46,6 +46,8 @@ export default async function render(root, { params: [id] }) {
         h("h1", {}, p.title),
         h("div", { class: "card buy-box stack" },
           h("div", { class: "price", style: { fontSize: "2rem", letterSpacing: "-.02em" } }, formatPrice(p.price)),
+          p.status === "satista" && p.stock != null ? h("div", { class: `stock-note ${p.stock <= 2 ? "low" : ""}` },
+            p.stock === 1 ? "Son 1 adet" : p.stock <= 3 ? `Son ${p.stock} adet` : `Stokta ${p.stock} adet`) : null,
           h("div", { class: "badges" },
             h("span", { class: "chip" }, icon("truck"), DELIVERY_LABEL[p.delivery]),
             p.neighborhood || p.district ? h("span", { class: "chip" }, icon("map-pin"), [p.neighborhood, p.district, p.city].filter(Boolean).join(", ")) : null,
@@ -115,6 +117,7 @@ function sellerRating(sellerId) {
 function ownerActions(p) {
   return h("div", { class: "stack" },
     h("p", { class: "notice" }, icon("user", 20), "Bu sizin ürününüz."),
+    h("a", { class: "btn btn-primary", href: `#/sat?duzenle=${p.id}`, "data-highlight": "urunu-duzenle" }, ...withIcon("pencil", "Ürünü düzenle")),
     p.status === "satista" ? h("button", { class: "btn btn-success", onclick: async () => {
       await setProductStatus(p.id, "satildi"); toast("Satıldı olarak işaretlendi. Hayırlı olsun!"); navigate("/profil");
     } }, withIcon("check", "Satıldı olarak işaretle")) : null,

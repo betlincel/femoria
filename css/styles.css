@@ -1335,3 +1335,12 @@ select.place-select:disabled { background-color: var(--surface-2); }
 .wiz-nav .wiz-back { width: auto; min-height: 64px; padding: 0 20px; }
 .wiz-nav .wiz-back[hidden] { display: none; }
 .wiz-nav .wiz-back[hidden] + .wiz-next { grid-column: 1 / -1; }
+
+/* Stok */
+.stock-note { font-size: .9rem; font-weight: 700; color: var(--success); }
+.stock-note.low { color: var(--primary); }
+.qty.qty-lg { align-self: flex-start; }
+.qty.qty-lg button { width: 48px; height: 48px; }
+.qty.qty-lg output { min-width: 44px; font-size: 1.15rem; }
+.timing { display: flex; align-items: flex-start; gap: 4px; color: var(--text-soft); }
+.timing .icon { flex: none; margin-top: 2px; color: var(--primary); }

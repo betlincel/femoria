@@ -67,7 +67,9 @@ export function addProductToCart(p) {
     toast(qty > 1 ? `Sepette ${qty} adet oldu.` : "Sepete eklendi.");
     return true;
   } catch (e) {
-    toast(e.code === "full" ? "Sepetiniz dolu. Önce sepetteki siparişleri gönderin." : "Sepete eklenemedi.");
+    toast(e.code === "full" ? "Sepetiniz dolu. Önce sepetteki siparişleri gönderin."
+      : e.code === "stock" ? (e.max ? `Stokta ${e.max} adet var; hepsi sepetinizde.` : "Bu ürün stokta kalmadı.")
+      : "Sepete eklenemedi.");
     return false;
   }
 }

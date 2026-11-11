@@ -3,9 +3,10 @@
 // Ayşe Abla'ya sesle anlatılırsa ad / açıklama / tür kendiliğinden dolar.
 // Üyelik ürün yüklemenin önüne konmaz: giriş/üyelik yalnızca "Satışa çıkar" anında istenir.
 // Yarım iş her değişiklikte otomatik saklanır (localStorage).
+// Düzenleme: #/sat?duzenle=<ürün kimliği> aynı formu ürünün bilgileriyle açar ("Değişiklikleri kaydet").
 import { h, toast, micButton, prepareImage, formatPrice, canListen, ask, sheet, icon, withIcon, iconCircle, statusScreen, speak } from "../ui.js";
 import { state, LS } from "../store.js";
-import { getCategories, priceSuggestion, publishProduct, askAssistant, track } from "../api.js";
+import { getCategories, priceSuggestion, publishProduct, updateProduct, getProduct, hasStock, photoUrl, askAssistant, track } from "../api.js";
 import { pageTitle, categoryTiles, askLocation, pickLocation } from "../components.js";
 import { navigate, requireAuth } from "../router.js";
 import { assistantEvent } from "../assistant.js";
@@ -16,28 +17,46 @@ const DESC_MAX = 2000;
 
 const newDraft = () => ({
   photos: [], transcript: "", title: "", description: "", category: null,
-  price: null, delivery: null, suggestion: null, location: null, startedAt: Date.now(), updatedAt: Date.now(),
+  price: null, stock: 1, delivery: null, suggestion: null, location: null, startedAt: Date.now(), updatedAt: Date.now(),
 });
+const MAX_STOCK = 999;
 
 const DELIVERY = [["elden", "users", "Elden teslim"], ["kargo", "package", "Kargo"], ["ikisi", "repeat", "İkisi de"]];
 
-export default async function render(root) {
-  let draft = { ...newDraft(), ...(LS.get("draft") || {}) };
+export default async function render(root, { query = {} } = {}) {
+  // ---------- Düzenleme modu ----------
+  const editId = query.duzenle || null;
+  let original = null;
+  if (editId) {
+    if (!requireAuth(`/sat?duzenle=${editId}`)) return;
+    original = await getProduct(editId).catch(() => null);
+    if (!original || original.seller_id !== state.user.id) {
+      root.append(pageTitle("Ürünü düzenle"), h("div", { class: "card" }, h("p", {}, "Bu ürünü düzenleyemezsiniz."), h("a", { class: "btn btn-primary", href: "#/profil" }, "Ürünlerime dön")));
+      return;
+    }
+  }
+  const stockOn = await hasStock();
+  let draft = editId ? {
+    ...newDraft(), title: original.title, description: original.description || "", category: original.category,
+    price: Number(original.price), stock: original.stock ?? 1, delivery: original.delivery, photos: [...(original.photos || [])],
+    location: { lat: original.approx_lat, lng: original.approx_lng, city: original.city, district: original.district, neighborhood: original.neighborhood },
+  } : { ...newDraft(), ...(LS.get("draft") || {}) };
   delete draft.step; // eski taslaklardan kalan alan
   // Adım adım: 0 Fotoğraf · 1 Ürün bilgisi · 2 Fiyat · 3 Teslimat
   const STEPS = [["Fotoğraf", ["photos"]], ["Ürün bilgisi", ["f-title", "category"]], ["Fiyat", ["f-price"]], ["Teslimat", ["delivery", "location"]]];
-  let step = Math.min(3, Math.max(0, Number(draft.wizStep) || 0));
+  let step = editId ? 0 : Math.min(3, Math.max(0, Number(draft.wizStep) || 0));
   const categories = await getCategories();
   const form = h("form", { class: "sell-form", novalidate: true, onsubmit: (e) => { e.preventDefault(); step < 3 ? next() : publish(); } });
 
-  if (!LS.get("draft")) track("listing_started");
+  if (!editId && !LS.get("draft")) track("listing_started");
 
   const save = () => {
+    if (editId) return; // düzenleme taslağı saklanmaz
     draft.updatedAt = Date.now();
     try { LS.set("draft", draft); } catch { toast("Telefonun hafızası doldu; taslak saklanamadı."); }
   };
 
-  root.append(pageTitle("Satışa çıkar"), form);
+  root.append(pageTitle(editId ? "Ürünü düzenle" : "Satışa çıkar", editId ? { back: () => navigate(`/urun/${editId}`) } : {}), form);
 
   // ---------- Yardımcılar ----------
   // Yüzen etiketli alan (etiket kutunun içinde; yazınca yukarı kayar)
@@ -91,7 +110,7 @@ export default async function render(root) {
       const src = draft.photos[i];
       if (!src) return h("button", { type: "button", class: "photo-slot", "aria-label": "Fotoğraf ekle", disabled: full, onclick: () => fileInput.click() }, icon("plus", 20));
       return h("div", { class: "photo-slot filled" },
-        h("img", { src, alt: `Fotoğraf ${i + 1}` }),
+        h("img", { src: String(src).startsWith("data:") ? src : photoUrl(src), alt: `Fotoğraf ${i + 1}` }),
         i === 0 ? h("span", { class: "cover" }, "Vitrin") : null,
         h("button", { type: "button", class: "photo-del", "aria-label": `${i + 1}. fotoğrafı kaldır`, onclick: () => {
           draft.photos = draft.photos.filter((_, j) => j !== i); save(); drawPhotos();
@@ -201,7 +220,7 @@ export default async function render(root) {
           h("div", { class: "field", "data-field": "category" },
             h("div", { class: "field-label" }, "Ne satıyorsunuz?", h("span", { class: "req" }, " *")),
             tilesWrap, h("div", { class: "field-error", hidden: true })))),
-        panel(2, section("Fiyat", priceField,
+        panel(2, section("Fiyat", priceField, stockOn ? stockField() : null,
           h("p", { class: "small muted", style: { margin: 0 } }, "Alıcılar teklif verebilir; kabul edip etmemek size kalır."))),
         panel(3, section("Teslimat",
           h("div", { class: "field", "data-field": "delivery" },
@@ -214,8 +233,10 @@ export default async function render(root) {
         h("div", { class: "wiz-nav" },
           h("button", { type: "button", class: "btn btn-secondary wiz-back", onclick: () => show(step - 1) }, ...withIcon("chevron-left", "Geri")),
           h("button", { type: "submit", class: "btn btn-primary btn-xl wiz-next" })),
-        h("button", { type: "button", class: "btn btn-ghost", onclick: () => { save(); toast("Sakladım. Kaldığınız yerden devam edersiniz."); navigate("/"); } }, "Sonra devam ederim"),
-        h("button", { type: "button", class: "btn btn-ghost btn-inline small", onclick: async () => {
+        editId
+          ? h("button", { type: "button", class: "btn btn-ghost", onclick: () => navigate(`/urun/${editId}`) }, "Vazgeç")
+          : h("button", { type: "button", class: "btn btn-ghost", onclick: () => { save(); toast("Sakladım. Kaldığınız yerden devam edersiniz."); navigate("/"); } }, "Sonra devam ederim"),
+        editId ? null : h("button", { type: "button", class: "btn btn-ghost btn-inline small", onclick: async () => {
           if (!(await ask("Formu temizleyelim mi?", "Fotoğraflar ve yazdıklarınız silinir.", "Evet, temizle", "Vazgeç"))) return;
           draft = newDraft(); step = 0; save(); drawPhotos(); draw();
         } }, "Formu temizle"),
@@ -239,7 +260,7 @@ export default async function render(root) {
     const back = form.querySelector(".wiz-back"), nxt = form.querySelector(".wiz-next");
     if (back) back.hidden = step === 0;
     if (nxt) {
-      nxt.replaceChildren(...(step < 3 ? withIcon("arrow-right", `Devam: ${STEPS[step + 1][0]}`) : withIcon("check", "Satışa çıkar")));
+      nxt.replaceChildren(...(step < 3 ? withIcon("arrow-right", `Devam: ${STEPS[step + 1][0]}`) : withIcon("check", editId ? "Değişiklikleri kaydet" : "Satışa çıkar")));
       nxt.classList.toggle("btn-success", step === 3);
     }
     if (scroll) window.scrollTo({ top: 0, behavior: "smooth" });
@@ -314,8 +335,23 @@ export default async function render(root) {
     return true;
   }
 
+  // Stok: kaç adet satılıyor (biterse ürün kendiliğinden "Satıldı" olur)
+  function stockField() {
+    const out = h("output", { "aria-live": "polite" }, draft.stock);
+    const set = (n) => { draft.stock = Math.min(MAX_STOCK, Math.max(editId ? 0 : 1, n)); out.textContent = draft.stock; save(); };
+    return h("div", { class: "field", "data-field": "stock" },
+      h("div", { class: "field-label" }, "Kaç adet var?"),
+      h("div", { class: "qty qty-lg", role: "group", "aria-label": "Stok adedi" },
+        h("button", { type: "button", "aria-label": "Bir azalt", onclick: () => set(draft.stock - 1) }, icon("minus", 18)), out,
+        h("button", { type: "button", "aria-label": "Bir artır", onclick: () => set(draft.stock + 1) }, icon("plus", 18))),
+      h("div", { class: "field-help" }, h("span", {}, editId
+        ? "Stok 0 olursa ürün \"Satıldı\" görünür. Online siparişlerde stok kendiliğinden düşer."
+        : "Tek ürünse 1 bırakın. Satıldıkça düşer; bitince ürün kendiliğinden \"Satıldı\" olur.")));
+  }
+
   async function publish() {
     if (!validate()) return;
+    if (editId) return saveEdit();
     if (!draft.price && !(await ask("Ücretsiz mi vereceksiniz?", "Fiyatı 0 TL yazdınız.", "Evet, ücretsiz", "Fiyat yazayım"))) return;
     draft.publishAfterLogin = Date.now();
     save();
@@ -355,10 +391,25 @@ export default async function render(root) {
     assistantEvent("product_published", product);
   }
 
+  async function saveEdit() {
+    form.replaceChildren(statusScreen("refresh", "Kaydediyorum…", { spin: true }));
+    window.scrollTo(0, 0);
+    try {
+      await updateProduct(editId, { ...draft, title: draft.title.trim() }, original.photos || []);
+      track("listing_edited", {});
+      toast("Değişiklikler kaydedildi.");
+      navigate(`/urun/${editId}`);
+    } catch (e) {
+      console.error("[Ürünü düzenle] başarısız:", e);
+      toast(`${publishErrorText(e).replace("Satışa çıkarılamadı", "Kaydedilemedi")} Değişiklikleriniz sayfada duruyor.`, 7000);
+      draw();
+    }
+  }
+
   // Girişten dönüldüyse kaldığı yerden otomatik yayınla.
   // (Yalnızca son 30 dakika içinde "Satışa çıkar"a basıldıysa.)
   draw();
-  if (draft.publishAfterLogin && Date.now() - draft.publishAfterLogin < 30 * 60e3 && state.user) publish();
+  if (!editId && draft.publishAfterLogin && Date.now() - draft.publishAfterLogin < 30 * 60e3 && state.user) publish();
 }
 
 // Satışa çıkarma hatasını sade bir cümleye çevirir (ayrıntı konsolda)

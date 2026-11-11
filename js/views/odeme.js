@@ -33,7 +33,8 @@ export default async function render(root) {
     if (!p || p.status !== "satista" || p.seller_id === state.user.id || !info[p.seller_id]?.payout_ready) return null;
     const delivery = p.delivery === "ikisi" ? it.choice || "elden" : p.delivery;
     const unit = offers[p.id] ? Number(offers[p.id].amount) : Number(p.price);
-    return { p, qty: offers[p.id] ? 1 : it.qty, delivery, unit };
+    const qty = offers[p.id] ? 1 : Math.min(it.qty, p.stock == null ? it.qty : Math.max(1, Number(p.stock)));
+    return { p, qty, delivery, unit };
   }).filter(Boolean);
 
   if (!lines.length) {
