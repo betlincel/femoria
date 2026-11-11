@@ -30,10 +30,11 @@ Supabase
 |---|---|
 | `profiles` | Tek hesap (alıcı + satıcı). Ayarlar, cinsiyet (hitap), onay kayıtları. Konum tutulmaz. Yalnız sahibi okur. |
 | `public_profiles` (görünüm) | Başkalarının görebileceği güvenli alanlar (ad, mahalle, doğrulama durumu). |
-| `categories`, `locations`, `badges` | Sözlükler. `locations`: il/ilçe/mahalle + mahalle merkezi. |
+| `categories`, `locations`, `badges` | Sözlükler. `categories`: ana kategori + alt kategori (`parent`), tek kaynak `js/categories-data.js` (SQL ve Ayşe Abla listesi `scripts/build-categories.mjs` ile üretilir). `locations`: il/ilçe/mahalle + mahalle merkezi. |
 | `products` | Ürünler. Konum her ürün için satıcı tarafından girilir (cihazdan ya da listeden), kaydedilirken ~500 m kaydırılır. |
 | `conversations`, `messages` | Ürün başına alıcı–satıcı sohbeti. Mesaj türleri: metin, hazır, ses, sipariş, sistem. |
 | `orders` | Sipariş kartı: adet, fiyat, teslim, tarih, iki tarafın "Anlaştık" onayı. Sepetten "Siparişi gönder" her ürün için sohbet açıp sipariş kartı oluşturur (sepetin kendisi yalnız cihazda, `js/cart.js`). |
+| `product_listing` (görünüm) | Satıştaki ürünler + satıcı bilgisi (güvenli ödeme, doğrulanmış, puan); "Ürünler" sayfasının satıcı süzgeçleri bundan okur. Ürünlerde `sold_count`, `review_count`, `favorite_count` (yalnız tetikleyici değiştirir) ve `rank_score` (önerilen sıra). |
 | `favorites` | Favoriler: kullanıcının kalple işaretlediği ürünler (yalnız kendisi görür; ürün ya da hesap silinince silinir). |
 | `checkouts` | Bir iyzico ödemesi (sepet): tutar, adres, durum, iyzico token / ödeme no. Yalnız sunucu yazar. |
 | `offers` | Teklifler (pazarlık): tutar, karşı teklif, durum; kabul edilen fiyat 48 saat geçerli. `make_offer`, `respond_offer`. |

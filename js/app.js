@@ -2,12 +2,12 @@
 import { isConfigured } from "./supabase.js";
 import { state, initAuth, onChange, LS } from "./store.js";
 import { route, startRouter, onRoute, navigate } from "./router.js";
-import { subscribeIncoming, track, getCategories } from "./api.js";
+import { subscribeIncoming, track, getCategories, categoryTree } from "./api.js";
 import { initAssistant, assistantEvent } from "./assistant.js";
 import { esc, toast, h } from "./ui.js";
 import { iconSVG, ayseAvatarSVG } from "./icons.js";
 import { ensureKvkkConsent } from "./consent.js";
-import { loadFavorites, favoriteCount } from "./favorites.js";
+import { loadFavorites } from "./favorites.js";
 import { cartCount } from "./cart.js";
 import { pickBrowsePlace, getBrowsePlace, placeLabel } from "./components.js";
 
@@ -146,25 +146,45 @@ document.getElementById("place-pill").addEventListener("click", async () => {
 });
 window.addEventListener("femoria:place", (e) => paintPlace(e.detail));
 
+// Üst kategori çubuğu: ana kategoriler + "Tüm Kategoriler" paneli (alt kategoriler sütunlar halinde)
 async function fillCategoryBar() {
-  const cats = await getCategories();
+  const tree = categoryTree(await getCategories());
   const bar = document.getElementById("category-bar");
-  for (const c of cats) {
+  for (const g of tree) {
     const a = document.createElement("a");
-    a.href = `#/urunler?kategori=${c.slug}`;
-    a.textContent = c.name;
+    a.href = `#/urunler?kategori=${g.slug}`;
+    a.textContent = g.name;
     bar.append(a);
   }
-}
 
-// Başlıktaki favori sayısı
-function paintFavCount() {
-  const n = favoriteCount();
-  const el = document.getElementById("fav-count");
-  el.hidden = !n;
-  el.textContent = n > 99 ? "99+" : String(n);
+  // Çubuğa sığmayan kategoriler gizlenir (hepsi "Tüm Kategoriler" panelinde)
+  const links = [...bar.querySelectorAll("a")];
+  const fit = () => {
+    links.forEach((a) => (a.hidden = false));
+    const firstTop = links[0]?.offsetTop;
+    links.forEach((a) => { if (a.offsetTop > firstTop + 4) a.hidden = true; });
+  };
+  fit();
+  let fitTimer;
+  window.addEventListener("resize", () => { clearTimeout(fitTimer); fitTimer = setTimeout(fit, 120); });
+
+  const btn = document.getElementById("all-cats-btn");
+  const mega = document.getElementById("cat-mega");
+  mega.replaceChildren(h("div", { class: "cat-mega-grid" }, tree.filter((g) => g.slug !== "diger").map((g) => h("section", { class: "cat-col" },
+    h("a", { class: "cat-col-title", href: `#/urunler?kategori=${g.slug}` }, g.name),
+    h("ul", {}, g.children.map((c) => h("li", {}, h("a", { href: `#/urunler?kategori=${c.slug}` }, c.name)))),
+  ))), h("a", { class: "cat-mega-all", href: "#/urunler" }, "Tüm ürünleri gör"));
+  const set = (open) => {
+    mega.hidden = !open;
+    btn.setAttribute("aria-expanded", String(open));
+    btn.classList.toggle("open", open);
+  };
+  btn.addEventListener("click", (e) => { e.stopPropagation(); set(mega.hidden); });
+  mega.addEventListener("click", (e) => e.target.closest("a") && set(false));
+  document.addEventListener("click", (e) => { if (!mega.hidden && !e.target.closest("#cat-mega")) set(false); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !mega.hidden) { set(false); btn.focus(); } });
+  onRoute(() => set(false));
 }
-window.addEventListener("femoria:fav", paintFavCount);
 
 // Başlıktaki sepet sayısı (sepet bu cihazda tutulur)
 function paintCartCount() {
