@@ -139,7 +139,7 @@ function promoCarousel() {
 
   const track = h("div", { class: "promo-track", "aria-live": reduceMotion ? "polite" : "off" }, slides);
   const dots = h("div", { class: "promo-dots", role: "group", "aria-label": "Slayt seç" },
-    SLIDES.map((sl, i) => h("button", { type: "button", "aria-label": `${i + 1}. slayt: ${sl.title}`, "aria-current": String(i === 0), onclick: () => go(i, true) })));
+    SLIDES.map((sl, i) => h("button", { type: "button", "aria-label": `${i + 1}. slayt: ${sl.title}`, "aria-current": String(i === 0), onclick: () => go(i, true) }, String(i + 1).padStart(2, "0"))));
   const prev = h("button", { type: "button", class: "promo-nav prev", "aria-label": "Önceki slayt", onclick: () => go(index - 1, true) }, icon("chevron-left"));
   const next = h("button", { type: "button", class: "promo-nav next", "aria-label": "Sonraki slayt", onclick: () => go(index + 1, true) }, icon("chevron-right"));
   const root = h("section", { class: "promo", "aria-roledescription": "karosel", "aria-label": "Femoria'dan öne çıkanlar" }, track, prev, next, dots);
@@ -181,6 +181,7 @@ function promoCarousel() {
   restart();
   return {
     el: root,
+    slides,
     stop: () => clearInterval(timer),
   };
 }
@@ -198,12 +199,13 @@ export default async function render(root) {
   const promo = promoCarousel();
   root.append(
     h("h1", { class: "sr-only" }, "Femoria — mahallenin el emeği pazarı"),
-    promo.el,
-    h("div", { class: "trust-bar trust-bar-hero" },
-      trustItem("shield-check", "Güvenli ödeme", "Para, teslim onayına kadar emanette"),
-      trustItem("truck", "Kargo veya elden teslim", "Siz seçersiniz"),
-      trustItem("lock", "Adresiniz gizli", "Yalnızca mahalleniz görünür")),
-    circlesSlot,
+    h("div", { class: "hero-wrap" },
+      promo.el,
+      h("div", { class: "hero-badges" },
+        trustItem("shield-check", "Güvenli ödeme", "Emanet sistemi"),
+        trustItem("truck", "Kargo / elden", "Siz seçersiniz"),
+        trustItem("lock", "Gizli adres", "Yalnız mahalle")),
+      circlesSlot),
     extras,
     catsSlot,
     h("div", { class: "promo-duo" },
@@ -249,8 +251,8 @@ export default async function render(root) {
         h("span", { class: "circle-ico", "aria-hidden": "true" }, icon(categoryIconName(g.slug), 30)), h("span", {}, g.name))),
       h("a", { class: "circle-item circle-all", role: "listitem", href: "#/urunler" }, h("span", { class: "circle-ico", "aria-hidden": "true" }, icon("grid", 28)), h("span", {}, "Tümü"))));
     catsSlot.replaceChildren(h("section", { class: "section" },
-      h("div", { class: "section-title" }, h("h2", {}, "Sana özel kategoriler"), h("div", { class: "section-actions" }, h("a", { href: "#/urunler" }, "Tüm kategoriler"))),
-      h("div", { class: "cat-rail", role: "list" }, groups.map((g) => {
+      h("div", { class: "section-title" }, h("div", {}, h("small", { class: "eyebrow-s" }, "Kategoriye göre alışveriş"), h("h2", {}, "Sana özel kategoriler")), h("div", { class: "section-actions" }, h("a", { href: "#/urunler" }, "Tüm kategoriler"))),
+      h("div", { class: "cat-grid", role: "list" }, groups.slice(0, 8).map((g) => {
         const ph = photoOf[g.slug];
         return h("a", { class: `cat-card ${ph ? "has-photo" : ""}`, role: "listitem", href: `#/urunler?kategori=${g.slug}`, style: ph ? { backgroundImage: `url("${ph}")` } : {} },
           ph ? null : h("span", { class: "cat-card-ico", "aria-hidden": "true" }, icon(categoryIconName(g.slug), 56)),
@@ -258,7 +260,18 @@ export default async function render(root) {
       }))));
   };
   getCategories().then((list) => { groups = categoryTree(list).filter((g) => g.slug !== "diger"); paintCats(); }).catch(() => {});
+  // Gerçek ürün fotoğrafları varsa 2. ve 3. afişin görselini fotoğraf kolajıyla değiştir
+  const collage = (rows) => {
+    const urls = [...new Set((rows || []).map((p) => photoUrl(p.photos?.[0])).filter(Boolean))].slice(0, 3);
+    if (urls.length < 2) return;
+    [1, 2].forEach((k) => {
+      const art = promo.slides[k]?.querySelector(".promo-art");
+      if (art) art.replaceChildren(...urls.map((u, i) => h("img", { class: `ph-tile t${i + 1}`, src: u, alt: "", loading: "lazy" })));
+      art?.classList.add("art-collage");
+    });
+  };
   const learnPhotos = (rows) => {
+    collage(rows);
     for (const p of rows || []) { const u = photoUrl(p.photos?.[0]); const g = groupSlugOf(p.category); if (u && g && !photoOf[g]) photoOf[g] = u; }
     paintCats();
   };
