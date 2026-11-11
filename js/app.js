@@ -35,6 +35,7 @@ route(/^\/ayarlar$/, "profil", () => import("./views/ayarlar.js"), "narrow");
 route(/^\/rehber$/, "rehber", () => import("./views/rehber.js"), "medium");
 route(/^\/giris$/, "giris", () => import("./views/giris.js"), "narrow");
 route(/^\/sifre-yenile$/, "giris", () => import("./views/sifre.js"), "narrow");
+route(/^\/yasal\/([\w-]+)$/, "aydinlatma", () => import("./views/yasal.js"), "medium");
 route(/^\/aydinlatma$/, "aydinlatma", () => import("./views/aydinlatma.js"), "medium");
 
 // Alt menüde aktif sekme
@@ -150,6 +151,8 @@ window.addEventListener("femoria:place", (e) => paintPlace(e.detail));
 async function fillCategoryBar() {
   const tree = categoryTree(await getCategories());
   const bar = document.getElementById("category-bar");
+  const fcol = document.getElementById("footer-cats");
+  if (fcol) for (const g of tree.filter((x) => x.slug !== "diger")) fcol.append(h("a", { href: `#/urunler?kategori=${g.slug}` }, g.name));
   for (const g of tree) {
     const a = document.createElement("a");
     a.href = `#/urunler?kategori=${g.slug}`;

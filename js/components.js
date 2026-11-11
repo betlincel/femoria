@@ -128,6 +128,27 @@ export function productCard(p) {
   );
 }
 
+// Yeni gelenler: tek satır, yana kaydırılır (telefonda parmakla, masaüstünde oklarla)
+export function productRow(items, label = "Ürünler") {
+  const rail = h("div", { class: "prow", role: "list", "aria-label": label, tabindex: "0" },
+    items.map((p) => { const c = productCard(p); c.setAttribute("role", "listitem"); return c; }));
+  const step = (dir) => rail.scrollBy({ left: dir * rail.clientWidth * 0.9, behavior: "smooth" });
+  const prev = h("button", { type: "button", class: "row-nav", "aria-label": "Önceki ürünler", onclick: () => step(-1) }, icon("chevron-left", 20));
+  const next = h("button", { type: "button", class: "row-nav", "aria-label": "Sonraki ürünler", onclick: () => step(1) }, icon("chevron-right", 20));
+  const paint = () => {
+    const max = rail.scrollWidth - rail.clientWidth - 2;
+    prev.disabled = rail.scrollLeft <= 2;
+    next.disabled = rail.scrollLeft >= max;
+    arrows.hidden = max <= 0; // hepsi sığıyorsa ok gösterme
+  };
+  const arrows = h("div", { class: "row-arrows" }, prev, next);
+  rail.addEventListener("scroll", paint, { passive: true });
+  window.addEventListener("resize", paint);
+  requestAnimationFrame(paint);
+  return { rail, arrows, stop: () => window.removeEventListener("resize", paint) };
+}
+
+
 /** Ürün ızgarası: telefonda 2, tablette 3, masaüstünde 4 sütun */
 export const productGrid = (items, { cols4 = true } = {}) =>
   h("div", { class: `pgrid ${cols4 ? "pgrid-4" : ""}` }, items.map(productCard));

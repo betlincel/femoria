@@ -120,7 +120,11 @@ export async function listProducts({ city = null, district = null, neighborhood 
   if (district) query = query.ilike("district", likeEscape(district));
   if (neighborhood) query = query.ilike("neighborhood", likeEscape(neighborhood));
   const words = String(q || "").trim().split(/\s+/).filter((w) => w.length > 1).slice(0, 4);
-  for (const w of words) query = query.ilike("title", `%${likeEscape(w)}%`);
+  // Her sözcük ürün adında ya da açıklamasında geçmeli (or() içinde özel karakterler atılır)
+  for (const w of words) {
+    const clean = w.replace(/[,()"\\%_*:]/g, "");
+    if (clean.length > 1) query = query.or(`title.ilike.%${clean}%,description.ilike.%${clean}%`);
+  }
   if (priceMin != null && priceMin !== "") query = query.gte("price", Number(priceMin));
   if (priceMax != null && priceMax !== "") query = query.lte("price", Number(priceMax));
   if (delivery === "kargo") query = query.in("delivery", ["kargo", "ikisi"]);
@@ -151,6 +155,26 @@ export async function getProduct(id) {
     userBadges(product.seller_id),
   ]);
   return { ...product, seller, sellerBadges: badges };
+}
+
+/** Ana sayfa / ürün sayfası önerileri: son gezilen, "sana özel" ve benzer ürünler */
+export async function recentProducts(ids) {
+  if (!isConfigured || !ids.length) return [];
+  const rows = await getProductsByIds(ids.slice(0, 20)).catch(() => []);
+  return ids.map((id) => rows.find((r) => r.id === id)).filter((r) => r && r.status === "satista");
+}
+/** Sana özel: gezdiğin/beğendiğin kategorilerden en çok önerilenler (yoksa genel en çok önerilenler) */
+export async function recommendedProducts({ categories = [], exclude = [], limit = 16 } = {}) {
+  const base = { sort: "onerilen", limit: limit + exclude.length };
+  const cats = [...new Set(categories)].slice(0, 6);
+  let rows = cats.length ? (await listProducts({ ...base, category: cats })).rows : [];
+  if (rows.length < 6) rows = [...rows, ...(await listProducts(base)).rows];
+  const seen = new Set(exclude);
+  return rows.filter((r) => !seen.has(r.id) && seen.add(r.id)).slice(0, limit);
+}
+export async function similarProducts(p, limit = 12) {
+  const rows = (await listProducts({ category: p.category, sort: "onerilen", limit: limit + 1 })).rows;
+  return rows.filter((r) => r.id !== p.id).slice(0, limit);
 }
 
 /** Sepetteki ürünlerin güncel hali (satılan/kaldırılan ürünler dönmez ya da durumuyla döner). */

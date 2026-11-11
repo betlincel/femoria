@@ -1,9 +1,11 @@
 // Vitrin (Ana sayfa) — geçişli afiş (ilk slayt: nasıl çalışır), yeni ürünler, güven, rehber.
 import { h, loading, emptyState, icon } from "../ui.js";
 import { state } from "../store.js";
-import { latestProducts, followedProducts } from "../api.js";
-import { productCard } from "../components.js";
-import { ayseAvatarSVG } from "../icons.js";
+import { latestProducts, followedProducts, recentProducts, recommendedProducts, getCategories, categoryTree, listProducts } from "../api.js";
+import { productRow } from "../components.js";
+import { recentIds } from "../recent.js";
+import { listFavoriteProducts } from "../favorites.js";
+import { ayseAvatarSVG, categoryIconName } from "../icons.js";
 
 function featureCard({ ico, title, text, href, warm = false, children = [] }) {
   return h(href ? "a" : "section", { class: `card ${warm ? "card-warm" : ""} ${href ? "card-link" : ""}`, href },
@@ -182,31 +184,12 @@ function promoCarousel() {
   };
 }
 
-// Yeni gelenler: tek satır, yana kaydırılır (telefonda parmakla, masaüstünde oklarla)
-function productRow(items) {
-  const rail = h("div", { class: "prow", role: "list", "aria-label": "Yeni gelen ürünler", tabindex: "0" },
-    items.map((p) => { const c = productCard(p); c.setAttribute("role", "listitem"); return c; }));
-  const step = (dir) => rail.scrollBy({ left: dir * rail.clientWidth * 0.9, behavior: "smooth" });
-  const prev = h("button", { type: "button", class: "row-nav", "aria-label": "Önceki ürünler", onclick: () => step(-1) }, icon("chevron-left", 20));
-  const next = h("button", { type: "button", class: "row-nav", "aria-label": "Sonraki ürünler", onclick: () => step(1) }, icon("chevron-right", 20));
-  const paint = () => {
-    const max = rail.scrollWidth - rail.clientWidth - 2;
-    prev.disabled = rail.scrollLeft <= 2;
-    next.disabled = rail.scrollLeft >= max;
-    arrows.hidden = max <= 0; // hepsi sığıyorsa ok gösterme
-  };
-  const arrows = h("div", { class: "row-arrows" }, prev, next);
-  rail.addEventListener("scroll", paint, { passive: true });
-  window.addEventListener("resize", paint);
-  requestAnimationFrame(paint);
-  return { rail, arrows, stop: () => window.removeEventListener("resize", paint) };
-}
-
 export default async function render(root) {
   const newArrivals = h("div", {}, loading());
   const arrowSlot = h("div", { class: "row-arrows-slot" });
   const extras = h("div", { class: "stack" });
   const followedSlot = h("div");
+  const catsSlot = h("div"), forYouSlot = h("div"), recentSlot = h("div"), topSlot = h("div");
 
   const promo = promoCarousel();
   root.append(
@@ -215,6 +198,9 @@ export default async function render(root) {
 
 
     extras,
+    catsSlot,
+    forYouSlot,
+    recentSlot,
     followedSlot,
 
     h("section", { class: "section" },
@@ -225,6 +211,8 @@ export default async function render(root) {
       newArrivals,
     ),
 
+
+    topSlot,
 
     h("section", { class: "section trust" },
       featureCard({ ico: "lock", title: "Adresiniz gizli", text: "Yalnızca mahalleniz görünür; konum her kayıtta kaydırılır." }),
@@ -259,6 +247,49 @@ export default async function render(root) {
       followRow.rail));
   }
 
+  // Sana özel kategoriler: ana kategoriler renkli kutular halinde (yatay kaydırılır)
+  getCategories().then((list) => {
+    const groups = categoryTree(list).filter((g) => g.slug !== "diger");
+    const tones = ["#9B3A35", "#1F7F6E", "#9A5F3E", "#3F7F7B", "#8F3A2B", "#6A35A0", "#A07F1F", "#46608C"];
+    catsSlot.replaceChildren(h("section", { class: "section" },
+      h("div", { class: "section-title" }, h("h2", {}, "Sana özel kategoriler"), h("div", { class: "section-actions" }, h("a", { href: "#/urunler" }, "Tüm kategoriler"))),
+      h("div", { class: "cat-rail", role: "list" }, groups.map((g, i) => h("a", {
+        class: "cat-card", role: "listitem", href: `#/urunler?kategori=${g.slug}`, style: { background: tones[i % tones.length] },
+      }, h("span", { class: "cat-card-ico", "aria-hidden": "true" }, icon(categoryIconName(g.slug), 40)), h("span", {}, g.name))))));
+  }).catch(() => {});
+
+  // Önceden gezdiklerin + Sana özel ürünler (gezilen ve beğenilen kategorilere göre)
+  const recentList = await recentProducts(recentIds()).catch(() => []);
+  let recentRow = null;
+  if (recentList.length) {
+    recentRow = productRow(recentList, "Önceden gezdiklerin");
+    recentSlot.replaceChildren(h("section", { class: "section" },
+      h("div", { class: "section-title" }, h("h2", {}, "Önceden gezdiklerin"), h("div", { class: "section-actions" }, recentRow.arrows)),
+      recentRow.rail));
+  }
+  const favs = state.user ? await listFavoriteProducts().catch(() => []) : [];
+  const forYou = await recommendedProducts({
+    categories: [...recentList, ...favs].map((p) => p.category),
+    exclude: recentList.map((p) => p.id), limit: 16,
+  }).catch(() => []);
+  let forYouRow = null;
+  if (forYou.length) {
+    forYouRow = productRow(forYou, "Sana özel ürünler");
+    forYouSlot.replaceChildren(h("section", { class: "section" },
+      h("div", { class: "section-title" }, h("h2", {}, "Sana özel ürünler"), h("div", { class: "section-actions" }, h("a", { href: "#/urunler?sirala=onerilen" }, "Tümü"), forYouRow.arrows)),
+      forYouRow.rail));
+  }
+
+  // En çok satanlar (sıralama SQL'i kuruluysa)
+  let topRow = null;
+  const top = (await listProducts({ sort: "satan", limit: 12 }).catch(() => ({ rows: [] }))).rows.filter((p) => p.sold_count > 0);
+  if (top.length >= 3) {
+    topRow = productRow(top, "En çok satanlar");
+    topSlot.replaceChildren(h("section", { class: "section" },
+      h("div", { class: "section-title" }, h("h2", {}, "En çok satanlar"), h("div", { class: "section-actions" }, h("a", { href: "#/urunler?sirala=satan" }, "Tümü"), topRow.arrows)),
+      topRow.rail));
+  }
+
   // Cinsiyet seçmemiş (eski) hesaplara bir kerelik hatırlatma
   if (state.user && state.profile && !state.profile.gender) {
     extras.append(h("div", { class: "section" }, featureCard({
@@ -268,5 +299,5 @@ export default async function render(root) {
     })));
   }
 
-  return () => { promo.stop(); row?.stop(); followRow?.stop(); };
+  return () => { promo.stop(); row?.stop(); followRow?.stop(); recentRow?.stop(); forYouRow?.stop(); topRow?.stop(); };
 }

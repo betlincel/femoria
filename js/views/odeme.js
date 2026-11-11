@@ -67,6 +67,7 @@ export default async function render(root) {
     h("option", { value: "" }, "İl seçin"), ...provinces.map((p) => h("option", { value: p.n, selected: p.n === f.city }, p.n)));
   drawIlce();
 
+  let legalOk = false;
   const err = h("p", { class: "field-error", hidden: true, role: "alert" });
   const payBtn = h("button", { type: "submit", class: "btn btn-primary btn-xl" }, ...withIcon("lock", `iyzico ile güvenli öde · ${formatPrice(total)}`));
 
@@ -78,7 +79,8 @@ export default async function render(root) {
       : !phoneOk ? "Cep telefonunuzu 05xx xxx xx xx biçiminde yazın."
       : !f.city || !f.district ? "İl ve ilçe seçin."
       : f.line.trim().length < 10 ? "Açık adresinizi yazın (mahalle, sokak, kapı no)." : null;
-    if (problem) { err.textContent = problem; err.hidden = false; return; }
+    const problem2 = problem || (!legalOk ? "Devam etmek için sözleşme ve iade koşullarını kabul edin." : null);
+    if (problem2) { err.textContent = problem2; err.hidden = false; return; }
     LS.set("address", f);
     payBtn.disabled = true;
     payBtn.replaceChildren("Güvenli ödeme sayfası açılıyor…");
@@ -104,6 +106,9 @@ export default async function render(root) {
     h("div", { class: "field" }, h("label", { for: "ad-line" }, "Açık adres"),
       h("textarea", { class: "input", id: "ad-line", rows: 3, placeholder: "Mahalle, sokak, bina ve kapı numarası", oninput: (e) => (f.line = e.target.value) }, f.line)),
     hasCargo ? h("p", { class: "small muted", style: { margin: 0 } }, "Adresiniz yalnızca kargo ile gönderilecek ürünlerin satıcısına gösterilir.") : null,
+    h("label", { class: "check legal-check" },
+      h("input", { type: "checkbox", id: "legal-ok", onchange: (e) => (legalOk = e.target.checked) }),
+      h("span", {}, "", h("a", { href: "#/yasal/mesafeli-satis", target: "_blank", rel: "noopener" }, "Ön bilgilendirme ve mesafeli satış sözleşmesini"), " ve ", h("a", { href: "#/yasal/iade-politikasi", target: "_blank", rel: "noopener" }, "iade koşullarını"), " okudum, kabul ediyorum.")),
     err,
     payBtn,
     h("div", { class: "pay-trust" },
