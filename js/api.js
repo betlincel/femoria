@@ -652,3 +652,10 @@ export const adminDismissReport = (id) => supabase.rpc("admin_dismiss_report", {
 export const adminProducts = (q = "") => supabase.rpc("admin_products", { p_q: q }).then(ok);
 export const adminRemoveProduct = (id, reason = null) => supabase.rpc("admin_remove_product", { p_product_id: id, p_reason: reason }).then(ok);
 export const adminOrders = () => supabase.rpc("admin_orders").then(ok);
+
+/** Okunmamış sohbet sayısı (20261119000020 migration'ı yoksa null döner) */
+export async function unreadCount() {
+  if (!isConfigured || !state.user) return 0;
+  const { data, error } = await supabase.rpc("my_unread_count");
+  return error ? null : Number(data) || 0;
+}

@@ -4,7 +4,7 @@
 // Üyelik ürün yüklemenin önüne konmaz: giriş/üyelik yalnızca "Satışa çıkar" anında istenir.
 // Yarım iş her değişiklikte otomatik saklanır (localStorage).
 // Düzenleme: #/sat?duzenle=<ürün kimliği> aynı formu ürünün bilgileriyle açar ("Değişiklikleri kaydet").
-import { h, toast, micButton, prepareImage, formatPrice, canListen, ask, sheet, icon, withIcon, iconCircle, statusScreen, speak } from "../ui.js";
+import { h, toast, micButton, prepareImage, formatPrice, canListen, ask, sheet, icon, withIcon, iconCircle, statusScreen, speak, tidyTitle, tidyText } from "../ui.js";
 import { state, LS } from "../store.js";
 import { matchCategory, groupSlugOf } from "../categories-data.js";
 import { getCategories, categoryTree, priceSuggestion, publishProduct, updateProduct, getProduct, hasStock, photoUrl, askAssistant, track } from "../api.js";
@@ -136,10 +136,15 @@ export default async function render(root, { query = {} } = {}) {
   // ---------- Form ----------
   function draw() {
     const title = h("input", { class: "input", id: "f-title", placeholder: " ", maxlength: TITLE_MAX, value: draft.title,
+      autocapitalize: "words", spellcheck: "true", lang: "tr", autocorrect: "on",
       oninput: (e) => { draft.title = e.target.value; save(); setError("f-title", null); },
+      // Alandan çıkınca otomatik düzelt: "doğal taş kolye" → "Doğal Taş Kolye"
+      onblur: (e) => { const t = tidyTitle(e.target.value); if (t !== e.target.value) { e.target.value = t; draft.title = t; save(); } },
       onchange: () => refreshSuggestion() });
     const desc = h("textarea", { class: "input", id: "f-desc", placeholder: " ", maxlength: DESC_MAX, rows: 4,
-      oninput: (e) => { draft.description = e.target.value; save(); } }, draft.description || "");
+      autocapitalize: "sentences", spellcheck: "true", lang: "tr", autocorrect: "on",
+      oninput: (e) => { draft.description = e.target.value; save(); },
+      onblur: (e) => { const t = tidyText(e.target.value); if (t !== e.target.value) { e.target.value = t; draft.description = t; save(); } } }, draft.description || "");
     const price = h("input", { class: "input", id: "f-price", placeholder: " ", inputmode: "decimal", autocomplete: "off",
       value: draft.price ?? "",
       oninput: (e) => {
@@ -373,7 +378,7 @@ export default async function render(root, { query = {} } = {}) {
     form.replaceChildren(statusScreen("refresh", "Vitrine koyuyorum…", { spin: true }));
     window.scrollTo(0, 0);
     try {
-      const product = await publishProduct({ ...draft, title: draft.title.trim() });
+      const product = await publishProduct({ ...draft, title: tidyTitle(draft.title), description: tidyText(draft.description) });
       const seconds = Math.round((Date.now() - draft.startedAt) / 1000);
       track("listing_published", { seconds, photos: draft.photos.length, used_voice: !!draft.transcript });
       LS.set("draft", null);
@@ -408,7 +413,7 @@ export default async function render(root, { query = {} } = {}) {
     form.replaceChildren(statusScreen("refresh", "Kaydediyorum…", { spin: true }));
     window.scrollTo(0, 0);
     try {
-      await updateProduct(editId, { ...draft, title: draft.title.trim() }, original.photos || []);
+      await updateProduct(editId, { ...draft, title: tidyTitle(draft.title), description: tidyText(draft.description) }, original.photos || []);
       track("listing_edited", {});
       toast("Değişiklikler kaydedildi.");
       navigate(`/urun/${editId}`);
