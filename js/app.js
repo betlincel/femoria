@@ -2,7 +2,7 @@
 import { isConfigured } from "./supabase.js";
 import { state, initAuth, onChange, LS } from "./store.js";
 import { route, startRouter, onRoute, navigate } from "./router.js";
-import { subscribeIncoming, track, resetAdminCache, getCategories, categoryTree } from "./api.js";
+import { subscribeIncoming, track, resetAdminCache, unreadCount, getCategories, categoryTree } from "./api.js";
 import { initAssistant, assistantEvent } from "./assistant.js";
 import { esc, toast, h } from "./ui.js";
 import { iconSVG, ayseAvatarSVG } from "./icons.js";
@@ -79,22 +79,39 @@ onChange(() => {
     lastUserId = state.user?.id ?? null;
     resetAdminCache();
     loadFavorites();
+    refreshUnread();
     stopInbox();
     stopInbox = subscribeIncoming((msg) => {
-      if (!location.hash.includes(msg.conversation_id)) {
-        document.getElementById("unread-dot").hidden = false;
-        document.getElementById("unread-dot-top").hidden = false;
-      }
+      // Sunucudaki sayıyı yenile; migration yoksa bu oturumdaki yeni mesajları sayar
+      if (!location.hash.includes(msg.conversation_id)) { if (!countSupported) paintUnread(unread + 1); refreshUnread(); }
       assistantEvent("message_received", msg);
     });
   }
 });
 
-onRoute(({ screen }) => {
-  if (screen === "mesajlar") {
-    document.getElementById("unread-dot").hidden = true;
-    document.getElementById("unread-dot-top").hidden = true;
+// Mesaj simgesindeki okunmamış sohbet sayısı (üst çubuk + alt menü + sekme başlığı)
+let unread = 0, countSupported = true;
+function paintUnread(n) {
+  unread = n;
+  for (const id of ["unread-dot", "unread-dot-top"]) {
+    const el = document.getElementById(id);
+    el.textContent = n > 99 ? "99+" : String(n);
+    el.hidden = !n;
   }
+  document.title = n ? `(${n}) ${document.title.replace(/^\(\d+\+?\)\s*/, "")}` : document.title.replace(/^\(\d+\+?\)\s*/, "");
+}
+async function refreshUnread() {
+  if (!state.user) return paintUnread(0);
+  const n = await unreadCount().catch(() => null);
+  if (n === null) { countSupported = false; return; }
+  countSupported = true;
+  paintUnread(n);
+}
+window.addEventListener("focus", refreshUnread);
+setInterval(() => { if (!document.hidden) refreshUnread(); }, 45000);
+
+onRoute(({ screen }) => {
+  setTimeout(refreshUnread, screen === "mesajlar" ? 1200 : 300); // sohbet açılınca okundu işaretlenir, ardından sayı güncellenir
   setTimeout(ensureKvkkConsent, 0); // aydınlatma sayfasından çıkınca onay iste
   // Başlıktaki arama kutusu ürün listesi dışında temizlenir
   if (screen !== "urunler") document.getElementById("q").value = "";

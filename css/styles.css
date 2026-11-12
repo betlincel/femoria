@@ -1686,3 +1686,12 @@ button.all-cats.open .all-cats-caret { transform: rotate(180deg); }
 .section-title > div:first-child { min-width: 0; flex: 1 1 auto; }
 .section-title .section-actions { flex: none; }
 @media (max-width: 520px) { .section-title h2 { font-size: 1.45rem; } .section-title a { padding: 6px 12px; font-size: .85rem; } }
+
+/* Mesaj simgesi sayısı */
+.hl-ico { position: relative; }
+.header-link .count, .nav-icon .count { background: #D0141A; }
+.nav-icon { position: relative; }
+.nav-icon .count { position: absolute; top: -6px; right: -10px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; color: #fff; font-size: .68rem; font-weight: 700; line-height: 18px; text-align: center; }
+.nav-icon .count[hidden], .header-link .count[hidden] { display: none; }
+.header-link .hl-ico > .count { display: block !important; }
+.header-link .hl-ico > .count[hidden], .nav-icon > .count[hidden] { display: none !important; }

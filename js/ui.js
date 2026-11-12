@@ -411,3 +411,25 @@ export function shieldCheck(text) {
   if (/(kapora|[öo]n [öo]deme|[öo]nce (para|[öo]deme)|havale yap|eft yap|[şs]ifre|kart numara)/i.test(t)) flags.push("dolandiricilik");
   return flags;
 }
+
+// ---------- Yazı düzeltme (ilan başlığı / açıklaması) ----------
+const LOWER_WORDS = new Set(["ve", "ile", "için", "veya", "de", "da", "ki", "mi", "mı", "mu", "mü"]);
+const UNIT = /^\d*(g|gr|kg|ml|lt|l|cl|cm|mm|m|adet|ad)\.?$/i;
+/** "ev yapımı  vişne reçeli - 400 G" → "Ev Yapımı Vişne Reçeli - 400 g" */
+export function tidyTitle(text) {
+  const words = String(text || "").replace(/\s+/g, " ").trim().split(" ").filter(Boolean);
+  return words.map((w, i) => {
+    if (UNIT.test(w) && /\d/.test(w)) return w.toLocaleLowerCase("tr-TR");
+    if (/^\d/.test(w) || /^[-–—&+/]+$/.test(w)) return w;
+    if (UNIT.test(w) && i > 0 && /\d/.test(words[i - 1])) return w.toLocaleLowerCase("tr-TR");
+    if (i > 0 && LOWER_WORDS.has(w.toLocaleLowerCase("tr-TR"))) return w.toLocaleLowerCase("tr-TR");
+    if (w.length <= 3 && w === w.toLocaleUpperCase("tr-TR") && /\p{L}/u.test(w)) return w; // KDV, XL gibi kısaltmalar
+    const lower = w.toLocaleLowerCase("tr-TR");
+    return lower.charAt(0).toLocaleUpperCase("tr-TR") + lower.slice(1);
+  }).join(" ");
+}
+/** Cümle başlarını büyütür, noktalamadan önceki boşlukları ve fazla boşlukları temizler. */
+export function tidyText(text) {
+  const t = String(text || "").replace(/[ \t]+/g, " ").replace(/ +([,.;:!?])/g, "$1").replace(/ *\n */g, "\n");
+  return t.replace(/(^|[.!?]\s+|\n)(\p{Ll})/gu, (_, pre, ch) => pre + ch.toLocaleUpperCase("tr-TR")).trim();
+}
